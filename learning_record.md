@@ -128,3 +128,81 @@ origin  https://github.com/lonely917/SummaryForLearning.git (fetch)
 origin  https://github.com/lonely917/SummaryForLearning.git (push)
 
 我们在原先目录下add 一个文件 推送到远程，然后再此目录下fetch，相当于我们在多地办公，同步文件
+Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
+$ git add .
+Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
+$ git commit -m "learning_summary 本地提交"
+[master 1d04963] learning_summary 本地提交
+ 1 file changed, 130 insertions(+)
+ create mode 100644 learning_record.md
+
+推送
+Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
+$ git push origin master
+Username for 'https://github.com': lonely917
+Password for 'https://lonely917@github.com':
+Counting objects: 4, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 2.14 KiB | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To https://github.com/lonely917/SummaryForLearning.git
+   50c177b..1d04963  master -> master
+
+在另一个目录(工作区)进行fetch和合并
+首先进行fetch操作，下载到本地(没有合并)
+Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
+$ git fetch origin
+remote: Counting objects: 3, done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 3 (delta 0), reused 3 (delta 0), pack-reused 0
+Unpacking objects: 100% (3/3), done.
+From https://github.com/lonely917/SummaryForLearning
+   50c177b..1d04963  master     -> origin/master
+
+
+可以通过命令查看本地和远端的差别
+Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
+$ git diff master origin/master
+diff --git a/learning_record.md b/learning_record.md
+new file mode 100644
+index 0000000..3fae107
+--- /dev/null
++++ b/learning_record.md
+
+merge操作
+Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
+$ git merge origin/master
+Updating 50c177b..1d04963
+Fast-forward
+ learning_record.md | 130 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 130 insertions(+)
+ create mode 100644 learning_record.md
+
+##git fetch merge 和git pull
+http://www.oschina.net/translate/git-fetch-and-merge
+
+##git小结
+仓库建立，本地库，远程库关联，push，fetch&merge，pull
+分支branch 分支merge push pull 回滚 pullrequest
+
+##android permission & uses permission
+http://blog.csdn.net/lilu_leo/article/details/6940941
+
+##svn中文乱码 
+注意要使用svn自带的diff工具，否则乱码
+
+##利用adb直接安装程序
+
+##Activity的生命周期和启动模式
+newtask方式和singleinstance启动的话，startactivityforresult会直接返回，在onactivityresult中。
+
+#eclipse ini配置文件
+初始化堆大小和最大堆大小设置
+初始化太大可能无法启动
+
+##svn delete
+
+##快速启动cmd窗口
+1. 在win7下，一般大家打开命令提示符是不是习惯了“win+r”
+2. 在桌面上先按住shift键，然后右键，会出现一个选项“在此处打开命令窗口”在其他盘里
