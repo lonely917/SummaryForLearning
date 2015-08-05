@@ -206,3 +206,24 @@ newtask方式和singleinstance启动的话，startactivityforresult会直接返回，在onactiv
 ##快速启动cmd窗口
 1. 在win7下，一般大家打开命令提示符是不是习惯了“win+r”
 2. 在桌面上先按住shift键，然后右键，会出现一个选项“在此处打开命令窗口”在其他盘里
+
+##常用点
+动态加载
+反射
+插件
+消息通信
+缓存
+软引用
+位图处理
+反注册
+
+##webview加载swf
+String url ="file:///android_asset/hoge.swf";
+
+WebView wv=(WebView) findViewById(R.id.WebView01);
+
+wv.getSettings().setPluginsEnabled(true);
+
+wv.loadUrl(url);
+
+##android anim动画实现
