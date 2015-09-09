@@ -1,0 +1,460 @@
+#修改bug记录
+##群相册--图片详情页长按转载到空间相册未屏蔽 ID： 50915973 状态： 接受/处理 
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050915973
+
+	        /**
+	         * Add by:wenburgyan
+	         * App Version:
+	         * Crash No:50915973
+	         * Crash Detail:转载到空间相册未屏蔽
+	         * Taptd Link:http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050915973
+	         * Reason:下面的代码会判断能否转载然后根据结果进行显示转载按钮，直接注释掉，不再添加转载按钮，不知道会不会影响其他功能，图片能否转载是图片属性控制还是直接屏蔽掉这个接口
+	         */
+QzonePictureViewer 图片浏览大图展示
+QzoneshowMoreActionMenu方法是弹出选项
+
+##http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050834359
+50834359 个性名片的引导层应该去掉  
+
+	/**
+         * Add by:wenburgyan
+         * App Version:
+         * Crash No:50834359
+         * Crash Detail:个性名片的引导层没去掉
+         * Taptd Link:http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050834359
+         * Reason: 原先的逻辑是apk安装后第一次点击进入个人资料页面会给出个性名片的引导，屏蔽掉判断即可
+         */
+FriendProfileCardActivity的initInfoCardCommonLayout方法初始化界面布局
+
+
+##50870975  与我相关未读数字，竖屏已读已没有数字，横屏仍有 
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050870975
+没有复现
+//横屏气泡 QzoneWrapperActivity
+
+##50800939 添加找群页面banner未去掉 状态： 接受/处理  
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050800939
+没有复现
+//稍后
+
+##50874153  群分类二级页面打不开  
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050874153&url_cache_key=927eadcecbcf53b3862646c1a10475f2
+
+    /**
+     * Add by:wenburgyan
+     * App Version:
+     * Crash No:
+     * Crash Detail:
+     * Taptd Link:
+     * Reason:
+     * 
+     *  重写dataEquals方法，默认返回true，内部调用不会启动新的activity，也就不会进入二级页面
+     */
+
+重写TroopClassChoiceActivity中的dataEquals的方法，因为basepad调转处理的时候判读是否模拟新activity的时候会使用dataEquals，默认返回true，因此没有启动新的activity也就没有反映。
+(这是基于TroopClassChoiceActivity本身就是standard方式启动，默认此方式启动，manifest文件中launchmode设置，默认标准方式)
+
+多次进入dataEquals ？？
+
+##ID： 50849197生活服务资料页向上滑动显示有问题
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050849197&url_cache_key=927eadcecbcf53b3862646c1a10475f2
+AccountDetailActivity具体的公众号显示
+
+生活服务点击 从chat到PublicAccountActivity
+mSlidingUpPanelLayout.setOnScrollChangedListener
+没看懂逻辑
+
+
+##ID： 50920147  【我tab】辅助功能的联系人按字母排序不起作用 
+http://tapd.oa.com/10106691/bugtrace/bugs/view?bug_id=1110106691050920147&url_cache_key=927eadcecbcf53b3862646c1a10475f2
+Contacts中有两个listview，一个是分组的一个是所有用户不分组的(后者被注释掉了，以前有此功能？) 不太清楚逻辑，没有改动。
+
+##联系人-生活服务-公众号详情 bouncescrollview 向上滚动显示顶部显示异常，对比手Q。
+没有明白代码中的控制逻辑，控制控制逻辑中添加滑倒顶部制定位置后不可上滑。
+
+
+
+##ID： 50837763 图片类文件保存到本地提示文案错误  
+http://tapd.oa.com/ApadQQ/bugtrace/bugs/view?bug_id=1010106691050837763
+1. 保存本地入口文案 保存到手机
+2. 点击保存弹出toast提示文案 已保存到手机
+【预期结果】
+1. 入口文案 保存到平板
+2. toast提示文案 已保存
+
+疑问?类似保存到手机的地方应该不止一处，统一改成平板？xml中直接更改？
+
+自定义控件
+bubbleContextMenu
+BubbleOnlongClickListener
+AIOGalleryActivity
+
+chatadapter 中的onLongClick 会话列表项长摁点击项
+
+AIOGalleryActivity 展示图片
+监听peek线程，操作失败，进入不了展示界面
+AIOGalleryActivity->AIOGalleryScene->ActionSheet 控制显示
+R.string.image_menu_save
+<string name="image_menu_save">保存到手机</string>更改为 "保存到平板"
+
+
+##【搜索】横屏右侧处于H5页面时，左侧搜索掉不起键盘 ID： 50869609
+点击生活服务启动PublicAccountActivity
+对其监听的话需要在qq web 附加调试，附加调试的时候不出现对应页面了？
+
+
+#总结
+断点如果不起作用有可能是没有去附加在对应线程。
+
+PushBroadcastReceiver
+QQAppInterface
+各个线程
+
+有手机QQ的源码吗？QQ5.0.0使用ant编译报错？
+
+
+#根据以下点学习下代码
+整体调用框架设计->activity调用以及生命周期管理 软引用的使用
+自定义控件->可复用
+插件的运用->分工开发，剥离工程，复用。
+异常记录->调试本地记录或者上线远程报给后台
+用户点击偏好记录->对接需求是否有必要
+系统使用情况，cpu、电量、响应时间->性能优化
+缓存的使用
+
+
+#不懂的地方
+灰度测试
+AIO
+RDM上报异常
+
+#改进
+apk安装包精简？
+编译时间问题？
+xml布局可视化？
+
+#各个线程 qq  qq:web
+
+
+QQBroadcastReceiver什么作用
+
+DragFrameLayout 红点
+task和activity 以及对应线程进程？
+AIOUtils AIO？
+QLog 日志
+StartupTracker 
+
+SplashActivity 
+	->UserguideActivity->SplashActivity 
+	startGetUin(getIntent());->OpenidToUinActivity
+	->LoginActivity
+
+onTabChanged 切换view 的id 只是标记了一些
+onTabSelected
+LocalActivityRecord extends Binder
+tabhost 的 addFrame  addFrame(null, SettingMe.class, mTabs[0]);
+mTabHost.setCurrentTab(1); //默认选中消息Tab
+mAssist.registerObserversAndListensers();
+observer队列 observer实现原理  注册了以后 什么时候触发的？
+WeakReference
+handler结构？BusinessHandler
+反射的使用
+splashactivity - mainassistobserver
+
+
+##更改widget图片
+WidgetContainer 包含天气 星座 邮箱
+widget_main.xml  include 三个布局文件如 widget_weather.xml对应天气，此外还有星座、邮箱的xml布局
+
+QZoneWidgetDetailActivity是详情页面，点击天气、星座后会进入
+R.layout.qzone_cover_widget_detail
+mWidgetDetail = QZoneCoverWidgetDetail.buildCoverWidget(this, mCurrentWidgetType);
+case QZoneWidgetBaseController.WIDGET_TYPE_CONSTELLATION:
+				widget = new QZoneCoverWidgetDetailConstellation(context);
+
+星座的小图可以在widget_weather中找到，大图是通过网络获取?
+widget_constellation_bg
+widget_star_river_bg
+
+QZoneWidgetDetailActivityConstellation.png
+
+进一步
+QZoneCoverWidgetDetailConstellation对应星座详情
+其中
+Drawable bg = ImageLoader.getInstance().loadImage(QzoneAppConstants.URL_COVER_CONSTELLATION_BG, mImageLoadListener);
+网络拉取图片
+QzoneAppConstants中
+	public static final String URL_COVER_CONSTELLATION_BG = "http://qzonestyle.gtimg.cn/qzone/phone/m/app/default/sq/android/widget/constellation_detail_bg.jpg";
+	public static final String URL_COVER_WEATHER_BG = "http://qzonestyle.gtimg.cn/qzone/phone/m/app/default/sq/android/widget/weather_detail_bg.jpg";
+##星座大图稍后再改，小图已改
+
+haze 雾霾
+gloomy 阴天
+
+##更改天气的背景图片
+
+##更改星座的文字和星星，星星包括大图里面的星星
+updateWidgetConstellationInfo中是小图的数据更新
+
+星星更换直接换资源
+qzone_cover_constellation_star
+qzone_cover_constellation_starry
+
+##新闻添加蒙板
+更改背景资源即可
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="@drawable/news_mask_bg" />
+邮件背景更换
+
+
+IphoneTitleBarActivity做甚么
+
+
+widget添加底图显示阴影效果
+
+城市有张背景图命名搞错了，.9图片
+新闻的蒙板放在文字下面
+天气去掉蒙板
+
+
+##
+TroopManageActivity 管理群
+
+
+##修正铃声选择和设置不一致的问题
+hashmap和linkedhashmap的问题，后者可以按照插入顺序进行遍历。
+
+##图片+圆角+阴影
+imageview padding设置失效可以考虑使用layoutmargin来实现效果
+layout有background为图片的时候，其中的imageview fillparent 可能还是比布局小一点
+图片重叠的话使用两张imageview来做
+imageview 的src  centercrop会是图片大于等于view的大小。
+
+##更改星座大图url
+QZoneWidgetDetailActivity
+大图设定从网络加载，设置本地默认图片?
+
+##更改widget星座小图 星星大小
+widget星座小图 是利用canvas绘制得到bitmap  getStartBitmap
+widget星座详情是layout固定星星imageview  大18dp  小15dp
+
+Bitmap和canvas操作
+
+dp->pixel
+public float convertDpToPixel(float dp, Activity context)
+{
+    Resources resources = context.getResources();
+    DisplayMetrics metrics = resources.getDisplayMetrics();
+    float px = dp * (metrics.densityDpi / 160f);
+    return px;
+}
+
+Drawable d = new BitmapDrawable(context.getResources(),
+                Bitmap.createScaledBitmap(b, ((int) convertDpToPixel(75)),  ((int) convertDpToPixel(75)), true));
+
+##修改群相册图片展示的actionsheet改为iconpopupwindow
+三处用到 menu、长摁、以及icon点击，主要调用父类basepictureviewer方法中一些函数子类qzonepictureviewer实现
+com.qzone.preview - qzone - QQLite
+BasePictureViewer
+onKeyDown(int, KeyEvent)
+QzoneGalleryScene
+onItemLongClick(AdapterView<?>, View, int, long)
+QzonePictureViewer
+onClick(View)
+
+
+
+##bug
+
+群相册 转载到空间 转载界面取消和回退箭头重合？？
+
+##
+profilecardactivity -> ProfileCardMoreActivity
+
+viewstub 原理
+
+##建立讨论组去掉人脉圈
+
+FriendTeamListInnerFrame 中
+        LinearLayout listViewHeader = (LinearLayout) mActivity.getLayoutInflater().inflate(
+                R.layout.select_friend_list_view_header, null);
+mBtnTroop.setVisibility(View.GONE);  //这里强制修改不显示人脉圈 wenburgyan
+
+##存到微云
+baseactionbar 修改 其各种继承类，这里全部去掉存到微云
+ActionBarManager中产生各种底部actionbar以及更多的弹出项
+
+##群二维码的actionsheet弹出 finished
+QRDisplay中的onClick 调用 showActionSheet改为showPopupWindow
+
+##TroopAssistant 群助手actionsheet修改 finished
+showactionsheet
+
+QzoneTroopAlbumViewPhotoActivity 群相册管理
+
+通过插件调用的如何定位activity
+
+我的相册 管理
+ViewerModelController
+initTitleBar
+
+群通知TroopActivity 
+showActionSheet
+
+QQMapActivity 发送位置 打开后地图的actionsheet
+
+手势密码锁定
+GesturePWDSettingActivity
+
+星座大图利用了缓存ImageLoader框架
+
+
+通话背景动画设定
+Call 通话
+RecentCallHelper
+RecommendAdapter
+
+##android anim动画实现
+三个star的闪烁以及两个流星的动画meteor
+
+##更改通话主界面
+原先对viewpager设置背景的代码，设置前对bitmap进行处理，避免太大，对于1080p以上才加载原图
+            Drawable bgdrawable = BitmapTools.getFixScreenDrawableWithScaled(BaseApplication.getContext(), R.drawable.recent_call_bg);
+            if (bgdrawable != null) {
+                mRecommendView.setBackgroundDrawable(bgdrawable);
+            } else {
+                mRecommendView.setBackgroundResource(R.drawable.recent_call_bg);
+            }
+
+RecentCallHelper
+和
+RecommendAdapter
+
+点击事件动态监听
+call中有实现
+
+分辨率和imageview的scaletype
+
+FIT_END / fitEnd   把图片按比例扩大/缩小到View的宽度，显示在View的下部分位置
+
+多人视频MultiVideoEnterPageActivity
+
+单人语音
+AVActivity
+
+
+qav_bottom_bar控制面板
+
+DoubleVideoCtrlUI
+initUI()
+MultiVideoCtrlLayerUI
+initUI()
+
+IvrControlUI extends DoubleVideoCtrlUI
+
+不同分辨率尺寸对应的dimen文件
+
+qav_bottom_bar和qav_bottom_bar_for_ivr，后者没有使用？两个都有hang_up的imagebutton
+还有qav_bottombar_hangup_no_answer.xml  在DoubleVideoCtrlUI中onCloseAnimation方法中用到
+美颜按钮的显示和隐藏涉及到 camera 和 add 以及beauty的动画
+
+qav_btn_accept_audio/vedio
+接听按钮替换 音频和视频
+
+剩余工作
+1. 引导界面不同分辨率的适配测试
+2. 来点接听页面修改
+3. 通话间距调整
+
+对方来电 对方挂掉 挂断icon变形？
+给对方电话视频或者对方来电 接通后布局变形
+
+发现bug
+和电脑视频 主动挂掉 电脑端窗口崩溃?
+和电脑语音，平板端还未想起声音的时候电脑端就接受，立刻接受语音通话，有可能接通了平板端仍然在请求中。
+
+onCloseAnimation挂断的动画
+
+qav_friend_info_head
+
+定位代码
+1. ant 断点 activity跳转
+2. 资源定位，全局搜索
+3. xml中的id对应到代码中的变量，根据变量的引用再去搜查，有时候代码中不止一处findviewbyid，不要漏查。
+4. dumpview寻找布局中资源的id名称，必须定义过。
+5. 抽象类指针运行时跟踪; 对于抽象类指针调用代码查找也可以，需要找到对应的实现类，一步步搜查。
+
+
+
+http://mma.qq.com/hdqq/feedback.html?sid=AcmLB-cqoogaVaE6e9qqxg4V
+
+星座详情页
+
+
+
+appid: 537042639
+LC: 0369FF963468DCBF
+buildNum: 1551
+isDebugVersion: true
+subVersion: 5.4.2
+productID: 130
+quaAppName: AQQ_2013 4.6
+supVersion: 2013
+revision: 0
+isSkinEngieAccelerated: false
+reportVersionName: 5.4.2.1551
+aboutSubVersionName: V 5.4.2.1551
+aboutSubVersionLog: V 5.4.2.1551
+isPublicVersion: false
+versioncode: 342
+amem: 448
+
+
+http://mma.qq.com/hdqq/feedback.html?manufacturer=samsung&product=mondrianwifizc&network=WIFI&os=19&version=V 5.4.2.1551&appid=537042639
+
+http://mma.qq.com/hdqq/feedback.html?manufacturer=samsung&product=mondrianwifizc&network=WIFI&os=4.4.2&version=V 5.4.2.1551&appid=537042639
+
+
+反馈页面完成
+星座widget小尺寸屏幕星星显示的问题
+
+相册的actionsheet 弹出位置不正确的bug
+
+消息通知不起作用，不是所有硬件支持，去掉此选项
+
+讨论组所有成员 下拉背景问题 设置背景色
+
+动态 图片 长摁 保存到平板  <string name="qzone_pictureviewer_save">保存到平板</string>
+
+提示性 <string name="datalineprompt">无需数据线，平板轻松传文件到电脑。</string>
+
+他人相册的问题 因为没有添加取消 以前是主人态测试的我的相册。
+
+控件的实现
+com.tencent.mobileqq.widget.FormSwitchItem
+
+public class PinnedDividerListView extends XListView implements AbsListView.OnScrollListener 
+
+DiscussionMemberActivity 讨论组成员activity
+
+
+TextView及其子类，当字符内容太长显示不下时可以省略号代替未显示的字符；
+省略号可以在显示区域的起始,中间，结束位置，或者以跑马灯的方式显示文字(textview的状态为被选中时文字会滚动)。 
+其实现只需在xml中对textview的ellipsize属性做相应的设置即可。 
+      
+        android:ellipsize="start"        省略号在开头        
+        android:ellipsize="middle"       省略号在中间        
+        android:ellipsize="end"          省略号在结尾        
+        android:ellipsize="marquee"      跑马灯显示 
+        或者在程序中可通过setEillpsize显式设置。 
+
+##weakreference的使用
+
+
+
+
+##ListView源码
+##view viewgroup 后者dispatchevent
+##线程池字节池

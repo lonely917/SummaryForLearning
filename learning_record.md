@@ -207,7 +207,7 @@ newtask方式和singleinstance启动的话，startactivityforresult会直接返回，在onactiv
 1. 在win7下，一般大家打开命令提示符是不是习惯了“win+r”
 2. 在桌面上先按住shift键，然后右键，会出现一个选项“在此处打开命令窗口”在其他盘里
 
-##常用点
+##关键词
 动态加载
 反射
 插件
@@ -216,6 +216,12 @@ newtask方式和singleinstance启动的话，startactivityforresult会直接返回，在onactiv
 软引用
 位图处理
 反注册
+
+强弱引用
+webview漏洞
+activity启动模式launch mode
+
+
 
 ##webview加载swf
 String url ="file:///android_asset/hoge.swf";
@@ -226,4 +232,7 @@ wv.getSettings().setPluginsEnabled(true);
 
 wv.loadUrl(url);
 
-##android anim动画实现
+
+##markdown nodeppt
+
+
