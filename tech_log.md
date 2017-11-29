@@ -209,3 +209,26 @@ new   Exception().getStackTrace()[i].getMethodName(); 0是当前代码所处方�
 Thread.currentThread().getStackTrace()[1].getMethodName(); 具体索引可能跟jdk版本有关
 
 #Serializable parcelabel
+
+#使用到的开源库
+一个log库，对android.util.log的封装，文中又进行了一定得修改
+https://github.com/orhanobut/logger
+另一个国产库，https://github.com/pengwei1024/LogUtils
+
+#AppCompatActivity & activity
+
+#activity和fragment周期，详细，以及如何被系统执行进入不同阶段
+
+#在activity内部添加一个静态的方法，启动此activity，这种设计的意义何在？
+
+#工具类
+xml，json实体解析生成
+http
+db
+sp
+pic
+toast
+dialog
+progress dialog or bar
+
+#glide retrofit gson okhttp rx
