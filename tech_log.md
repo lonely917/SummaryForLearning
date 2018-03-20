@@ -13,7 +13,7 @@ webviewclient和webchromeclient
 unicode utf-8 编码格式 java的String中的每个char是两字结
 
 #activity和fragment的startactivityforresult
-fragmentactivity对startactivityforresult进行了重新设计，对requestcode进行一层处理，通过requestcode来区分是由fragment还是activity发起的，
+fragmentactivity对fragment的startactivityforresult进行了重新设计，对requestcode进行一层处理，通过requestcode来区分是由fragment还是activity发起的，
 在activity的onActivityResult监听中通过这个字段判断，并复原，路由到activity或者fragment的对应处理中。fragment的startactivityforresult最终
 也是activity的start方法，但是会对requestcode进行转换。
 
@@ -231,4 +231,48 @@ toast
 dialog
 progress dialog or bar
 
-#glide retrofit gson okhttp rx
+#glide retrofit gson okhttp rx recyclerView 
+snackbar
+listview源码和recycleview对比
+
+#fragment的意义，减少了大部分的activity又如何，仅仅是一种轻量级的实现？
+
+#提示找不到native函数以及多个zipentry的问题
+多个zipentry是由于多个jar包冲突，删除或者整合。
+找不到native是因为so文件缺失。
+还有abifilter的设置，一般一个就可以兼容，so也要注意对应版本的兼容性，32位64位。
+
+#lib包和libs包，eclipse对dependency引用的包添加源码关联
+
+#插件化和组件化，热更新和增量更新
+
+#app托管平台
+蒲公英，frm，pre
+
+#区块链和智能合约
+
+#shadowsocks/shadowsocks-android
+kotlin方法
+
+#APPcompat和fragmentActivity
+
+#edittext焦点问题，自动弹出键盘的解决
+一种方式是在其parent布局中设置foucusable和focusableintouchmode为true
+另一种方式是设置activity的windowsoftinputmethod 为 statehiden
+注意stateresize会使得软键盘的弹出附带布局向上移动的效果。
+
+#window notitle的设置
+方式1
+oncreate中setcontentview之前执行设置requestWindowFeature(Window.FEATURE_NO_TITLE);
+方式1在程序启动的时候还是看到标题栏，闪一下。
+方式2
+设置theme的属性，添加 <item name="android:windowNoTitle">true</item>
+
+#splash的实现
+启动activity的制作，初始化行为。
+一般初始化会有黑屏或者白屏(也可以设置透明)，这里自动会有一段延时，而且会跟布局的差异时间持续有差别。
+要想这个地方也有背景，可以在activity的theme主题中修改背景属性
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@drawable/splash</item>
+这样就控制了启动初始时间段的显示图片。
+然后在oncreate结束地方调用跳转到主activity中去，可以设定延时跳转。
