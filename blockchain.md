@@ -64,3 +64,16 @@ https://blockexplorer.com/
 一般区块建立六次以上，基本不可逆转
 
 什么叫做交易的确认
+
+编译比特币核心，通过命令行使用比特币核心提供的json-rpc api接口
+比特币代码 https://github.com/bitcoin/bitcoin
+比特币客户端：中本聪客户端(satoshi-client) 一个参考实现bitcoind
+多种语言实现：bitcoinj-java;btcd-go;
+查询实际交易来看交易结构和区块链组织形式
+btcd-go不提供钱包功能(交易功能)，但可与其他应用结合，且支持httppost（bitcoind）和websocket两种通信方式
+
+一个比喻
+比特币的挖矿-难度可以动态调整的巨大维度的数独游戏(难解，但是易于验证)
+
+公钥加密和数字指纹概念
+比较RSA、ecc(椭圆曲线)、素数幂
