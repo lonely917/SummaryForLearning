@@ -120,3 +120,6 @@ https://github.com/bitcoin/bitcoin/blob/3955c3940eff83518c186facfec6f50545b5aab5
 https://blockchain.info/block/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f
 block#0 只有一笔交易
 创世区块的留言查看，二进制内容转换成字符，隐藏留言。
+
+Merkle树快速归纳和校验数据完整性
+merkle树和简单支付验证7.8 流程没有明白。从全节点获取的数据是什么？这里验证什么，验证交易？验证区块？从别的节点获取merkle区块消息真实度？不是直接获取结果而是获取root和路径，然后自己来验证。
