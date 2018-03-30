@@ -170,3 +170,13 @@ OP_RETURN操作符
 区块链和共识系统的发明，降低大型系统在组织和协调上的花销，同时消除权力攫取、腐败及管制俘获的可乘之机。
 
 比特币安全：纸钱包，冷存储机制，硬件钱包，分散钱包，多重签名，遗产处理。
+
+
+mastering bitcoin
+>>>>>>>>>>>
+
+>>>>>>>>>>>>
+#programming blockchain by using c# 
+You can acquire testnet coins quickly by using faucets, just google "get testnet bitcoins".
+
+
