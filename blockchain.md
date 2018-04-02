@@ -221,3 +221,6 @@ The Transaction ID is defined by SHA256(SHA256(txbytes))
 The consensus rules enforce that the sum of output's value in the coinbase transaction does not exceed the sum of transaction fees in the block plus the mining reward.
 
 give me a child until he is seven and i will give you a man
+
+priate key + network ->Bitcoin Secret（wallet import format）
+bitcoin secret 可以得到private， 但是bitcoin adress 不能得到 public key 因为它里面只有public key hash
