@@ -224,3 +224,44 @@ give me a child until he is seven and i will give you a man
 
 priate key + network ->Bitcoin Secret（wallet import format）
 bitcoin secret 可以得到private， 但是bitcoin adress 不能得到 public key 因为它里面只有public key hash
+
+PGP(Pretty Good Privacy)，是一个基于RSA公钥加密体系的邮件加密软件。
+
+Proof of ownership as an authentication method章节中message和signature的验证，message什么用，用在哪里，signature如何生成（利用private key对message处理生成？），signature和scriptsign？
+
+关于密钥的生成和伪随机数
+KDF的使用，密钥的加密存储，尽量提高暴力破解成本，多密钥或多地址的必要性。
+关于密钥安全性，一些加密方案
+--BIP38 part1&part2:
+对private key利用password再次进行加密，进一步升级，将PassphraseCode交给第三方，实现非可信第三方依然能够使用PassphraseCode来生成加密后的密钥，a third party key generator + passphrasecode -> encrypted key
+
+--BIP32（HD Wallet）
+problems we want to solve:1 Prevent outdated backups & 2 Delegating key / address generation to an untrusted peer
+A “Deterministic” wallet would fix our backup problem. With such a wallet, you would have to save only the seed. From this seed, you can generate the same series of private keys over and over.
+
+注意生成的子key有hardened-keys 和 non-hardened-keys两种类型，区别是前者能够复原主key。
+
+masterkey->childkey,也可以是层次树状的，用于部分组织架构。
+不再需要备份所有钱包地址，一个主key可以根据标识去生成地址，但是这里需要记录那些地址标识。
+另外利用masterPubKey来实现第三方地址管理，根据masterpubkey来生成具体的地址。
+
+上述两种方法，将生成过程交给第三方，但是客户端是否还要验证？既然要验证且能验证，那为何不在本地生成？
+！！！！对具体使用的算法原理进行分析
+
+--Mnemonic Code for HD Keys (BIP39)
+便于记忆，目前支持若干种语言。
+
+这里key的位数是多少，key，masterkey，钱包地址等？？？
+
+xprv9tvBA4Kt8UTuEW9Fiuy1PXPWWGch1cyzd1HSAz6oQ1gcirnBrDxLt8qsis6vpNwmSVtLZXWgHbqff9rVeAErb2swwzky82462r6bWZAW6Ty
+
+L1tZPQt7HHj5V49YtYAMSbAmwN9zRjajgXQt9gGtXhNZbcwbZk2r
+41e0d7ab8af1ba5452b824116a31357dc931cf28
+04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f
+
+Current bitcoin rules allows only one OP_RETURN of 80 bytes per transaction
+
+p2pk & p2pkh
+public key hash -> 160bit ->40位16进制字符
+scriptpubkey -> p2pk or p2pkh
+p2pkh较前者好处，1 避免直接暴露公钥，以后会有风险，加密算法被量子计算机破解，通过public key得到private key，2 缩短长度，便于生成二维码等。
