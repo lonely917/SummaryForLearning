@@ -229,6 +229,8 @@ PGP(Pretty Good Privacy)，是一个基于RSA公钥加密体系的邮件加密�
 
 Proof of ownership as an authentication method章节中message和signature的验证，message什么用，用在哪里，signature如何生成（利用private key对message处理生成？），signature和scriptsign？
 
+spend your coin 介绍了scriptsign使用库进行计算的方法，但没有介绍原理。
+
 关于密钥的生成和伪随机数
 KDF的使用，密钥的加密存储，尽量提高暴力破解成本，多密钥或多地址的必要性。
 关于密钥安全性，一些加密方案
@@ -263,5 +265,12 @@ Current bitcoin rules allows only one OP_RETURN of 80 bytes per transaction
 
 p2pk & p2pkh
 public key hash -> 160bit ->40位16进制字符
-scriptpubkey -> p2pk or p2pkh
-p2pkh较前者好处，1 避免直接暴露公钥，以后会有风险，加密算法被量子计算机破解，通过public key得到private key，2 缩短长度，便于生成二维码等。
+scriptpubkey -> p2pk or p2pkh,P2WSH
+p2pkh较前者好处，1 避免直接暴露公钥，以后会有风险，ECC算法被量子计算机破解，通过public key得到private key，2 缩短长度，便于生成二维码等。
+但是量子计算机对hash的逆运算能做到么？
+软分叉和硬分叉？
+the semantics of P2WPKH is the same as the semantics of P2PKH, except that the signature is not placed at the same location as before.
+P2WSH:pay to witness script hash
+MultiSig:
+Nowadays, native Pay To Multi Sig (as you have seen above) and native P2PK are never used directly. Instead they are wrapped into something called a Pay To Script Hash payment.
+P2SH，P2WSH
