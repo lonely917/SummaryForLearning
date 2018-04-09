@@ -269,10 +269,22 @@ scriptpubkey -> p2pk or p2pkh,P2WSH
 p2pkh较前者好处，1 避免直接暴露公钥，以后会有风险，ECC算法被量子计算机破解，通过public key得到private key，2 缩短长度，便于生成二维码等。
 但是量子计算机对hash的逆运算能做到么？
 软分叉和硬分叉？
+Segwit = segregated witness
 the semantics of P2WPKH is the same as the semantics of P2PKH, except that the signature is not placed at the same location as before.
 P2WSH:pay to witness script hash
 MultiSig:
 Nowadays, native Pay To Multi Sig (as you have seen above) and native P2PK are never used directly. Instead they are wrapped into something called a Pay To Script Hash payment.
+
+P2SH，P2WSH(P2WSH (Pay to Witness Script Hash))
+This P2SH scriptPubKey represents the hash of the multi-sig script: redeemScript.Hash.ScriptPubKey.
+As with P2PKH/P2WPKH, the only difference between P2SH and P2WSH is about the location of what was previously in the scriptSig, and the scriptPubKey being modified.
+
+P2W* over P2SH没有看明白，钱包如何兼容？
+The Bitcoin script language is a stack based language so everyone having done some assembler should be able to read it.
+
+
+script language http://davidederosa.com/basic-blockchain-programming/bitcoin-script-language-part-one/
+
 P2SH，P2WSH
 
 NBitcoin 提供TransactionBuilder封装交易，对不同的ownership类型进行统一处理。
@@ -281,4 +293,3 @@ colored coin    600santosi
 
 ##segwit-benefits
 https://bitcoincore.org/en/2016/01/26/segwit-benefits/
-
