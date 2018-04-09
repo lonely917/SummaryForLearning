@@ -274,3 +274,11 @@ P2WSH:pay to witness script hash
 MultiSig:
 Nowadays, native Pay To Multi Sig (as you have seen above) and native P2PK are never used directly. Instead they are wrapped into something called a Pay To Script Hash payment.
 P2SH，P2WSH
+
+NBitcoin 提供TransactionBuilder封装交易，对不同的ownership类型进行统一处理。
+ownership and proof of ownership
+colored coin    600santosi
+
+##segwit-benefits
+https://bitcoincore.org/en/2016/01/26/segwit-benefits/
+
