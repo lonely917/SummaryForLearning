@@ -293,3 +293,6 @@ colored coin    600santosi
 
 ##segwit-benefits
 https://bitcoincore.org/en/2016/01/26/segwit-benefits/
+
+
+proof of burn 没看明白，burn一些bitcoin，作为reputation，就不能欺诈了？这些bitcoin永远不能被消费。
