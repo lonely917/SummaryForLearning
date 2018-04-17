@@ -293,3 +293,13 @@ colored coin    600santosi
 
 ##segwit-benefits
 https://bitcoincore.org/en/2016/01/26/segwit-benefits/
+
+ NBitcoin tests:unit test 
+资产的发布和转移
+Open Assets and Ricardian contracts（没看明白）
+RicardianContract and IssuerScript
+ 
+
+ 一个例子，colored coin的一个选举应用-Liquid Democracy，可以使用网络通知投票形式，也可以利用RucardianContract合约形式。
+
+ ##visual studio code教程
