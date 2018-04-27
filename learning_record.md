@@ -235,4 +235,6 @@ wv.loadUrl(url);
 
 ##markdown nodeppt
 
-
+##intent的bundle
+data.getExtras().toString()
+注意，这里面的bundle的map，在读写的时候会触发一次序列化数据填充的过程，因此在onActivityResult的data里面，调试的时候可能发现里面bundle的map是空的，在调用hasExtra或getStringExtra的时候确可以得到数据，相当于首次调用出发map的填充过程。

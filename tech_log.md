@@ -276,3 +276,18 @@ oncreate中setcontentview之前执行设置requestWindowFeature(Window.FEATURE_N
         <item name="android:windowBackground">@drawable/splash</item>
 这样就控制了启动初始时间段的显示图片。
 然后在oncreate结束地方调用跳转到主activity中去，可以设定延时跳转。
+
+##intent的bundle
+data.getExtras().toString()
+注意，这里面的bundle的map，在读写的时候会触发一次序列化数据填充的过程，因此在onActivityResult的data里面，调试的时候可能发现里面bundle的map是空的，在调用hasExtra或getStringExtra的时候确可以得到数据，相当于首次调用出发map的填充过程。
+
+
+#adb shell
+关闭指定活动
+adb shell am force-stop "包名"
+启动指定活动
+adb shell am start -n "包名/启动类的名称"
+列出安装程序
+adb shell pm list package 列出
+列出进程
+adb shell ps
