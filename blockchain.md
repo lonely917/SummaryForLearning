@@ -309,3 +309,4 @@ proof of burn 没看明白，burn一些bitcoin，作为reputation，就不能欺
 10. 国密SM2/3/4
 11. 比特币每秒7笔，以太坊每秒15笔，中心化visa系统峰值56000，支付宝2017双十一256000。
 12. DAPP, 闪电网络， 雷电网络。
+13. docker，Kubernetes，kafa/zookeper,Gossip协议，ecs(elastic computer service)
