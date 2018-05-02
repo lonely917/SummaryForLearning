@@ -2,7 +2,7 @@
 消费升级的概念
 合规ICO项目募集数字货币的作用，这里的数字货币仅仅是金钱的代替？
 #baas，blockchain as a service
-目前的开放平台有哪些？除腾讯，ibm外
+目前的开放平台有哪些？除腾讯，ibm外，(华为白皮书也发布了)
 #区块链联盟
 国外，R3,Hyperledger
 国内，中国区块链研究联盟CBRA，China Hyperledger,金链盟
@@ -42,7 +42,7 @@ B-money & hashcash
 拜占庭问题的延伸和应用
 
 比特币客户端：
-完整客户端(邮件服务器)，轻量级客户端(邮件客户端)，在线客户端(邮件客户端)，后两者以来第三方服务器。
+完整客户端(邮件服务器)，轻量级客户端(邮件客户端)，在线客户端(邮件客户端)，后两者依赖第三方服务器。
 轻量级客户端需要依赖第三方？
 
 比特币交易查询网站
@@ -331,3 +331,5 @@ proof of burn 没看明白，burn一些bitcoin，作为reputation，就不能欺
 12. DAPP, 闪电网络， 雷电网络。
 13. docker，Kubernetes，kafa/zookeper,Gossip协议，ecs(elastic computer service)
 
+#以太坊
+https://ethfans.org/wikis/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E7%99%BD%E7%9A%AE%E4%B9%A6
