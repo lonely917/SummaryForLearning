@@ -333,3 +333,10 @@ proof of burn 没看明白，burn一些bitcoin，作为reputation，就不能欺
 
 #以太坊
 https://ethfans.org/wikis/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E7%99%BD%E7%9A%AE%E4%B9%A6
+
+
+#bitcoin reference guide pdf
+double sha256的应用？工作量证明是用的这个？
+工作量证明的难度系数和难度值的转换关系证明？
+block彼此的链接方式？物理实现是什么样的？
+nonce字段只有4字节，对于计算目标值很快就能遍历完，解决方案？加入coinbase相关字段？
