@@ -340,3 +340,6 @@ double sha256的应用？工作量证明是用的这个？
 工作量证明的难度系数和难度值的转换关系证明？
 block彼此的链接方式？物理实现是什么样的？
 nonce字段只有4字节，对于计算目标值很快就能遍历完，解决方案？加入coinbase相关字段？
+block和transaction的hash定位的实现？
+一个参考实现默认值546satoshi，out的value低于此值被认为dust transaction
+input和output的locktime，以及input的sequenceNumber的作用？
