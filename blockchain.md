@@ -343,3 +343,6 @@ nonce字段只有4字节，对于计算目标值很快就能遍历完，解决�
 block和transaction的hash定位的实现？
 一个参考实现默认值546satoshi，out的value低于此值被认为dust transaction
 input和output的locktime，以及input的sequenceNumber的作用？
+coinbase交易中的的coinbase字段-block-height-size + block-height + arbitrary data（arbitrary data can be used for prove of work）
+final transaction rule, 和locktime以及sequence num有关，一个废弃的transaction replacement机制，已经不被视为standard
+普通交易和coinbase交易的完整性保障，前者公钥私钥，后者利用工作量证明相关？不应该都跟工作量证明相关一致吗，所有交易都会影响到merkelroot进而影响pow？
