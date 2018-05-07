@@ -347,3 +347,10 @@ coinbase交易中的的coinbase字段-block-height-size + block-height + arbitra
 final transaction rule, 和locktime以及sequence num有关，一个废弃的transaction replacement机制，已经不被视为standard
 普通交易和coinbase交易的完整性保障，前者公钥私钥，后者利用工作量证明相关？不应该都跟工作量证明相关一致吗，所有交易都会影响到merkelroot进而影响pow？
 script 可以创造很复杂的锁定条件，但是比特币的参考实现中只使用了一些脚本模板，P2PK,P2PKH,P2SH,MultiSign,Nulldata.（See https://en.bitcoin.it/wiki/Script for complete reference.）
+off-by-one error?
+null data transaction 不遵循dust transaction rule，他的output value可以为0，为了避免blockchain flooding，每个交易里只能有一个输出是这种类型。
+sha256&ripemd160&ecdsa
+两种地址的计算P2PH&P2SH,以及base58编码
+signature的计算：scriptsign的计算，涉及几种hashtype，分别对应交易字段参与的不同程度。
+
+算出谜题后，广播的时候，广播哪些内容，其他节点如何知道这个block里有哪些交易，或者这些交易是否已经在自身节点中收到过？
