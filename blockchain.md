@@ -347,3 +347,20 @@ coinbase交易中的的coinbase字段-block-height-size + block-height + arbitra
 final transaction rule, 和locktime以及sequence num有关，一个废弃的transaction replacement机制，已经不被视为standard
 普通交易和coinbase交易的完整性保障，前者公钥私钥，后者利用工作量证明相关？不应该都跟工作量证明相关一致吗，所有交易都会影响到merkelroot进而影响pow？
 script 可以创造很复杂的锁定条件，但是比特币的参考实现中只使用了一些脚本模板，P2PK,P2PKH,P2SH,MultiSign,Nulldata.（See https://en.bitcoin.it/wiki/Script for complete reference.）
+
+
+dustTransaction 公式中的146是什么意思？
+
+#重读白皮书
+1. 另种电子货币体系(信息交换体系):基于信任和基于加密
+2. 收到交易的几点证明：确认交易存在，证明接收者身份(可以使用这个交易的输出)，以及交易没有双重支付。
+3. 工作量证明的难度动态调整，保证区块行程时间在某一个固定值附近，使得货币稳定的产出，使得打包时间固定在10分钟左右，不至于太快产生太多分歧（fork）。
+4. 传统的隐私来自第三方信用中介。加密货币中交易会广播，一些可选策略，布隆过滤，公钥哈希或者多交易地址，可以进行一定程度地改进。
+5. 即使控制算力，攻击者所做的只能是诋毁自己的交易，双重支付，而不能凭空造币或者抢币。
+6. 论文中没有提拜占庭问题，只是说诚实算力高于攻击者算力。关于拜占庭问题BFT个改进BFT算法的0.5和0.667概率问题进行研究。
+
+summary:论文是对这种基于工作量证明的分布式加密货币方案的原型设计，没有涉及到一些实现细节，或者说具体实现方式选用算法是可变的，这也符合论文定位，可以从参考实现中去学习这些细节。文章主要提出了交易加密策略来明确交易者身份(pubkey privatekey signature)，基于工作量的证明来避免double spending问题，并对攻击者篡改交易的可能性进行了数学分析。为了避免双花问题，需要交易公开，因此涉及到数据和身份隐私性的改进。为了鼓励节点参与，提出了激励机制(incentive)。避免数据膨胀，使用梅克尔树(Merkel Tree)来进行交易的存储和校验。MerkelTree可以使得简易支付验证(SPV)成为可能。
+
+论文中涉及到的数学问题和概念：分布式一致性算法，共识机制，pow，哈希现金，梅克尔树(Merkel Tree)，赌徒破产问题Gambler's Ruin Problem，泊松分布。
+
+#比特币参考实现学习
