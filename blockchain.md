@@ -93,6 +93,22 @@ base58 是base64字符中除去0,大写字母O,小写字母l,大写字母I,以�
 base58check 是base58再加校验构成。
 图示流程：私钥-公钥-公钥哈希(一种比特币地址)-添加类型前缀和双哈希校验位-base58check格式的比特币地址。(章节4.2)
 base58check在比特币的应用中对不同类型数据设置不同前缀：比特币地址0x00（1），p2sh地址0x05(3),测试网络地址0x6f(m or n),private key wif 0x80(5,K,L),BIP38和BIP32有对加密私钥和扩展公钥类型的定义。
+私钥的格式：
+    . 普通256bit，64位16进制字符串,256/4=64；1E99423A4ED27608A15A2616A2B0E9E52CED330AC530EDCC32C8FFC6A526AEDD
+    . WIF,base58check格式，8bit带有128的标识(0x6f)和32bit校验位(标志+数据进行double sha256截取前32bit)，所以一共8+256+32=296bit base58->296/5.85798=50.5293（这里的5.8为log58） = 51位字符，5J3mBbAH58CpQ3Y5RNJpUKPE62SQ5tfcvU2JpbnkeyhfsYB1Jcn。
+    .WIF­compressed,KxFC1jmwwCoACiCAWZ3eXa96mBM6tb3TYzGmf6YwgdGWZgawvrtJ，52位字符
+公钥的格式：
+    .每个公钥对应椭圆曲线上一个点的坐标，为标志+x+y构成，8+256+256=520bit -> 130位十六机制字符，标志说明0x04表示非压缩，0x02、0x03为压缩格式。另一方面可以只保存标志+x,然后通过公式计算y,这里的y会有正负之分对应y为奇数偶数,分别为0x03和0x02。标志+x共8+256=264位，66位十六进制字符。
+
+bitcoin地址:1424C2F4bC9JidNjjTUZCbUxv6Sa1Mt62x
+decoderToHex:00211B74CA4686F81EFDA5641767FC84EF16DAFE0B388C8D1D
+-> 共8+160+32 = 200bit 50位十六进制字符串
+    00;标准形式比特币地址8bit
+    211B74CA4686F81EFDA5641767FC84EF16DAFE0B;160bit哈希值
+    388C8D1D;check值32bit
+   
+
+256bitECDSA私钥18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725
 
 公钥加密和数字指纹概念
 比较RSA、ecc(椭圆曲线)、素数幂
