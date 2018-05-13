@@ -97,6 +97,8 @@ base58check在比特币的应用中对不同类型数据设置不同前缀：比
     . 普通256bit，64位16进制字符串,256/4=64；1E99423A4ED27608A15A2616A2B0E9E52CED330AC530EDCC32C8FFC6A526AEDD
     . WIF,base58check格式，8bit带有128的标识(0x6f)和32bit校验位(标志+数据进行double sha256截取前32bit)，所以一共8+256+32=296bit base58->296/5.85798=50.5293（这里的5.8为log58） = 51位字符，5J3mBbAH58CpQ3Y5RNJpUKPE62SQ5tfcvU2JpbnkeyhfsYB1Jcn。
     .WIF­compressed,KxFC1jmwwCoACiCAWZ3eXa96mBM6tb3TYzGmf6YwgdGWZgawvrtJ，52位字符
+    私钥不能压缩也不被压缩存储，wif-compressed是指私钥对应生成的公钥是压缩格式的，该私钥以base58check格式存储。
+    其原型hex-compressed则为私钥原始字节流后添加0x01标志位进行base58check得到。
 公钥的格式：
     .每个公钥对应椭圆曲线上一个点的坐标，为标志+x+y构成，8+256+256=520bit -> 130位十六机制字符，标志说明0x04表示非压缩，0x02、0x03为压缩格式。另一方面可以只保存标志+x,然后通过公式计算y,这里的y会有正负之分对应y为奇数偶数,分别为0x03和0x02。标志+x共8+256=264位，66位十六进制字符。
 
@@ -106,7 +108,13 @@ decoderToHex:00211B74CA4686F81EFDA5641767FC84EF16DAFE0B388C8D1D
     00;标准形式比特币地址8bit
     211B74CA4686F81EFDA5641767FC84EF16DAFE0B;160bit哈希值
     388C8D1D;check值32bit
+    base58check->200/5.8579=34.14,对应字符尾数在34、35左右。实际是34。
    
+   1J7mdg5WxGENmwyJP9xuGhG5KRzu99BBCX = 34位base58
+   1J7mdgYqyNd4ya3UEcq31Q7sqRMXw2XZ6n = 34位base58
+一堆地址示例：
+私钥5J3mBbAH58CpQ3Y5RNJpUKPE62SQ5tfcvU2JpbnkeyhfsYB1Jcn
+地址1424C2F4bC9JidNjjTUZCbUxv6Sa1Mt62x
 
 256bitECDSA私钥18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725
 
@@ -115,6 +123,14 @@ decoderToHex:00211B74CA4686F81EFDA5641767FC84EF16DAFE0B388C8D1D
 
 信用卡交易包含敏感信息，而且要在加密网络中传输，比特币交易可以在任意网络环境下传播。
 有效交易几秒内指数级扩散
+
+区块链记录着所有交易，每个人的"账户"实际就是区块链中所有的utxo组合（未经使用的交易输出）。区块链中并没有账户的物理概念。钱包客户端可能会对用户的utxo建立一个索引。每此交易其实就是utxo被消耗和新生成的过程。交易通过使用所有者的签名来解锁utxo，通过新的使用者的比特币地址创建utxo。
+
+比特币应该是现有输出，再有的输入。创世区块的coinbase交易，没有输入，产生第一次输出。
+
+交易的格式：版本，输入数目，输入[]，输出数目，输出[],时间戳。
+输出：总量，锁定脚本长度，锁定脚本。
+输入：包含改utxo输出的交易哈希值(23字节)，输出索引，解锁脚本尺寸，解锁脚本，序列号(可以先不研究)。
 
 8.3交易的独立校验
 比特币多个零碎的utxo组成输入，贪心算法的一个应用
@@ -129,9 +145,12 @@ coinbase和创世区genesis block？第一个聪的诞生？
 比特币交易数据存储采用什么组织形式？db层面
 
 
-解锁脚本和锁定脚本
+解锁脚本和锁定脚本，最常见的，锁定脚本即一个公钥脚本，用于说明什么样的条件才能够使用此输出；解锁脚本为交易输入中的一个字段，可以和锁定脚本结合来验证确实可以使用这个utxo，比如sign+pubkey。最简单的形式为p2pk,锁定脚本pubkey op_checksign，一个可用的解锁脚本为signature(from private key)。 
 
-OP_RETURN的引入，避免非支付UTXO集的膨胀
+OP_RETURN的引入，避免非支付UTXO集的膨胀。
+op_return的输出其值一般为0，因为它不能被消费，所以一般不会给>0的数值，提出此概念就是为了构造一种带有额外数据的输出，但不录入utxo数据集，不可被消费。
+对于signature的生成类型有多种，也就是有多个hashtype，具体在bitcoin reference中有说明。
+p2pk;p2pkh;multisign;p2sh(redeem script, 将负责脚本存储负担转移到输入方，而非输出方,输出方会存储于utxo集，影响内存)
 
 P2P技术，bitcoin，bitTorrent,Napster.
 扩展的比特币网络(extended bitcoin network):比特币P2P协议，矿池挖矿协议，Stratum协议以及其他连接比特币系统组件相关协议的整体网络结构。
