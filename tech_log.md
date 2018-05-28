@@ -291,3 +291,23 @@ adb shell am start -n "包名/启动类的名称"
 adb shell pm list package 列出
 列出进程
 adb shell ps
+
+# Edittext软键盘输入弹出的问题，以及键盘是否影响布局上移的问题
+一、代码中调用 setSoftInputMode()方法进行设置：
+
+OnCreate方法里面加下面这句代码 ，很管用，而且再点EditBox也能让输入法正常弹出。。 
+getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+
+二、 在AndroidManifest.xml文件中的android:windowSoftInputMode属性使用：
+
+在 AndroidManifest.xml文件中的activity节点下添加：android:windowSoftInputMode="stateHidden|adjustPan" 
+
+stateHidden：是隐藏软键盘的 
+
+adjustPan：是保证控件不会因为输入法的弹出而发生形变的。 
+
+# surfaceview 周期以及游戏相关
+
+# handler
+
