@@ -311,3 +311,9 @@ adjustPan：是保证控件不会因为输入法的弹出而发生形变的。
 
 # handler
 
+#Android 跨进程调用途径和原理
+intent、广播、aidl。
+intent 的action和uri跳转。
+网页调用app。
+
+
