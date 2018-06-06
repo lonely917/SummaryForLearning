@@ -311,3 +311,22 @@ adjustPan：是保证控件不会因为输入法的弹出而发生形变的。
 
 # handler
 
+#Android 跨进程调用途径和原理
+intent、广播、aidl。
+intent 的action和uri跳转。
+网页调用app。
+
+
+#自定义控件
+组合，继承，绘制
+
+#activity启动模式
+
+#adb shell 启动关闭应用
+adb install XX.apk
+adb install -r XX.apk
+adb uninstall com.spdb.apiservice.test
+unstall -k 包名
+
+adb shell am force-stop
+adb shell am start -n 包名/启动类名称
