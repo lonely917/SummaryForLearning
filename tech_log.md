@@ -330,3 +330,38 @@ unstall -k 包名
 
 adb shell am force-stop
 adb shell am start -n 包名/启动类名称
+
+#退出adb shell
+如果ctrl+c不能退出adb shell则使用exit命令。
+
+#action 和 category
+
+android.intent.action.MAIN
+android.intent.category.LAUNCHER
+android.intent.category.HOME
+
+taskAffinity和process属性
+
+adb shell dumpsys activity查看当前任务栈情况
+
+各种启动模式
+https://blog.csdn.net/ljz2009y/article/details/26621815
+
+<action android:name="android.intent.action.BOOT_COMPLETED"/>
+
+#Context & Activity
+
+#打印驱动的几种模式
+1. 有deviceServiceApi服务层，利用aidl调用，aidl相关类以及上层方法可以打成jar包，一般不涉及so文件，服务层apk中会用到so库，底层硬件调用。
+2. 一个jar包封装接口和底层操作，so库提供支持，所以一般一个jar包一个so库。
+上述结论待核实
+
+#settext null的处理
+EditText 的 settext以及Toast的toast都会到TextView的setText(CharSequence text, BufferType type,boolean notifyBefore, int oldlen)方法，会对传入数值判断，null则变为""。
+
+#gradle相关目录
+1. 下载第三方依赖库
+.gradle\caches\modules-2\files-2.1
+
+2. gradle不同版本的目录
+.gradle\wrapper\dists
