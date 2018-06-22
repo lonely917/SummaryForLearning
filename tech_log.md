@@ -365,3 +365,23 @@ EditText 的 settext以及Toast的toast都会到TextView的setText(CharSequence 
 
 2. gradle不同版本的目录
 .gradle\wrapper\dists
+
+#打包aar以及依赖本地aar
+allprojects {
+    repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+        flatDir{dirs 'libs'}
+    }
+}
+
+compile (name:'printerutils-debug',ext:'aar')
+
+#引入多个jar包带来的jar包冲突，或引入aar和项目其他jar包冲突，aar的生成是否包含其依赖包也是一种考量。
+https://blog.csdn.net/jiujiedexiaoming/article/details/76520376
+
+#构建最小系统
+
+#FragmentActivity
+
+#
