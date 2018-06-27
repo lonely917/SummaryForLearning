@@ -380,8 +380,51 @@ compile (name:'printerutils-debug',ext:'aar')
 #引入多个jar包带来的jar包冲突，或引入aar和项目其他jar包冲突，aar的生成是否包含其依赖包也是一种考量。
 https://blog.csdn.net/jiujiedexiaoming/article/details/76520376
 
-#构建最小系统
+#构建app最小系统
 
 #FragmentActivity
 
-#
+# so库和abi架构
+https://www.cnblogs.com/Bugtags2015/p/5578541.html
+
+#Context探究
+```
+Activity-ContextThemeWrapper-ContextWrapper-Context
+                                    |            |__abstract getApplicationContext()
+                                    |__Context mBase 
+                                    |__getBaseContext()
+                                    |__getApplicationContext()
+                                    |__attachBaseContext(Context base)
+```
+attachBaseContext的引用，这是一个关键操作，涉及到真实getapplicationcontext的具体实现。
+Activity、Application、Service都用到这个操作。
+ContextImpl和ActivityThread两个类不在android sdk系统中，未提示这里的引用，但这两个文件很关键。
+context的实际实现是ContextImpl。
+
+```
+    attachBaseContext(Context)
+    Found usages
+    Activity.java
+    Application.java
+    BackupAgent.java
+    ContextThemeWrapper.java
+    EphemeralResolverService.java
+    MediaBrowserServiceCompatApi21.java
+    MediaBrowserServiceCompatApi21.java
+    MultiDexApplication.java
+    NotificationListenerService.java
+    NotificationRankerService.java
+    PrintService.java
+    RecommendationService.java
+    RuntimePermissionPresenterService.java
+    Service.java
+```
+
+关注ContextImpl和ActivityThread的流程，探索`apk安装以及启动全过程`。
+
+app启动-注意launcher process - system process - app process结合思考。
+
+Binder与AMS流程。AMS负责四大组件生命周期。
+https://blog.csdn.net/bfboys/article/details/52564531
+https://www.jianshu.com/p/e69d22ec0582
+
