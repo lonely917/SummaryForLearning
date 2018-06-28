@@ -428,3 +428,91 @@ Binder与AMS流程。AMS负责四大组件生命周期。
 https://blog.csdn.net/bfboys/article/details/52564531
 https://www.jianshu.com/p/e69d22ec0582
 
+#Toast工具类
+## DisplayToast
+静态内部类实现的单例模式
+Toast的封装
+单例模式的饿汉、懒汉、静态内部类、静态代码块、枚举5种实现。
+懒汉模式的懒加载以及并发安全，普通的synchronized不能应对指令重排策略，双重检测机制或者synchronized+volatile来实现线程安全。
+静态内部类加载场景以及时机。
+
+DiaplayToast对比Toast中的静态方法makeText以及实例方法show和cancel
+
+Toast.makeText的时候，默认的gravity
+```xml
+    <!-- Default Gravity setting for the system Toast view. Equivalent to: Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM -->
+    <integer name="config_toastDefaultGravity">0x00000051</integer>
+
+```
+
+## 两种inflate方式 LayoutInflater源码研究
+
+```java
+
+LayoutInflater inflate = (LayoutInflater)
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+View v = inflate.inflate(com.android.internal.R.layout.transient_notification, null);
+
+
+View view = LayoutInflater.from(context).inflate(R.layout.toast_layout, null);
+
+```
+
+getApplication getApplicationContext getBaseContext分析
+https://blog.csdn.net/guolin_blog/article/details/47028975
+测试下Toast和Dialog使用Activity的this和getBaseContext以及getApplicationContext的异同？
+
+## 判断线程主子分别处理toast
+```java
+private long mUIThreadId;
+mUIThreadId = android.os.Process.myTid();
+```
+
+利用Process.mTid() 和 初始化activity生成的变量主线程标识进行比较，来决定是否利用handler.post来实现Toast。一般定义在BaseActivity中。这个过程类似对runOnUiThread的实现流程的一个具体应用，直接runOnUiThread也可以。这个方法对主线程的判断是通过Thread mUiThread这个对象来区分的。同理我们的toast也可以利用这个已有变量来区分。
+
+``不同activity的mUiThread值是否相同。上述那个自定义的mUIThreadId是否也是相同的？``
+
+## ChannelUtil工具类
+获取设备标识(读取mac地址，设备标识-imei或者使用64位ANDROID_ID = "android_id")
+```java
+    /**
+     * Returns the unique device ID, for example, the IMEI for GSM and the MEID
+     * or ESN for CDMA phones. Return null if device ID is not available.
+     *
+     * <p>Requires Permission:
+     *   {@link android.Manifest.permission#READ_PHONE_STATE READ_PHONE_STATE}
+     */
+     TelephonyManager的getDeviceId()
+
+     /**
+         * A 64-bit number (as a hex string) that is randomly
+         * generated when the user first sets up the device and should remain
+         * constant for the lifetime of the user's device.
+    */       
+     device_id = android.provider.Settings.Secure.getString(context.getContentResolver(),android.provider.Settings.Secure.ANDROID_ID);     
+```
+获取版本号
+```
+
+```
+
+## FragmentActivity提出的目的？
+对应fragment的使用有差别。
+fragment对3.0Honeycomb前后支持差异。
+
+# 基本控件源码分析
+1. Toast
+2. Dialog
+3. PopUpWindow
+4. Activity
+5. Fragment
+6. View & subclasses
+7. Service 
+8. broadcastreceiver
+
+# 基本工具类源码分析
+
+# Android profiler实战 内存使用分析
+退出后依然看得到？如何完全退出？
+
+#
