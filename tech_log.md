@@ -493,6 +493,32 @@ mUIThreadId = android.os.Process.myTid();
 ```
 获取版本号
 ```
+context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+
+```
+
+## cockrouch代码研究
+地址:https://github.com/android-notes/Cockroach
+原理分析:通过install传入一个异常处理方法(接口以及匿名内部类的形式传入，可以用新的接口方法即lamda表达式来代替)，install的过程会对主线程looper进行拦截，构建一个新的loop循环(while循环)，对消息处理，发现是QuitCockroachException的instance则退出新建的loop即return，回到系统自己的loop，否则交给传入的自定义异常处理类处理。这里的拦截是通过向mainlooper发送一个消息进行拦截，发送消息后进行如下操作，获取系统默认异常处理getDefaultUncaughtExceptionHandler保存(用于卸载后恢复原状)，然后设置自定义的默认异常处理，即调用install传入的异常处理类的回调函数进行异常处理。这里更改默认异常处理是为了线程的异常也交给异常处理类的回调来处理。再看install传入的异常处理类的异常方法，主要是toast提示异常信息，这里通过对主线程发消息的方式执行，而不是直接toast，因为这里可能会在子线程抛异常时执行，所以通过向主线程发消息的形式最后在主线程上执行所有最后的操作。
+线程有两个异常处理类。其中getUncaughtExceptionHandler会优先返回uncaughtExceptionHandler，如果这个是null返回group，而ThreadGroup继承于Thread.UncaughtExceptionHandler，相当于使用 ThreadGroup的uncaughtException。
+
+``研究下jvm系统对线程异常处理流程``
+
+```java
+
+    // null unless explicitly set
+    private volatile UncaughtExceptionHandler uncaughtExceptionHandler;
+
+    // null unless explicitly set
+    private static volatile UncaughtExceptionHandler defaultUncaughtExceptionHandler;
+
+    public UncaughtExceptionHandler getUncaughtExceptionHandler() {
+    return uncaughtExceptionHandler != null ?
+        uncaughtExceptionHandler : group;
+}
+
+
+public class ThreadGroup implements Thread.UncaughtExceptionHandler 
 
 ```
 
@@ -515,4 +541,5 @@ fragment对3.0Honeycomb前后支持差异。
 # Android profiler实战 内存使用分析
 退出后依然看得到？如何完全退出？
 
-#
+#Android 消息循环机制
+进一步，消息队列阻塞读(确认下一是否阻塞读取，虽然不一定阻塞多久，一般情况下消息应该是连续很多地读不尽的直到程序终止)如何实现的，c、java、Android、系统层面如何做到。
