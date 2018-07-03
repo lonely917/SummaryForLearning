@@ -577,3 +577,7 @@ https://android.googlesource.com/platform/external/apache-http/+/master/src/org/
 直接看不到源码，看到的class提示throw new RuntimeException("Stub!");实际是Android.jar对一些细节实现进行了屏蔽，在实际运行的时候通过反射等动态机制进行ROM里实际方法的替换。在aosp(android opensource system project )查看系统源码。https://android.googlesource.com/
 
 ```查看网络请求源码底层，选择urlconnection，httpclient，okhttp进行综合比较。```
+```好的工具类util包探索```
+
+#java获取当前类名和函数名的方法。
+利用反射或者利用getStackTrace方法，注意方法层级，尤其是进行了log封装之后。
