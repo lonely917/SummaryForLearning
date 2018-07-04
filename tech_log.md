@@ -581,3 +581,20 @@ https://android.googlesource.com/platform/external/apache-http/+/master/src/org/
 
 #java获取当前类名和函数名的方法。
 利用反射或者利用getStackTrace方法，注意方法层级，尤其是进行了log封装之后。
+
+##Android sdk中的binder调用
+
+##Toast源码解析
+hack Toast的时间长度的几种策略
+https://www.cnblogs.com/net168/p/4058193.html
+1. 通过反射，修改Toast的默认show方法，直接调用内部TN的方法。
+2. 通过TN的show和hide原理来实现自定义的Toast，借助windowmanager
+3. 持续发送toast，对于小于long的，则可以发送long的toast然后隔一段时间取消，来控制时间，大于long的就得通过循环发送来控制了。
+
+默认Toast主要代码，Toast源码sdk中可找到，下述是aidl调用到的server端代码
+https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/java/com/android/server/NotificationManagerService.java
+
+
+#Activity和Fragment生命周期管理
+自定义ActivityManager和系统类ActivityManager
+系统如何管理activity的，分别结合client和server端代码分析理解。
