@@ -554,7 +554,7 @@ fragment对3.0Honeycomb前后支持差异。
 
 # 基本控件源码分析
 1. Toast
-2. Dialog
+2. Dialog 活动周期？
 3. PopUpWindow
 4. Activity
 5. Fragment
@@ -598,3 +598,6 @@ https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/jav
 #Activity和Fragment生命周期管理
 自定义ActivityManager和系统类ActivityManager
 系统如何管理activity的，分别结合client和server端代码分析理解。
+
+## 单例模式懒加载DCL的探索
+1.5前后volatie关键字引入，编译器优化影响，指令重排问题。
