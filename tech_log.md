@@ -601,3 +601,36 @@ https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/jav
 
 ## 单例模式懒加载DCL的探索
 1.5前后volatie关键字引入，编译器优化影响，指令重排问题。
+
+##获取设备信息
+
+``` 
+    #model型号 brand厂商 name名称
+    adb shell getprop ro.product.model
+    APOS A8
+
+    adb shell getprop ro.product.brand
+    LANDI
+
+    adb shell getprop ro.product.name
+    APOS A8
+
+    C:\Users\ywb>adb shell cat /system/build.prop | findstr product
+    ro.product.model=APOS A8
+    ro.product.brand=LANDI
+    ro.product.name=APOS_A8
+    ro.product.device=APOS_A8
+    ro.product.board=msm8909
+    # ro.product.cpu.abi and ro.product.cpu.abi2 are obsolete,
+    # use ro.product.cpu.abilist instead.
+    ro.product.cpu.abi=armeabi-v7a
+    ro.product.cpu.abi2=armeabi
+    ro.product.cpu.abilist=armeabi-v7a,armeabi
+    ro.product.cpu.abilist32=armeabi-v7a,armeabi
+    ro.product.cpu.abilist64=
+    ro.product.manufacturer=LANDI
+    ro.product.locale.language=zh
+    ro.product.locale.region=CN
+    # ro.build.product is obsolete; use ro.product.device
+    ro.build.product=APOS_A8
+```
