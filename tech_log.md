@@ -634,3 +634,55 @@ https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/jav
     # ro.build.product is obsolete; use ro.product.device
     ro.build.product=APOS_A8
 ```
+
+## android.util中懒加载的单例模板类
+```java
+/**
+ * Singleton helper class for lazily initialization.
+ *
+ * Modeled after frameworks/base/include/utils/Singleton.h
+ *
+ * @hide
+ */
+public abstract class Singleton<T> {
+    private T mInstance;
+
+    protected abstract T create();
+
+    public final T get() {
+        synchronized (this) {
+            if (mInstance == null) {
+                mInstance = create();
+            }
+            return mInstance;
+        }
+    }
+}
+```
+
+## android进程间通信
+AMS(AMP proxy)的startActivity,消息通信，同步异步？阻塞还是马上返回?
+Instrumentation 的execStartActivity 同步异步？
+最终通信通过dump or nativeWriteString?
+操作系统级别进程线程通信方式？
+
+## android studio 快速查找的缺陷
+ctrl + N 查找class，看不到一些系统类，src中有这些，通过ctrl+shift+N进行文件名查找
+还有一些属于内部类，不能直接找到，应先找其外部类。
+
+##activity application这些组件的生命周期调用，外部的控制，模板的实现原理。
+
+##activity 启动过程
+
+binder client->server
+                      ActivityManagerService
+ActivityManagerProxy
+ActivityManagerNative
+
+binder server->client
+ApplicationThread
+                      ApplicationThreadNative
+                      ApplicationThreadProxy
+
+ActivityThread
+   H handleMessage
