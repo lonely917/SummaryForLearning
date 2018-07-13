@@ -686,3 +686,19 @@ ApplicationThread
 
 ActivityThread
    H handleMessage
+
+``注意api26和23已经有了差异，部分Native和Proxy过失被移除，简化了设计``
+
+## Activity的startActivity和 getApplicationContext.StartActivity()区别?
+最后都是通过Instrumentation 的execStartActivity，有什么区别，对于后者进行分析，涉及到baseContext的赋值，在app启动阶段。
+
+##源码分析，一些关键环节
+startactivity
+startservice
+bindservice
+registerreceiver
+sendbroadcast
+aidl 
+binder
+
+源码分析后绘制uml图
