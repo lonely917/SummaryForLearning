@@ -702,3 +702,12 @@ aidl
 binder
 
 源码分析后绘制uml图
+
+##修改git HTTP post buffer
+一些基本操作https://www.jianshu.com/p/729206b5770a
+git config --global http.postBuffer 524288000
+git config --global user.name wenburgyan
+git config --global user.email wenboyan2014@163.com
+查看配置
+git config -l
+也可以查看或者编辑user目录下的.gitconfig文件来实现上述操作
