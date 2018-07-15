@@ -711,3 +711,23 @@ git config --global user.email wenboyan2014@163.com
 查看配置
 git config -l
 也可以查看或者编辑user目录下的.gitconfig文件来实现上述操作
+
+## listview scrollview nestedscrollview
+```java
+    * <p>Scroll view supports vertical scrolling only. For horizontal scrolling,
+    * use {@link HorizontalScrollView} instead.</p>
+    *
+    * <p>Never add a {@link android.support.v7.widget.RecyclerView} or {@link ListView} to
+    * a scroll view. Doing so results in poor user interface performance and a poor user
+    * experience.</p>
+    *
+    * <p class="note">
+    * For vertical scrolling, consider {@link android.support.v4.widget.NestedScrollView}
+    * instead of scroll view which offers greater user interface flexibility and
+    * support for the material design scrolling patterns.</p>
+```
+
+##一些习以为常的认知的思考、持续更新
+1. fragment的意义
+2. 
+
