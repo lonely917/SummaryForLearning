@@ -731,5 +731,11 @@ git config -l
 
 ##一些习以为常的认知的思考、持续更新
 1. fragment的意义
-2. 
+2. mvp mvc mvvm databinding lifecircle 框架公开化标准化也就在一定程度上意味着过时，透过现象抓住本质
 
+## 一些练习
+1. 最小原型app(调研一些app)
+2. 尝试开发模式的利用mvp，mvvm
+3. 尝试instant app开发
+4. 尝试flutter dart开发
+5. 自己的后台搭建，java？dart？go？后台接口
