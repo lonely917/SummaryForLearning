@@ -692,6 +692,8 @@ ActivityThread
 ## Activity的startActivity和 getApplicationContext.StartActivity()区别?
 最后都是通过Instrumentation 的execStartActivity，有什么区别，对于后者进行分析，涉及到baseContext的赋值，在app启动阶段。
 
+##synchronized 锁的是什么，具体底层的实现，延申到各种锁以及线程同步问题
+
 ##源码分析，一些关键环节
 startactivity
 startservice
