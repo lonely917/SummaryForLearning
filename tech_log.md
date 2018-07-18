@@ -739,3 +739,21 @@ git config -l
 3. 尝试instant app开发
 4. 尝试flutter dart开发
 5. 自己的后台搭建，java？dart？go？后台接口
+
+## mvp
+几点概括
+1. 不要将传统三层架构(表示层、逻辑层、数据访问及持久化层)和mvc mvp生硬对应
+2. model层并非单单数据实体，也可以有业务逻辑
+3. mvc最早提出于1980s,主要桌面GUI程序，后续再web应用中推广。主要目的，代码复用，解耦。
+4. mvp，作为mvc的派生，增强展示逻辑中的seperate concerns，更方便的单元测试。[from wiki``MVP is a user interface architectural pattern engineered to facilitate automated unit testing and improve the separation of concerns in presentation logic``]
+5. 一般mvp有passive view和 supervisor 两种模式，前者view-model不直接交互，由presenter中介来做，后者部分逻辑会在view中，view-model会有交互，可通过数据绑定，这种情况下和mvc到比较相似。
+6. Android app本身的框架，xml+activity是一种mvc模式，其gui设计是否基于mvc需要研究下系统框架。
+7. 我们所讨论的Android应用开发时使用的mvp，mvc是我们对应用代码进行的一个逻辑划分。
+8. Android中mvp的使用，activity或者fragment属于view层，实现iview的接口，其中引用presenter，使用presenter进行逻辑处理，隔离model和view，presenter中拥有view和model的引用，调用model进行数据请求，通过iview接口引用来进行界面更新，iview接口的实现一般在view层。有种说法，mvp只对presentation layer的一个分层，更完整的看mvp clean。
+9. mvp重点进行解耦，关注点分离，便于更好的单元测试，就Android而言，会使得单元测试更为容易。
+10. 进一步有mvp clean，提供domain，usecase等。
+11. 实用起来不应该有严格的界限，本身在Android上没有严格的标准。
+12. app所谓架构的问题，酌情使用，综合考虑。
+https://antonioleiva.com/mvp-android/
+https://fernandocejas.com/2014/09/03/architecting-android-the-clean-way/
+https://fernandocejas.com/2015/07/18/architecting-android-the-evolution/
