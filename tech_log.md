@@ -757,3 +757,21 @@ git config -l
 https://antonioleiva.com/mvp-android/
 https://fernandocejas.com/2014/09/03/architecting-android-the-clean-way/
 https://fernandocejas.com/2015/07/18/architecting-android-the-evolution/
+https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html
+https://www.slideshare.net/PedroVicenteGmezSnch/effective-android-ui-english
+https://www.slideshare.net/PedroVicenteGmezSnch/software-design-patterns-on-android
+
+
+```css
+所谓架构的目的：
+Easy to maintain.
+Easy to test.
+Very cohesive.
+Decoupled.
+
+软件设计注意事项
+Respect SOLID principles.
+Do not over think (do not do over engineering).
+Be pragmatic.
+Minimize framework (android) dependencies in your project as much as you can.
+```
