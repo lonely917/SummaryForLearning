@@ -702,8 +702,12 @@ registerreceiver
 sendbroadcast
 aidl 
 binder
-
+ams
+activitystack
 源码分析后绘制uml图
+框架流程的角度，了解数据走向
+设计模式角度，分析设计方法
+
 
 ##修改git HTTP post buffer
 一些基本操作https://www.jianshu.com/p/729206b5770a
@@ -739,6 +743,7 @@ git config -l
 3. 尝试instant app开发
 4. 尝试flutter dart开发
 5. 自己的后台搭建，java？dart？go？后台接口
+6. 各种图解，知识脉络，脑图，uml。
 
 ## mvp
 几点概括
@@ -775,3 +780,13 @@ Do not over think (do not do over engineering).
 Be pragmatic.
 Minimize framework (android) dependencies in your project as much as you can.
 ```
+## launch mode 和 intent flag
+Android doc中有介绍，一些规则，归根结底看源码中的处理规则。
+
+## activitystack taskrecord activityrecord processrecord
+taskrecord 任务栈
+
+## 装饰器模式和继承
+https://en.wikipedia.org/wiki/Decorator_pattern
+decorator作为subclass的一种替换方案。
+contex的具体实现，一些组件的实现使用了装饰器模式。
