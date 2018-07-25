@@ -798,3 +798,25 @@ System Server进程启动众多服务进程并addservice，这些服务进程会
 许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
 通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
 jni是可以实现双向操作的，java访问navtive,navtive访问java。
+
+## intent filter 作用原理
+启动标识，launcher程序会用到，用于解析决定图标点击后启动哪个应用的哪个activity
+
+##apk安装过程相关
+pms启动以及安装核心过程
+https://maoao530.github.io/2017/01/10/packagemanager/
+应用程序安装过程
+https://maoao530.github.io/2017/01/18/package-install/
+http://liuwangshu.cn/framework/pms/1-packageinstaller-initialize.html
+http://liuwangshu.cn/framework/pms/2-packageinstaller-apk.html
+http://www.cnblogs.com/Jax/p/6910745.html
+
+## binder机制原理
+java层
+https://blog.csdn.net/luoshengyang/article/details/6642463
+c++层若干篇
+https://blog.csdn.net/luoshengyang/article/details/6618363
+
+
+
+
