@@ -790,3 +790,25 @@ taskrecord 任务栈
 https://en.wikipedia.org/wiki/Decorator_pattern
 decorator作为subclass的一种替换方案。
 contex的具体实现，一些组件的实现使用了装饰器模式。
+
+## intent filter 作用原理
+启动标识，launcher程序会用到，用于解析决定图标点击后启动哪个应用的哪个activity
+
+##apk安装过程相关
+pms启动以及安装核心过程
+https://maoao530.github.io/2017/01/10/packagemanager/
+应用程序安装过程
+https://maoao530.github.io/2017/01/18/package-install/
+http://liuwangshu.cn/framework/pms/1-packageinstaller-initialize.html
+http://liuwangshu.cn/framework/pms/2-packageinstaller-apk.html
+http://www.cnblogs.com/Jax/p/6910745.html
+
+## binder机制原理
+java层
+https://blog.csdn.net/luoshengyang/article/details/6642463
+c++层若干篇
+https://blog.csdn.net/luoshengyang/article/details/6618363
+
+
+
+
