@@ -809,6 +809,21 @@ https://blog.csdn.net/luoshengyang/article/details/6642463
 c++层若干篇
 https://blog.csdn.net/luoshengyang/article/details/6618363
 
+##Android 学习路线
+renyugang https://blog.csdn.net/singwhatiwanna/article/details/49560409
+艺术探索
 
+view和控件类
+xvyisheng https://blog.csdn.net/column/details/androidui.html(群英传)
+http://hencoder.com/ui-1-1/(扔物线)
 
+源码类
+老罗csdn
+http://gityuan.com/friends/ 列表
 
+## aidl与序列化(serializable parcelable)
+
+## contentprovider，broadcastreceiver，service的基本使用
+
+## socket 跨进程通信的思考
+socket的实现原理
