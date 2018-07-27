@@ -791,6 +791,14 @@ https://en.wikipedia.org/wiki/Decorator_pattern
 decorator作为subclass的一种替换方案。
 contex的具体实现，一些组件的实现使用了装饰器模式。
 
+## Android binder机制
+从c++到java
+https://blog.csdn.net/luoshengyang/article/details/6618363
+System Server进程启动众多服务进程并addservice，这些服务进程会在ServiceManager中进行注册。
+许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
+通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
+jni是可以实现双向操作的，java访问navtive,navtive访问java。
+
 ## intent filter 作用原理
 启动标识，launcher程序会用到，用于解析决定图标点击后启动哪个应用的哪个activity
 
