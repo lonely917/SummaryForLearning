@@ -835,3 +835,11 @@ http://gityuan.com/friends/ 列表
 
 ## socket 跨进程通信的思考
 socket的实现原理
+
+## java 注解实现原理，控制反转，依赖注入等。
+
+## Android di框架
+
+## Android 系统源码调试
+
+## Android view 框架
