@@ -843,3 +843,6 @@ socket的实现原理
 ## Android 系统源码调试
 
 ## Android view 框架
+
+#listview源码
+id 和 position的区别，看了实现细节自然清楚了。
