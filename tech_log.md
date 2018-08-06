@@ -843,6 +843,11 @@ socket的实现原理
 ## Android 系统源码调试
 
 ## Android view 框架
+drag view的实现？
 
-#listview源码
+## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
+
+## using math.net to do data fit.
+非常强大的一个数学库，可以学习下源代码，对照数学知识。
+math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
