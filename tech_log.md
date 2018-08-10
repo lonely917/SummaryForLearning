@@ -843,7 +843,16 @@ socket的实现原理
 ## Android 系统源码调试
 
 ## Android view 框架
-drag view的实现？
+1. drag view的实现？
+2. view的scrollTo 和 scrollBy是针对view的content，而不是view自身位置的移动。viewgroup则会移动内部的子view。想要变换view的位置(在父容器中的位置)，使用其他方式，比如offsetLeftAndRight(offsetTopAndBottom)等。
+3. scroller是一个"数值变换发生器"，提供一定形式的曲线函数和实时计算，view的computeScroll预留和scroller配合实现平滑的scrollTo或者scrollBy。
+4. ObjectAnimator属性动画
+5. view、viewgroup事件分发，父子布局空间传递，重叠空间事件分发。
+6. findviewbyid的实现
+7. setcontentview的实现，布局空间初始化过程，结合activity的创建过程，context的创建等。
+
+8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
+9. view绘制流程
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
