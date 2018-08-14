@@ -848,10 +848,47 @@ socket的实现原理
 3. scroller是一个"数值变换发生器"，提供一定形式的曲线函数和实时计算，view的computeScroll预留和scroller配合实现平滑的scrollTo或者scrollBy。
 4. ObjectAnimator属性动画
 5. view、viewgroup事件分发，父子布局空间传递，重叠空间事件分发。
+
+基本事件传递(事件如何触发activity的dispatch方法这里不涉及，只包含从activity处理开始后续环节)
+activity的dispatchTouchEvent:
+A1. 如果是down事件，触发onUserInteraction函数，此函数用户重写定义行为,否则直接下一步;
+A2. 调用getWindow().superDispatchTouchEvent，如果其调用返回值为true，则直接返回true，否则下一步；
+A3. 调用activity的onTouchEvent函数，将其返回值返回。(一般情况下activity的onTouchEvent返回false)；
+其中A2，getWindow()得到的是PhoneWindow,进一步调用decorview(继承自framelayout，属于ViewGroup)的superDispatchTouchEvent，再调用super.dispatch,因此，A2会调用ViewGroup的dispatchTouchEvent。
+
+ViewGroup的dispatchTouchEvent主要环节：
+A1. 初始 handled = false
+A2. 如果是down事件，清空之前状态cancelAndClearTouchTargets, resetTouchState,这两个方法具体细节不表，我们主要关心两处FLAG_DISALLOW_INTERCEPT重置和mFirstTouchTarget = null，否则下一步;
+A3. 计算intercepted(根据字面含义，viewgroup是否拦截事件，如果拦截就不会再从子view中寻找处理对象)，计算过程如下
+A3-1. 如果down事件或者mFirstTouchTarget不为空，判断disallowIntercept。disallowIntercept为true，则intercepted为true，否则将onInterceptTouchEvent(ev)赋值为intercepted，此方法默认返回false;
+(如果发生down事件，前面说了会重置一些数据，mFirstTouchTarget必定也为空；如果不是down事件但mFirstTouchTarget为空，对应场景为：之前的down事件没有找到子view处理，也就是A4过程没有找到mFirstTouchTarget)。
+A3-2. 不满足A3-1的判断条件，即这不是一个按下事件并且之前没有给mFirstTouchTarget赋值，则intercepted赋值true;
+A4. 如果intercepted为false,说明不拦截，对于down事件，从子view中寻找处理对象，从上向下遍历，根据触摸区域，会将事件分发给对应区域的子view，并记录能处理的第一个子view，退出分发查找过程，用mFirstTouchTarget标记，对应方法addTouchTarget。否则下一步。
+A5.判断mFirstTouchTarget，如果为空，交由父类处理，通过dispatchTransformedTouchEvent调用父类的也就是view的dispatchTouchEvent，表示viewgroup自己处理该事件，并将返回值赋给handled。否则下一步
+A6.mFirstTouchTarget不为空，说明前面的down事件在A3-2中找到了处理子view，通过dispatchTransformedTouchEvent调用该子view的dispatchTouchEvent，并将返回值赋给handled。注意子view可能是view也可能是viewgroup。(场景分析：如果是down事件走到这里，说明在A3-1中找到了target，而且已经向其分发过事件，这里实际上通过判断alreadyDispatchedToNewTouchTarget发现之前分发过而且子view能处理，就会直接对handled赋值true，而不会再去调用dispatchTransformedTouchEvent；如果不是down事件走到这里，说明是down事件后续的move和up，则会通过通过dispatchTransformedTouchEvent调用该子view的dispatchTouchEvent，并将返回值赋给handled。)
+A7.返回handled。
+
+View的dispatchTouchEvent主要环节(对代码流程进行了一定扩展以便于描述，更易于理解，实际代码可能比较简练晦涩):
+A1. 初始result为false。(result为最终要返回的数值，表示是否处理了该事件)
+A2. 检查是否设置了onTouchListener,如果设置有则执行A2,否则A3.
+A2. 检测控件是否enable，enable的话才去调用onTouchListener，如果listener的onTouch返回true，则对result进行赋值true。
+A3. 检查result，如果不为true，则执行onTouchEvent,如果该方法返回true，则对result赋值true。
+A4. 返回result
+
+onTouchEvent方法中默认行为：检测控件的是否满足以下条件之CLICKABLE或者LONGCLICKABLE或者CONTEXT_CLICKABLE，满足之前就会进行事件处理并返回true，否则返回false。在onTouchEvent的的actionUp事件处理中会调用onClick的listener(如果设置了的话)。
+
+总结，一般情况下view应该是enable的，处理过程可以简化为：首先调用listener的onTouch(设置了的话)，如果为false，才会再去调用view的onTouchEvent，如果是clickable的话，一定会返回true，否则false。clickable的情况下对不同事件具体处理，actionUp的时候会触发click的listener。关于clickable属性，view默认的是不可点击，button是可点击，这个在view初始化的时候会加载属性。我们也可以主动设置，代码设置或者xml中设置。
+
+参考：
+https://blog.csdn.net/yanbober/article/details/45887547
+http://gityuan.com/2015/09/19/android-touch/
+
 6. findviewbyid的实现
 7. setcontentview的实现，布局空间初始化过程，结合activity的创建过程，context的创建等。
 
+
 8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
+
 9. view绘制流程
 
 ## listview源码
