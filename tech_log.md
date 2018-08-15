@@ -847,8 +847,8 @@ socket的实现原理
 2. view的scrollTo 和 scrollBy是针对view的content，而不是view自身位置的移动。viewgroup则会移动内部的子view。想要变换view的位置(在父容器中的位置)，使用其他方式，比如offsetLeftAndRight(offsetTopAndBottom)等。
 3. scroller是一个"数值变换发生器"，提供一定形式的曲线函数和实时计算，view的computeScroll预留和scroller配合实现平滑的scrollTo或者scrollBy。
 4. ObjectAnimator属性动画
-5. view、viewgroup事件分发，父子布局空间传递，重叠空间事件分发。
 
+5. view、viewgroup事件分发，父子布局空间传递，重叠空间事件分发。
 基本事件传递(事件如何触发activity的dispatch方法这里不涉及，只包含从activity处理开始后续环节)
 activity的dispatchTouchEvent:
 A1. 如果是down事件，触发onUserInteraction函数，此函数用户重写定义行为,否则直接下一步;
@@ -884,12 +884,36 @@ https://blog.csdn.net/yanbober/article/details/45887547
 http://gityuan.com/2015/09/19/android-touch/
 
 6. findviewbyid的实现
-7. setcontentview的实现，布局空间初始化过程，结合activity的创建过程，context的创建等。
+通过activity的findviewbyid方法->window.fbd->decorview.fbd->view.fbd->view.findViewTraversal（由于decorview是viewgroup，这里实际上调用的是viewgroup的findViewTraversal）
+最终调用viewgroup的findViewTraversal，会对children进行遍历，依此调用view的fbd->findViewTraversal,找到符合id的view并返回，否则返回null。
+注意decorview是在setcontentview中初始化的，最后都会用到inflate和addview两个方法，前者从xml得到view(也可能把这个view加到parent中)，后者向父容器添加子view。
 
+7. setcontentview的实现，布局空间初始化过程，结合activity的创建过程，context的创建等。
+调用getWindow().setContentView,这里的mWindow实际是PhoneWindow对象，  最终到phoneWindow的setContentView。
+具体过程：
+A1. 判断mContentParent，为空则installDecor来初始化mContentParent，否则移除mContentParent的所有子view。
+A2. 填充mContentParent内容，通过inflate方法将指定id的xml资源初始化，并添加到mContentParent这个viewgroup中。
+A3. 回调activity的onContentChanged方法，默认行为空。
+
+其中,A1的installDecor具体行为如下：
+A1-1. new一个decorview(继承自framelayout)，[首先判断mDecor，为空，则mDecor = generateDecor(-1)]
+A1-2. mContentParent赋值[判断mContentParent，为空则mContentParent = generateLayout(mDecor);]
+A1-3. mLayoutInflater.inflate(layoutResID, mContentParent);布局文件实例化，并添加到mContentParent中。
+
+A1-2中contentParent的生成过程，也就是 generateLayout(mDecor)的详细过程
+首先根据主题选择对应的窗体框架资源，布局中一般都要包含一个id为content的framelayout。
+然后mDecor.onResourcesLoaded将对应窗体框架初始化，也就是mContentRoot，并将其添加到decorview中。
+然后赋值contentParent，从window也就是decorview中找id为content的viewgroup，也就是前面描述的framelayout。
+返回contentParent。
 
 8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
 
 9. view绘制流程
+正常view绘制依次触发三个关键方法:onMeasure(), onLayout(), onDraw(),分别是计算控件尺寸，计算布局位置，绘制控件。
+ViewRootImpl是所有布局的根。其中performTraversals是view绘制流程的重点函数，其中会调用到，performMeasure，performLayout,performDraw等方法，这三个方法最终会调用各个子view的onmeasure、onlayout、ondraw方法。
+
+view的requestLayout会递归调用，知道根ViewRootImpl的scheduleTraversals，这里会通过handler发送消息，异步调用到ViewRootImpl的doTraversal，doTraversals会调用performTraversals进行绘制，requestlayout的时候设置了一些参数，会执行onMeasure和onLayout，不会执行onDraw()(这一点待确定...)
+view的invalidate或者postInvalidate同步或者异步的形式，最后会调用viewgroup的invalidateChild，在这个方法里会调用invalidateChildInParent(viewgroup中有方法的具体实现)，do..while..直到根布局的invalidateChildInParent，通过invalidateRectOnScreen调用scheduleTraversals，触法绘制。
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
