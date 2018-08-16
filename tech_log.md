@@ -906,15 +906,25 @@ A1-2中contentParent的生成过程，也就是 generateLayout(mDecor)的详细�
 然后赋值contentParent，从window也就是decorview中找id为content的viewgroup，也就是前面描述的framelayout。
 返回contentParent。
 
+setcontentview后，界面并没有显示，实际的显示是在ActivityThread.的handleResumeActivity，会调用activity.makeVisible()最终会mDecor.setVisibility(View.VISIBLE)，这里才显示。
+
 8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
 
 9. view绘制流程
 正常view绘制依次触发三个关键方法:onMeasure(), onLayout(), onDraw(),分别是计算控件尺寸，计算布局位置，绘制控件。
 ViewRootImpl是所有布局的根。其中performTraversals是view绘制流程的重点函数，其中会调用到，performMeasure，performLayout,performDraw等方法，这三个方法最终会调用各个子view的onmeasure、onlayout、ondraw方法。
 
-view的requestLayout会递归调用，知道根ViewRootImpl的scheduleTraversals，这里会通过handler发送消息，异步调用到ViewRootImpl的doTraversal，doTraversals会调用performTraversals进行绘制，requestlayout的时候设置了一些参数，会执行onMeasure和onLayout，不会执行onDraw()(这一点待确定...)
-view的invalidate或者postInvalidate同步或者异步的形式，最后会调用viewgroup的invalidateChild，在这个方法里会调用invalidateChildInParent(viewgroup中有方法的具体实现)，do..while..直到根布局的invalidateChildInParent，通过invalidateRectOnScreen调用scheduleTraversals，触法绘制。
+view的requestLayout会递归调用，直到根ViewRootImpl的scheduleTraversals，这里会通过handler发送消息，异步调用到ViewRootImpl的doTraversal，doTraversals会调用performTraversals进行绘制，requestlayout的时候设置了一些参数，会执行onMeasure和onLayout，不会执行onDraw()(这一点待确定...)
+view的invalidate或者postInvalidate同步或者异步的形式，最后会调用viewgroup的invalidateChild，在这个方法里会调用invalidateChildInParent(viewgroup中有方法的具体实现)，do..while..直到根布局的invalidateChildInParent，通过invalidateRectOnScreen调用scheduleTraversals，类似前面的，此方法最终会到performTraversals触发绘制。
+Activity-Window-PhoneWindow-DecorView-布局中的contentid为我们的xml布局-ViewGroup以及view
 
+10. LayoutInflater过程和原理
+获取LayoutInflater实例， LayoutInflator.from方法，进一步会调用context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)，因此这两种方法实质一样的。
+得到一个LayoutInflater对象后，可以mLayoutInflator.inflate进行实例化view，三个参数，资源id、root、attachToRoot。
+首先result = root;资源解析得到的为tmp。
+如果root不为空，且不绑定父布局，则会获取其布局参数，并将设置给资源文件得到的tmp；
+root不空，且绑定父布局，调用root.addView，addview的时候会用到root的布局参数。
+root为空，或者不绑定父布局，result赋值资源解析出的view，最后返回。（这里的第二个条件是否是冗余的？）
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
 
