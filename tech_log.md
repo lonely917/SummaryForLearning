@@ -919,12 +919,22 @@ view的invalidate或者postInvalidate同步或者异步的形式，最后会调�
 Activity-Window-PhoneWindow-DecorView-布局中的contentid为我们的xml布局-ViewGroup以及view
 
 10. LayoutInflater过程和原理
-获取LayoutInflater实例， LayoutInflator.from方法，进一步会调用context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)，因此这两种方法实质一样的。
+获取LayoutInflater实例， 通过LayoutInflator.from方法，进一步会调用context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)，因此这两种方法实质一样的。
 得到一个LayoutInflater对象后，可以mLayoutInflator.inflate进行实例化view，三个参数，资源id、root、attachToRoot。
 首先result = root;资源解析得到的为tmp。
 如果root不为空，且不绑定父布局，则会获取其布局参数，并将设置给资源文件得到的tmp；
 root不空，且绑定父布局，调用root.addView，addview的时候会用到root的布局参数。
 root为空，或者不绑定父布局，result赋值资源解析出的view，最后返回。（这里的第二个条件是否是冗余的？）
+
+11. statusbar的处理
+https://developer.android.com/training/system-ui/status#java
+4.0之前可以通过代码或者xml的theme来实现。
+4.0之后通过代码来实现。
+
+12. window的布局
+statusbar在什么时候生成的？
+viewrootImp的初始化和performTraversals的调用时机？
+
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
 
