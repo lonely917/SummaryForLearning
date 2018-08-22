@@ -925,6 +925,7 @@ Activity-Window-PhoneWindow-DecorView-布局中的contentid为我们的xml布局
 如果root不为空，且不绑定父布局，则会获取其布局参数，并将设置给资源文件得到的tmp；
 root不空，且绑定父布局，调用root.addView，addview的时候会用到root的布局参数。
 root为空，或者不绑定父布局，result赋值资源解析出的view，最后返回。（这里的第二个条件是否是冗余的？）
+`参考链接 https://blog.csdn.net/yanbober/article/details/45970721`
 
 11. statusbar的处理
 https://developer.android.com/training/system-ui/status#java
@@ -934,6 +935,11 @@ https://developer.android.com/training/system-ui/status#java
 12. window的布局
 statusbar在什么时候生成的？
 viewrootImp的初始化和performTraversals的调用时机？
+
+activity-window-decorview-xml content;
+
+13. view viewgroup的measure,layout，draw细节
+https://blog.csdn.net/yanbober/article/details/46128379
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
