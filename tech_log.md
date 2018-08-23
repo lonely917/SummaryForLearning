@@ -29,6 +29,7 @@ jarsigner -verbose -keystore aisinoxfb.jks -signedjar test.apk TestSign.apk aisi
 
 查看密钥信息
 keytool -list -keystore xx.keystore 
+keytool -list -v -keystore xx.keystore 
 
 查看安装包里的证书信息，解压文件
 keytool -printcert -file META-INF/CERT.RSA
@@ -36,7 +37,13 @@ keytool -printcert -file META-INF/CERT.RSA
 生成密钥
 keytool -genkey 。。。。。。
 
+默认debug.keystore相关信息
 
+    Keystore name: "debug.keystore"
+    Keystore password: "android"
+    Key alias: "androiddebugkey"
+    Key password: "android"
+    CN: "CN=Android Debug,O=Android,C=US"
 
 
 #gradle新增指令
