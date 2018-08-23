@@ -634,6 +634,12 @@ https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/jav
     # ro.build.product is obsolete; use ro.product.device
     ro.build.product=APOS_A8
 ```
+## adb 命令(shell) 总结
+
+1. 安装提示错误 INSTALL_FAILED_INSUFFICIENT_STORAGE
+adb shell df 查看设备空间，发现/data下空间不足，卸载一些程序在安装
+
+
 
 ## android.util中懒加载的单例模板类
 ```java
@@ -940,6 +946,7 @@ activity-window-decorview-xml content;
 
 13. view viewgroup的measure,layout，draw细节
 https://blog.csdn.net/yanbober/article/details/46128379
+
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
