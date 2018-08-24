@@ -924,6 +924,7 @@ setcontentview后，界面并没有显示，实际的显示是在ActivityThread.
 8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
 
 9. view绘制流程
+(setcontentview流程中有一个addview方法会触发绘制，调用performtraversal)
 正常view绘制依次触发三个关键方法:onMeasure(), onLayout(), onDraw(),分别是计算控件尺寸，计算布局位置，绘制控件。
 ViewRootImpl是所有布局的根。其中performTraversals是view绘制流程的重点函数，其中会调用到，performMeasure，performLayout,performDraw等方法，这三个方法最终会调用各个子view的onmeasure、onlayout、ondraw方法。
 
@@ -954,6 +955,13 @@ activity-window-decorview-xml content;
 13. view viewgroup的measure,layout，draw细节
 https://blog.csdn.net/yanbober/article/details/46128379
 
+根据linearlayout的layout方法，可以看到，如果orientation是vertical的话，layout的gravity属性中只能选则bottom、top、center_vertical,其他属性无效，也就是center_horizonal无效，如果想使得child剧中，利用child的layout_gravity属性设置，此情况下child的layout_gravity只有水平方向的有效，也就是right、left、center_horizonal。可以这样理解，父布局垂直的，则其gravity不应在处理水平的设置信息，进而把水平方向的设置交给child的layout_gravity属性。这样便于理解，根本原因是源码就是这样控制的，也就决定了其行为。
+
+onMeasure计算尺寸
+onLayout计算布局位置
+看下细节，细节设计决定了使用的规则。
+requestLayout不会触发onDraw。
+invalidate会调用onDraw。
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
@@ -961,3 +969,22 @@ id 和 position的区别，看了实现细节自然清楚了。
 ## using math.net to do data fit.
 非常强大的一个数学库，可以学习下源代码，对照数学知识。
 math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
+
+## Android studio常用快捷键
+括号匹配 ctrl+shift+M
+搜索action ctrl+shift+A
+快速检索 double shift
+查找类 ctrl+N
+查找文件 ctrl+shift+N
+
+重写方法 ctrl+O
+方法导览 ctrl+F12
+
+注释 ctrl+/
+类或方法说明 ctrl+Q
+自动补全提示 ctrl+shift+space
+操作提示 alt+enter
+
+查找方法的具体实现 ctrl+alt+B (find implementation)
+查找引用 alt+F7， ctrl+shift+alt+F7  (ctrl+鼠标点击)
+跳转到变量定义或者方法原型(ctrl+鼠标点击)
