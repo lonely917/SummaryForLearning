@@ -954,7 +954,7 @@ activity-window-decorview-xml content;
 
 13. view viewgroup的measure,layout，draw细节
 https://blog.csdn.net/yanbober/article/details/46128379
-
+http://liuwangshu.cn/application/view/7-measure-sourcecode.html
 根据linearlayout的layout方法，可以看到，如果orientation是vertical的话，layout的gravity属性中只能选则bottom、top、center_vertical,其他属性无效，也就是center_horizonal无效，如果想使得child剧中，利用child的layout_gravity属性设置，此情况下child的layout_gravity只有水平方向的有效，也就是right、left、center_horizonal。可以这样理解，父布局垂直的，则其gravity不应在处理水平的设置信息，进而把水平方向的设置交给child的layout_gravity属性。这样便于理解，根本原因是源码就是这样控制的，也就决定了其行为。
 
 onMeasure计算尺寸
@@ -963,8 +963,28 @@ onLayout计算布局位置
 requestLayout不会触发onDraw。
 invalidate会调用onDraw。
 
+MeasureSpec规格，高两位表示模式：UNSPECIFIED,EXACTLY,AT_MOST,低30位表示尺寸。
+子view的MeasureSpec是由其layoutpara和父group的MeasureSpec共同决定的。最根部ViewRootImpl是初始设定的,通过getRootMeasureSpec方法获取，mode为exactly，size为屏幕大小，layoutpara均为为match_parent。
+
+ViewGroup的onMeasure一般在具体的实现类中重写逻辑。比如linearlayout的onMeasure中有measureVertical和measureHorizontal方法。父类的measure具体过程一般是遍历子布局，会根据viewgroup的MeasureSpec，子view的布局参数(也有父布局的padding等参数)生成子view的MeasureSpec，比如getChildMeasureSpec这个方法就会用来生成子view的measure参数。
+所有的measure只是设定尺寸参数，这些参数会在layout中使用。
+关于getChildMeasureSpec可以仔细看一下，对应分析这样一种场景，viewgroup设定wrapcontent,内部view设定matchparent,控件什么行为？通过源码分析会看到，此时内部view设定matchaparent和wrapcontent表现行为一样。1.外部viewgroup的wrapcontent会使得其measure参数模式为AT_MOST,进而内部view的measure也会变为AT_MOST。
+
+14. 滑动的实现？
+listview滑动的实现
+嵌套listview的滑动事件处理。
+onInterceptTouchEvent方法说明，父布局夺取子view的事件处理权，最终会到viewgroup的onTouchEvent方法。如果当前有target作为目标处理器，则target会先收到一个ACTION_CANCEL事件，后续事件不会到原先的target。
+```java
+/**    Return true to steal motion events from the children and have
+     * them dispatched to this ViewGroup through onTouchEvent().
+     * The current target will receive an ACTION_CANCEL event, and no further
+     * messages will be delivered here.
+     */
+```
+
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
+
 
 ## using math.net to do data fit.
 非常强大的一个数学库，可以学习下源代码，对照数学知识。
