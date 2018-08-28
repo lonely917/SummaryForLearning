@@ -1008,3 +1008,9 @@ math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
 查找方法的具体实现 ctrl+alt+B (find implementation)
 查找引用 alt+F7， ctrl+shift+alt+F7  (ctrl+鼠标点击)
 跳转到变量定义或者方法原型(ctrl+鼠标点击)
+
+## android studio & gradle
+1. 项目加载过程
+gradle版本，gradle-plugin,sdk,build-tools;
+dependency deal;
+test deal;
