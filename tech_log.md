@@ -948,9 +948,19 @@ https://developer.android.com/training/system-ui/status#java
 
 12. window的布局
 statusbar在什么时候生成的？
-viewrootImp的初始化和performTraversals的调用时机？
-
+viewrootImp的初始化和performTraversals的调用时机？(visibility变化会触发绘制,decorview设置visible)
 activity-window-decorview-xml content;
+Theme和style的加载时机：
+installDecor->generateLayout的时候：
+TypedArray a = getWindowStyle();
+这里的getwindowstyle获取window的一些属性设置，此方法会先找到activity的theme，然后获取com.android.internal.R.styleable.Window这个属性组对应的属性。
+后续会根据主题下这些属性的数值进行窗体设置。
+theme的设置(赋值)是在ActivityThread启动activity的时候根据xml内容进行的设置，或者activity中代码设置主题。
+
+values.xml -> 各种theme,根theme。
+attrs.xml-> 各种属性定义。
+`https://blog.csdn.net/yanbober/article/details/51015630`
+R.style-R.styleable-R.attr
 
 13. view viewgroup的measure,layout，draw细节
 https://blog.csdn.net/yanbober/article/details/46128379
@@ -981,6 +991,8 @@ onInterceptTouchEvent方法说明，父布局夺取子view的事件处理权，�
      * messages will be delivered here.
      */
 ```
+
+
 
 ## listview源码
 id 和 position的区别，看了实现细节自然清楚了。
@@ -1014,3 +1026,9 @@ math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
 gradle版本，gradle-plugin,sdk,build-tools;
 dependency deal;
 test deal;
+
+## hencoder学习记录
+1. canvas和paint
+paint：setStyle,setColor,setStrokeWidth,setStrokeCap,setTextSize,setAntiAlias
+canvas:drawColor,drawRect,drawRoundRect,drawCircle,drawOval,drawLine,drawLines,drawArc,drawPoint,drawPoints,drawPath
+path:addXX，XXto,close.
