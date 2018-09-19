@@ -1026,6 +1026,7 @@ math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
 gradle版本，gradle-plugin,sdk,build-tools;
 dependency deal;
 test deal;
+每一步走什么
 
 ## hencoder学习记录
 1. canvas和paint
