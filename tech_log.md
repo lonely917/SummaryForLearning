@@ -270,7 +270,7 @@ kotlin方法
 
 #window notitle的设置
 方式1
-oncreate中setcontentview之前执行设置requestWindowFeature(Window.FEATURE_NO_TITLE);
+oncreate中setcontentview之前执行设置requestFeature(Window.FEATURE_NO_TITLE);
 方式1在程序启动的时候还是看到标题栏，闪一下。
 方式2
 设置theme的属性，添加 <item name="android:windowNoTitle">true</item>
