@@ -1033,3 +1033,9 @@ test deal;
 paint：setStyle,setColor,setStrokeWidth,setStrokeCap,setTextSize,setAntiAlias
 canvas:drawColor,drawRect,drawRoundRect,drawCircle,drawOval,drawLine,drawLines,drawArc,drawPoint,drawPoints,drawPath
 path:addXX，XXto,close.
+
+## 问题列表
+1. AppCompatActivity和Activity，前者有ActionBar，后者是TitleBar
+2. 模板，模板参数，继承。
+3. onEditorAction
+4. 几种实现加载框的方式，dialog和progressbar的各种子类，自定义view。
