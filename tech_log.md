@@ -1033,3 +1033,7 @@ test deal;
 paint：setStyle,setColor,setStrokeWidth,setStrokeCap,setTextSize,setAntiAlias
 canvas:drawColor,drawRect,drawRoundRect,drawCircle,drawOval,drawLine,drawLines,drawArc,drawPoint,drawPoints,drawPath
 path:addXX，XXto,close.
+
+## 问题积累
+1. jcenter和maven库比较
+2. gradle build tools  & gradle plugin & gradle & android studio 的version匹配，蛋疼死!!
