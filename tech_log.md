@@ -270,7 +270,7 @@ kotlin方法
 
 #window notitle的设置
 方式1
-oncreate中setcontentview之前执行设置requestWindowFeature(Window.FEATURE_NO_TITLE);
+oncreate中setcontentview之前执行设置requestFeature(Window.FEATURE_NO_TITLE);
 方式1在程序启动的时候还是看到标题栏，闪一下。
 方式2
 设置theme的属性，添加 <item name="android:windowNoTitle">true</item>
@@ -1034,6 +1034,14 @@ paint：setStyle,setColor,setStrokeWidth,setStrokeCap,setTextSize,setAntiAlias
 canvas:drawColor,drawRect,drawRoundRect,drawCircle,drawOval,drawLine,drawLines,drawArc,drawPoint,drawPoints,drawPath
 path:addXX，XXto,close.
 
-## 问题积累
-1. jcenter和maven库比较
-2. gradle build tools  & gradle plugin & gradle & android studio 的version匹配，蛋疼死!!
+## 问题列表
+1. AppCompatActivity和Activity，前者有ActionBar，后者是TitleBar
+2. 模板，模板参数，继承。
+3. onEditorAction
+4. 几种实现加载框的方式，dialog和progressbar的各种子类，自定义view。
+5. 矢量图制作
+6. textAppearanceSmall 系统属性
+7. 墨刀 & 蓝湖
+8. jcenter和maven库比较
+9. gradle build tools  & gradle plugin & gradle & android studio 的version匹配，蛋疼死!!
+10. 状态栏问题，沉浸式，actionbar和toolbar
