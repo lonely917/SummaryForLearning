@@ -1045,3 +1045,5 @@ path:addXX，XXto,close.
 8. jcenter和maven库比较
 9. gradle build tools  & gradle plugin & gradle & android studio 的version匹配，蛋疼死!!
 10. 状态栏问题，沉浸式，actionbar和toolbar
+11. 模块化，组件化，路由AROUTER
+12. 插件化
