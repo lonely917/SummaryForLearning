@@ -1047,3 +1047,9 @@ path:addXX，XXto,close.
 10. 状态栏问题，沉浸式，actionbar和toolbar
 11. 模块化，组件化，路由AROUTER
 12. 插件化
+13. listview和edittext问题，焦点问题，嵌套layout触摸事件问题。
+
+
+## edittext设置输入类型没有生效的问题
+editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
+注意TYPE_CLASS_XX这个一定要有
