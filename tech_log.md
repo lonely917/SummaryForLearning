@@ -1053,3 +1053,5 @@ path:addXX，XXto,close.
 ## edittext设置输入类型没有生效的问题
 editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
 注意TYPE_CLASS_XX这个一定要有
+
+##keystore详解、证书、公钥私钥
