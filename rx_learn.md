@@ -14,3 +14,7 @@ Retrofit requires at minimum Java 7 or Android 2.3.
 
 implementation 'com.squareup.retrofit2:retrofit:2.5.0'
 implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+
+## okhttp
+### 使用条件
+OkHttp supports Android 2.3 and above. For Java, the minimum requirement is 1.7.
