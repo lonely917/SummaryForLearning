@@ -1054,4 +1054,13 @@ path:addXX，XXto,close.
 editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
 注意TYPE_CLASS_XX这个一定要有
 
-##keystore详解、证书、公钥私钥
+## Android sqlite的官方示例
+
+## Android LiveData ViewModel
+
+## 新出的框架到底好在哪里？
+
+## apk包生成过程，签名过程。做一个相关过程分析工具。
+
+## keystore详解、证书、公钥私钥
+。
