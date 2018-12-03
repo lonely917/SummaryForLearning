@@ -1063,4 +1063,6 @@ editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DEC
 ## apk包生成过程，签名过程。做一个相关过程分析工具。
 
 ## keystore详解、证书、公钥私钥
-。
+
+## tartget api和 miniapi的作用
+如果实际机型api低于target的话，运行库情况，比如httplicent的冲突情况
