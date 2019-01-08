@@ -1,11 +1,29 @@
-# vultr的一次配置过程
+<!-- TOC -->
 
+- [vultr + ss 的配置过程](#vultr--ss-的配置过程)
+    - [web可视化界面新建服务器实例](#web可视化界面新建服务器实例)
+    - [ssh登陆](#ssh登陆)
+    - [登陆服务器后配置ss](#登陆服务器后配置ss)
+    - [查看easy_install和pip位置](#查看easy_install和pip位置)
+    - [为pip3命令建立连接](#为pip3命令建立连接)
+    - [pip3 install shadowsocks提示ssl错误](#pip3-install-shadowsocks提示ssl错误)
+    - [查看openssl version的命令](#查看openssl-version的命令)
+    - [更换3.6.2,下载python源码进行编译安装](#更换362下载python源码进行编译安装)
+    - [查看bin目录下的python](#查看bin目录下的python)
+    - [为pip3和python建立软连接](#为pip3和python建立软连接)
+    - [测试python3和对应pip](#测试python3和对应pip)
+    - [安装ss](#安装ss)
+    - [总结](#总结)
+
+<!-- /TOC -->
+
+# vultr + ss 的配置过程
 ## web可视化界面新建服务器实例
 1. 选择区域
 2. 选择系统
 3. 开始创建
 
-## ssh登陆进行配置
+## ssh登陆
 可以在管理界面通过view console进行登陆配置，但是不太方便，这里我们通过ssh客户端进行远程配置。
 
 windows端工具有ssh client或者putty，window10已经集成了ssh client。
@@ -43,7 +61,18 @@ Last login: Sun Jan  6 12:24:25 2019 from 106.2.234.179
     netstat -antp | grep sshd 查看是否启动22端口
 
 ## 登陆服务器后配置ss
+
+github上还能找到的配置说明如下
+
+    CentOS:
+    yum install python-setuptools && easy_install pip
+    pip install shadowsocks
+
+看似简单，配置起来很大概率会失败，主要是系统和python版本等因素。我是用的centos6.x，内置有2.6的python，但是pip的高版本使用时要求python版本要在2.7以后。这里我直接安装python3.x，安装后自带pip,然后使用对应版本的pip进行shadowsocks的安装。我最先使用了当前最新版本3.7.2，下载源码，解压，编译，建立软连接，执行对应的pip install shadowsocks，但是报错，缺少ssl模块，查阅了资料最新版本ssl模块有一定修改，最后使用3.6.2的python,下述先说明了3.7.2安装过程发现的问题，从
+`更换3.6.2,下载python源码进行编译安装`章节开始是一个完整的成功的安装配置过程。
+
 ## 查看easy_install和pip位置
+安装完python3.x后自带了 setuptools和pip,不需要` yum install python-setuptools && easy_install pip`,如下可以查看相关位置。
 ```s
     [root@vultr ~]# find / -name easy_install*
 
@@ -76,12 +105,17 @@ Last login: Sun Jan  6 12:24:25 2019 from 106.2.234.179
 
     ln -s /usr/local/python3/bin/pip3 /usr/bin/pip3
 
-这样就可以使用pip3命令了，否则使用的pip命令默认连接的不是3.x安装时配套的pip。
+这样就可以使用pip3命令了，否则使用的pip命令默认连接的不是3.x，而是安装时配套的pip。
 
     [root@vultr Python-3.7.2]# pip3 -V
     pip 18.1 from /usr/local/python3/lib/python3.7/site-packages/pip (python 3.7)
 
 ## pip3 install shadowsocks提示ssl错误
+python3和pip都有了，就使用如下指令安装
+
+    pip3 install shadowsocks
+
+这里如果没有错误提示，你就安装成功了(可以直接去`安装ss`章节进行参考配置)，这里是会报一个ssl相关错误，网上有很多帖子进行如下指导：
 
     cd Python-3.7.2
     ./configure --with-ssl
@@ -92,28 +126,37 @@ Last login: Sun Jan  6 12:24:25 2019 from 106.2.234.179
     Installing collected packages: setuptools, pip
     Successfully installed pip-18.1 setuptools-40.6.2
 
-configure的时候提示参数不识别?什么鬼，网上都是这个写法？
-换另一种./configure --enable-optimizations
-
-make && make install后出现了如下提示
+但如果细心观察输出会发现提示configure的时候，--with-ssl不识别 ?什么鬼，网上都是这个写法？
+make && make install后也有如下提示
 
     Could not build the ssl module!
     Python requires an OpenSSL 1.0.2 or 1.1 compatible libssl with X509_VERIFY_PARAM_set1_host().
     LibreSSL 2.6.4 and earlier do not provide the necessary APIs, https://github.com/libressl-portable/portable/issues/381
     
-3.7要求更高版本的ssl,然而yum自动升级只能到1.0.1，所以需要下载源码编译生成高版本，根据网上记录，依然会有坑，暂时放弃3.7.2版本，换个稍微低点版本的python。
+3.7要求更高版本的ssl,然而yum自动升级只能到1.0.1，所以需要下载源码编译生成高版本，根据网上记录，依然会有坑，暂时放弃3.7.2版本，换个稍微低点版本的python。最终选择3.6.2进行重装。
 
-## 查看openssl version
+## 查看openssl version的命令
 
     [root@vultr Python-3.7.2]# openssl version
     OpenSSL 1.0.1e-fips 11 Feb 2013
 
-## 更换3.6.2
+## 更换3.6.2,下载python源码进行编译安装
+
+wget下载源码
 
     wget http://www.python.org/ftp/python/3.6.2/Python-3.6.2.tgz
+
+解压
+
     tar -xvzf Python-3.6.2.tgz
-    cd 进入目录
+
+cd 进入源码目录开始配置、编译
+
     ./configure(这里依然不支持--with-ssl，请问网上的帖子都是怎么来的？)
+    make
+    make install
+
+上述三条指令成功的执行需要一些依赖，比如编译环境，依赖包等等，根据提示可以找到解决方案，一般在confiure之前先yum install一些依赖包，比如gcc,ssl等模块。
 
 ## 查看bin目录下的python
 
@@ -126,42 +169,117 @@ make && make install后出现了如下提示
     -rwxr-xr-x   2 root root       4864 Aug 18  2016 python.bak
 
 ## 为pip3和python建立软连接
+这里相当于给我们的python3.6.2和对应的pip建立一个自定义名称的快捷方式，我们可以在终端调用，并且不和系统原有的python2.x产生分歧。
 
     [root@vultr ~]# ln -s /usr/local/bin/pip3.6 /usr/bin/pip3.6
     [root@vultr ~]# ln -s /usr/local/bin/python3.6 /usr/bin/python3
+
+这样我们可以在控制台使用python3和pip3.6两个命令。
+
+## 测试python3和对应pip
+    
+
     [root@vultr ~]# python3 -V
-    [root@vultr ~]# ip3.6 -V
+    
+    [root@vultr ~]# pip3.6 -V
                     pip 9.0.1 from /usr/local/lib/python3.6/site-packages (python 3.6)
 
+
+    
+    [root@vultr ~]# ls -al /usr/bin/ |grep -E 'python|pip'
+    -rwxr-xr-x   1 root root       2804 Jun  4  2014 lesspipe.sh
+    -rwxr-xr-x   1 root root        278 Jan  7 02:32 pip
+    -rwxr-xr-x   1 root root        280 Jan  7 02:32 pip2
+    -rwxr-xr-x   1 root root        284 Jan  7 02:32 pip2.6
+    lrwxrwxrwx   1 root root         21 Jan  7 08:56 pip3.6 -> /usr/local/bin/pip3.6            //我们使用的3.6版本
+    lrwxrwxrwx   1 root root         29 Jan  7 07:35 pip3.7 -> /usr/local/python3/bin/pip3.7
+    lrwxrwxrwx   1 root root          6 Oct 16 22:46 python2 -> python
+    -rwxr-xr-x   2 root root       4864 Aug 18  2016 python2.6
+    lrwxrwxrwx   1 root root         24 Jan  7 09:02 python3 -> /usr/local/bin/python3.6       //我们使用的3.6版本
+    -rwxr-xr-x   2 root root       4864 Aug 18  2016 python.bak
+
+
 ## 安装ss
+通过如下指令安装shadowsocks
 
     [root@vultr ~]# pip3.6 install shadowsocks
+
+提示如下
+
     Collecting shadowsocks
     Downloading https://files.pythonhosted.org/packages/02/1e/e3a5135255d06813aca6631da31768d44f63692480af3a1621818008eb4a/shadowsocks-2.8.2.tar.gz
     Installing collected packages: shadowsocks
     Running setup.py install for shadowsocks ... done
     Successfully installed shadowsocks-2.8.2
+
     You are using pip version 9.0.1, however version 18.1 is available.
     You should consider upgrading via the 'pip install --upgrade pip' command.
 
-    ssserver -p xxxx -k xxxx -m aes-256-cfb
-    ssserver -p xxxx -k xxxx -m aes-256-cfb --user xxxx -d start
+如下若干种方式启动ss
+
+    ssserver -p xxxx -k xxxx -m aes-256-cfb(前台启动)
+    ssserver -p xxxx -k xxxx -m aes-256-cfb -d start(后台启动)
+    
+关闭ss服务的命令    
+
     ssserver -d stop
+
+查看日志
+
     less /var/log/shadowsocks.log
 
-    /etc/init.d/iptables status(查看墙状态)
-    /etc/init.d/iptables stop （关闭墙，这是centos6可用方法，7中有firewalld指令，但这里不识别）
+通过配置文件配置参数并启动ss
+```json
+    vi /etc/shadowsocks.json
 
-    添加端口
+    {
+    "server":"my_server_ip",
+    "server_port":8388,
+    "local_address": "127.0.0.1",
+    "local_port":1080,
+    "password":"mypassword",
+    "timeout":300,
+    "method":"aes-256-cfb",
+    "fast_open": false
+    }
+```
+    ssserver -c /etc/shadowsocks.json(前台启动)
+    ssserver -c /etc/shadowsocks.json -d start(后台启动)
+    ssserver -c /etc/shadowsocks.json -d stop(停止服务)
+
+查看ssserver是否启动
+
+    [root@vultr ~]# ps -ef | grep sserver
+    root      6499     1  0 03:39 ?        00:00:00 /usr/local/bin/python3.6 /usr/local/bin/ssserver -c /etc/shadowsocks.json -d start
+    root      6517  6431  0 03:40 pts/1    00:00:00 grep sserver
+
+
+查看墙状态命令
+
+    /etc/init.d/iptables status
+
+关闭墙，这是centos6可用方法，7中有firewalld指令，但这里不识别
+
+    /etc/init.d/iptables stop 
+
+添加端口
+    
     vi /etc/sysconfig/iptables
-    进行编辑
+
+进行编辑，添加下面这一行
+    
     -A INPUT -m state --state NEW -m tcp -p tcp --dport xxxx -j ACCEPT
 
-    重启防火墙
+重启防火墙
+    
     /etc/init.d/iptables start
 
+
+
 ## 总结
+
 1. 安装python，先不使用当前最新3.7，如选择3.6.2。python安装过程需要各种依赖，比如下载的包要解压，直接tar可能解压不了，缺少另一个工具xz;编译过程需要其他模块，这里有一系列的模块，网上查阅基本可以解决。
 2. 使用pip install shadowsocks。注意对make install后得到的python3进行一定的处理，3.x大部分已经集成了pip，找到pip3.x的目录，对python3.x和pip3.x分别建立软连接，这样可以避免和内置的低版本的python或者pip冲突，直接执行即可安装。如果提示错误可能就是python的安装过程缺少模块，根据提示排查，重新configure,make，makeinstall。
 3. ssserver -p xxxx -k xxxx -m aes-256-cfb -d start开启ss（也可以通过配置文件实现更为丰富的管理）
 4. 端口进行防火墙白名单处理，具体防火墙操作根据系统会有差别。
+
