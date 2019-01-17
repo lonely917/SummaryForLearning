@@ -14,6 +14,13 @@
     - [测试python3和对应pip](#测试python3和对应pip)
     - [安装ss](#安装ss)
     - [总结](#总结)
+- [ubuntu 代理服务器搭建(squid)](#ubuntu-代理服务器搭建squid)
+    - [系统和工具说明](#系统和工具说明)
+    - [安装squid](#安装squid)
+    - [查看安装和运行状态](#查看安装和运行状态)
+    - [配置授权认证](#配置授权认证)
+    - [编辑配置文件](#编辑配置文件)
+    - [重新启动](#重新启动)
 
 <!-- /TOC -->
 
@@ -44,7 +51,7 @@ Last login: Sun Jan  6 12:24:25 2019 from 106.2.234.179
     openssh-server-5.3p1-123.el6_9.x86_64
     libssh2-1.4.2-2.el6_7.1.x86_64
     openssh-5.3p1-123.el6_9.x86_64
-    openssh-clients-5.3p1-123.el6_9.x86_64
+    openssh-clients-5.3p1-123.el6_9.x86_64 
 
 上述显示已经安装，如果没有安装通过如下指令进行安装
 
@@ -283,3 +290,69 @@ cd 进入源码目录开始配置、编译
 3. ssserver -p xxxx -k xxxx -m aes-256-cfb -d start开启ss（也可以通过配置文件实现更为丰富的管理）
 4. 端口进行防火墙白名单处理，具体防火墙操作根据系统会有差别。
 
+</br></br>
+
+# ubuntu 代理服务器搭建(squid)
+
+## 系统和工具说明
+1. 环境：Ubuntu Server 16.04.1 LTS 64位
+2. 代理工具:安装squid，提供代理server的功能
+3. 添加用户认证:通过htpasswd命令进行用户名密码配置
+
+## 安装squid
+
+    sudo apt-get install squid //安装squid
+    sudo vi /etc/squid/squid.conf //编辑配置文件
+    service squid restart  //重启服务
+
+配置文件的修改如下:
+
+    找到"http_access allow localhost"
+    改为"http_access allow all",这样外网才能够访问到。
+
+默认端口3128,配置文件中某一行指定，可以进行修改：
+
+    http_port 3128
+
+## 查看安装和运行状态
+
+    xxx@VM-0-14-ubuntu:~$ which squid
+    /usr/sbin/squid
+
+    ubuntu@VM-0-14-ubuntu:~$ ps -aux | grep squid
+    root      7752  0.0  0.7 109280  6312 ?        Ss   Jan16   0:00 /usr/sbin/squid -YC -f /etc/squid/squid.conf
+    proxy     7754  0.0  3.1 151928 27852 ?        S    Jan16   0:16 (squid-1) -YC -f /etc/squid/squid.conf
+    proxy     7755  0.0  0.1  13280  1476 ?        S    Jan16   0:00 (logfile-daemon) /var/log/squid/access.log
+    ubuntu   10313  0.0  0.1  13232  1032 pts/1    S+   11:37   0:00 grep --color=auto squid
+
+## 配置授权认证
+上述操作后，可以通过ip和port进行代理使用，没有授权认证，不需要用户名和密码。
+接下来进行相关配置，可以输入htpasswd查看是否有相关工具，没有的话根据提示安装。
+这里控制台提示我用下述指令进行安装(关于这个安装指令，网上有很多版本，有些会提示找不到对应安装包)
+
+    #安装工具包
+    sudo apt install apache2-utils
+
+    #添加一个账号 -c表示创建文件
+    ubuntu@VM-0-14-ubuntu:~$ sudo htpasswd -b -c /etc/squid/passwd username1xxx user1pwd
+    Adding password for user user1
+
+    #添加另一个账号 前面已有文件，不在创建新文件，不使用-c
+    ubuntu@VM-0-14-ubuntu:~$ sudo htpasswd -b /etc/squid/passwd username2xxx user2pwd
+    Adding password for user user2
+
+## 编辑配置文件
+
+    #配置认证方式和认证文件
+    auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+    
+    #认证规则
+    acl aclauth1 proxy_auth REQUIRED
+    
+    #允许对应规则(之前的http_access allow all不再使用)
+    http_access allow aclauth1
+
+## 重新启动
+
+    sudo service squid stop
+    sudo service squid start
