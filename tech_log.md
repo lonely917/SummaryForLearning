@@ -1066,3 +1066,10 @@ editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DEC
 
 ## tartget api和 miniapi的作用
 如果实际机型api低于target的话，运行库情况，比如httplicent的冲突情况
+
+## fastjson源码研究
+
+## 各种语言类型转换的精度问题，Java double string相关转换，bigdecimal以及numberformat等。
+
+##requestFeature() must be called before adding content
+直接new Dialog，先show再调用setcontentview，区别于使用builder的setview。
