@@ -24,3 +24,20 @@ Q: 布局超出屏幕宽度或者高度，滑动的实现?
 Q：BoxFit的不同形式?
 
 Q: Container的width不起作用?
+
+Q: Flutter APP 使用卡顿?(列表、界面切换等)
+dubug版本确实会出现这样的情况，使用release包的时候会流畅很多，不会有如此明显的卡顿。
+在工程目录执行flutter build apk命令(相当于flutter build apk --release),会生成app-release.apk,可以使用flutter install进行安装.
+
+Q: declarative UI vs imperative UI
+
+Q: 使用flutter的widget来实现Android中的不同布局，linearlayout、framelayout、relativelayout？
+
+    A: flutter从一个不同维度进行布局的组成，通过新的控件体系来实现不同布局。
+    下述资料(flutter官方推荐博文)对照性质地进行了一定程度的剖析，来熟悉flutter widgets的不同属性。
+    https://stackoverflow.com/questions/44396075/equivalent-of-relativelayout-in-flutter
+    https://proandroiddev.com/flutter-for-android-developers-how-to-design-linearlayout-in-flutter-5d819c0ddf1a
+    对应示例https://github.com/burhanrashid52/FlutterForAndroidExample
+
+    {stack、column、row} {align、positioned、expanded、flexible}
+    布局+对内约束;布局+对外约束
