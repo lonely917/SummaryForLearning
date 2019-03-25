@@ -41,3 +41,15 @@ Q: 使用flutter的widget来实现Android中的不同布局，linearlayout、fra
 
     {stack、column、row} {align、positioned、expanded、flexible}
     布局+对内约束;布局+对外约束
+
+Q: flutter项目的依赖包下载到哪里去了?
+    A：flutter sdk目录中.pub-cache\hosted\目录下有dart和flutter相关的依赖包目录。
+
+Q: flutter项目依赖包通过什么下载的，程序通过什么编译的?
+    A：下载工具 sdk\packages\flutter_tools\gradle指定了基本的gradle版本和仓库地址。
+
+Q: flutter常用命令
+    A: 
+    flutter packages get; 
+    flutter build apk (--release/debug); 
+    flutter run (dart file name)
