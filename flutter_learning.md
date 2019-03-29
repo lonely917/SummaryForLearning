@@ -53,3 +53,9 @@ Q: flutter常用命令
     flutter packages get; 
     flutter build apk (--release/debug); 
     flutter run (dart file name)
+
+Q：布局常见调试错误
+
+1. widget build的返回值不能是null
+2. 外部没有material app,Text一定要有textdirection，否则会报错：Text或者其ancestor没有方向。
+3. bottomnavigationbaritem的title不能为空
