@@ -59,3 +59,5 @@ Q：布局常见调试错误
 1. widget build的返回值不能是null
 2. 外部没有material app,Text一定要有textdirection，否则会报错：Text或者其ancestor没有方向。
 3. bottomnavigationbaritem的title不能为空
+4. RaisedButton上方和下方有一个空白区域，垂直方向padding设置不成0?使用MaterialTapTargetSize属性设置，选择shrinkwrap,否则控件默认会保留一部分点击区域。
+https://stackoverflow.com/questions/53714646/unwanted-space-appearing-between-raisedbutton-widgets-in-a-column
