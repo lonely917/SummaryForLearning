@@ -61,3 +61,13 @@ Q：布局常见调试错误
 3. bottomnavigationbaritem的title不能为空
 4. RaisedButton上方和下方有一个空白区域，垂直方向padding设置不成0?使用MaterialTapTargetSize属性设置，选择shrinkwrap,否则控件默认会保留一部分点击区域。
 https://stackoverflow.com/questions/53714646/unwanted-space-appearing-between-raisedbutton-widgets-in-a-column
+
+Q：Navigator operation requested with a context that does not include a Navigator
+
+    A:  两个解决方案
+        1-使用builder来创建floatingActionButton
+        2-把MaterialApp的home单独拿出来写一个class，不要使用直接在home:参数中创建的形式。(https://github.com/flutter/flutter/issues/15919)
+
+Q：TextField控件，键盘弹出问题，布局是否resize?
+    A：In your Scaffold, set resizeToAvoidBottomPadding property to false.
+    默认为true，使得底部边缘上移，相关的控件(依附于bottom的布局)会resize。设置属性为false，则弹出的键盘会遮盖相关控件。注意，上移只会使得受影响控件上移，若想要整体布局上移需要从布局构建方面进行考虑。比如用一个控件包裹一块区域，然后这个区域上移，类似微信聊天输入内容的时候，界面的行为。对于登陆场景，一般都是将输入框的位置放置高位，键盘遮盖不到即可(这也是一种主流适配方案,相对于resize体验更好)，对于Android的键盘设置行为，softinputmode属性等。
