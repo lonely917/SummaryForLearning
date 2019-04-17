@@ -238,3 +238,19 @@ wv.loadUrl(url);
 ##intent的bundle
 data.getExtras().toString()
 注意，这里面的bundle的map，在读写的时候会触发一次序列化数据填充的过程，因此在onActivityResult的data里面，调试的时候可能发现里面bundle的map是空的，在调用hasExtra或getStringExtra的时候确可以得到数据，相当于首次调用出发map的填充过程。
+
+## edittext实现多行自动换行
+```xml
+<EditText
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@null"
+    android:gravity="left|top"
+    android:hint="输入备注信息"
+    android:inputType="textMultiLine"
+    android:singleLine="false"
+    android:maxLength="200"
+    android:maxLines="5" //最多可见行数
+    android:scrollHorizontally="false"
+    android:textSize="15sp" />
+```

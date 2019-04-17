@@ -1071,5 +1071,51 @@ editText.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DEC
 
 ## 各种语言类型转换的精度问题，Java double string相关转换，bigdecimal以及numberformat等。
 
-##requestFeature() must be called before adding content
+## requestFeature() must be called before adding content
 直接new Dialog，先show再调用setcontentview，区别于使用builder的setview。
+
+## 记录一次webview问题排查
+1. 问题描述
+
+pos机呈现开票二维码，应用内使用webview加载的页面，按钮点击没有响应，但是通过手机扫描二维码打开能正常点击。
+观察应用日志
+
+    logcat:I/chromium:"Uncaught TypeError undifined is not a function",source:http:.xxxx.js(96)。
+
+2. 分析过程
+
+webview首先加载网页，然后会对相关的资源进行加载，并根据需要执行一些操作(这些操作可能定义在相关的js文件中)，找到对应的js文件定位到指定行数，是一个函数调用，根据提示应该认为找不到这个函数，但是手机浏览器和支付宝扫描都是正常的，进一步分析，这个函数定义在另一个js文件中。在另一个js文件中定位到这个函数，发现是一个函数变量，这个函数变量的赋值是有条件的，如果允许存储才进行赋值。也就是说之所以报错，是因为这个变量没有具体数值，所以提示不是一个函数。转过头来看，我们的webview没有设置dom存储相关，加上如下设置，即可。
+
+    mWeb.getSettings().setDomStorageEnabled(true);//系统默认是false
+
+修改后发现了新问题，pos机上页面打开没有问题，提交响应也有了，但是提交后，跳转到第二个页面，部分信息没有展示，按钮点击依然有问题。log提示如下：
+
+    logcat:I/chromium:"Uncaught TypeError unexpected token",
+    source:http:.xxxx.js(712)。
+
+但是在手机上安装跳转和提交都没问题(前面存储的问题已经解决)。
+
+根据之前的经验，肯定是js在某处解析又错了，找到对应的地方，是一个多行字符串的使用，报错提示不识别字符(反引号)，查阅后发现这是ES6的语法，很可能是webview内核不支持ES6,通过`chrome://inspect`查看到设备weview使用的是39.000版本的chrome内核，在`https://caniuse.com/#search=ES6`查阅，对ES6 Template Literals (Template Strings)的支持是在chrome40.0之后才可以。这也就解释了手机上运行app没有问题的原因，手机系统webview版本比较新，支持这个语法，但pos机上webview版本比较旧。
+
+这个webview版本和Android系统版本没有强制的对应，Android5之后webview成为一个独立的app，可以通过google play进行升级(心疼..1s中)，他的版本对应chrome内核版本。Android4.3之后webview内核切换到chromium，之前是webkit。
+
+解决办法：
+
+1. 修改js,扩展兼容性，手动修改或者工具转换；
+2. pos机具webview应用更新；
+3. 放弃原生webview,使用其他方案。
+```
+
+    //查看系统版本号
+    shell@CB03:/ $ getprop ro.build.version.release
+    5.1.1
+    //查看sdk api
+    shell@CB03:/ $ getprop ro.build.version.sdk
+    22
+```
+## webview的替换方案
+1. CrossWalk-安装包体积会增大很多，相当于加了一个浏览器内核。
+
+2. TBS(腾讯浏览器内核)，附加资源不大300k左右，但是使用的时候会下载内核资源(数十M),如果本机有这个内核则不再下载(腾讯系应用使用时可能已经下载过了)，如果本机没有资源也不联网下载，则使用内置webview。tbs速度比webview要快。
+
+3. tab chrome.依赖于chrome服务，速度上custome tab > open in chrome app > webview。
