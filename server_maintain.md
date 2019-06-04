@@ -67,6 +67,8 @@ Last login: Sun Jan  6 12:24:25 2019 from 106.2.234.179
     service sshd stop 停止服务 
     netstat -antp | grep sshd 查看是否启动22端口
 
+    yum install net-tools(如果没有netstat命令，通过此命令可以工具包安装)
+
 ## 登陆服务器后配置ss
 
 github上还能找到的配置说明如下

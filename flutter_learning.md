@@ -71,3 +71,5 @@ Q：Navigator operation requested with a context that does not include a Navigat
 Q：TextField控件，键盘弹出问题，布局是否resize?
     A：In your Scaffold, set resizeToAvoidBottomPadding property to false.
     默认为true，使得底部边缘上移，相关的控件(依附于bottom的布局)会resize。设置属性为false，则弹出的键盘会遮盖相关控件。注意，上移只会使得受影响控件上移，若想要整体布局上移需要从布局构建方面进行考虑。比如用一个控件包裹一块区域，然后这个区域上移，类似微信聊天输入内容的时候，界面的行为。对于登陆场景，一般都是将输入框的位置放置高位，键盘遮盖不到即可(这也是一种主流适配方案,相对于resize体验更好)，对于Android的键盘设置行为，softinputmode属性等。
+
+Q：rendering.dart中的调试参数设置，不起作用?
