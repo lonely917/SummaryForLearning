@@ -873,7 +873,7 @@ ViewGroup的dispatchTouchEvent主要环节：
 A1. 初始 handled = false
 A2. 如果是down事件，清空之前状态cancelAndClearTouchTargets, resetTouchState,这两个方法具体细节不表，我们主要关心两处FLAG_DISALLOW_INTERCEPT重置和mFirstTouchTarget = null，否则下一步;
 A3. 计算intercepted(根据字面含义，viewgroup是否拦截事件，如果拦截就不会再从子view中寻找处理对象)，计算过程如下
-A3-1. 如果down事件或者mFirstTouchTarget不为空，判断disallowIntercept。disallowIntercept为true，则intercepted为true，否则将onInterceptTouchEvent(ev)赋值为intercepted，此方法默认返回false;
+A3-1. 如果down事件或者mFirstTouchTarget不为空，判断disallowIntercept。disallowIntercept为true，则intercepted为false，否则将onInterceptTouchEvent(ev)赋值为intercepted，此方法默认返回false;
 (如果发生down事件，前面说了会重置一些数据，mFirstTouchTarget必定也为空；如果不是down事件但mFirstTouchTarget为空，对应场景为：之前的down事件没有找到子view处理，也就是A4过程没有找到mFirstTouchTarget)。
 A3-2. 不满足A3-1的判断条件，即这不是一个按下事件并且之前没有给mFirstTouchTarget赋值，则intercepted赋值true;
 A4. 如果intercepted为false,说明不拦截，对于down事件，从子view中寻找处理对象，从上向下遍历，根据触摸区域，会将事件分发给对应区域的子view，并记录能处理的第一个子view，退出分发查找过程，用mFirstTouchTarget标记，对应方法addTouchTarget。否则下一步。
