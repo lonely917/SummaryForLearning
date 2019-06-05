@@ -896,6 +896,23 @@ onTouchEvent方法中默认行为：检测控件的是否满足以下条件之CL
 https://blog.csdn.net/yanbober/article/details/45887547
 http://gityuan.com/2015/09/19/android-touch/
 
+
+事件分发若干解析：
+https://blog.csdn.net/yanbober/article/details/45887547
+https://blog.csdn.net/yanbober/article/details/45912661
+https://blog.csdn.net/yanbober/article/details/45932123
+
+https://blog.csdn.net/lmj623565791/article/details/39102591
+http://gityuan.com/2015/09/19/android-touch/
+
+https://blog.csdn.net/singwhatiwanna/article/details/17339857
+
+https://blog.csdn.net/chunqiuwei/article/details/50164791
+https://blog.csdn.net/chunqiuwei/article/details/41084921
+
+1分析各种常见场景实例加深理解。
+2低版本源码看起来更简单,高版本许多附加判断或者新增安全机制，不好把握重点。
+
 6. findviewbyid的实现
 通过activity的findviewbyid方法->window.fbd->decorview.fbd->view.fbd->view.findViewTraversal（由于decorview是viewgroup，这里实际上调用的是viewgroup的findViewTraversal）
 最终调用viewgroup的findViewTraversal，会对children进行遍历，依此调用view的fbd->findViewTraversal,找到符合id的view并返回，否则返回null。
