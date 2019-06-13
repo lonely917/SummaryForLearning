@@ -577,6 +577,19 @@ fragment对3.0Honeycomb前后支持差异。
 #Android 消息循环机制
 进一步，消息队列阻塞读(确认下一是否阻塞读取，虽然不一定阻塞多久，一般情况下消息应该是连续很多地读不尽的直到程序终止)如何实现的，c、java、Android、系统层面如何做到。
 
+## looper和handler
+
+Looper
+
+Handler
+
+Message
+
+MessageQueue
+
+ThreadLocal
+-使用一个全局的ThreadLocal变量，其中get和set会获取当前线程thread,然后对thread的ThreadLocalMap进行add操作，key为全局的ThreadLocal变量。
+
 ##httpclient legacy使用
 org.apache.http.legacy.jar对应源码
 https://android.googlesource.com/platform/external/apache-http/+/master/src/org/apache/http/
@@ -934,7 +947,7 @@ A1-2. mContentParent赋值[判断mContentParent，为空则mContentParent = gene
 //A1-3. mLayoutInflater.inflate(layoutResID, mContentParent);布局文件实例化，并添加到mContentParent中。
 
 A1-2中mContentParent的生成过程，也就是 generateLayout(mDecor)的详细过程:
-A1-2-1. 首先根据主题选择对应的窗体框架资源，即layoutResource的赋值，布局中一般都要包含一个id为content的framelayout。
+A1-2-1. 首先根据主题选择对应的窗体框架资源，即layoutResource的赋值，布局中一般都要包含一个id为content的framelayout。 //这也是我们通过代码设置activity窗体属性的时候，要在setcontentview之前的原因.
 A1-2-2. 然后mDecor.onResourcesLoaded将对应窗体框架初始化，可以理解为inflate窗体框架资源文件后添加到添加到decorview中(并将实例化的资源root赋值给DecorView中的成员mContentRoot)。
 A1-2-3. 然后赋值contentParent，从window也就是decorview中找id为content的viewgroup，也就是前面描述的framelayout。返回contentParent。
 
@@ -954,7 +967,7 @@ A1-2-2 DecorView的onResourcesLoaded过程如下
 
     //generateLayout(DecorView decor)中关键部分，模板资源加载部分
     mDecor.startChanging();
-    mDecor.onResourcesLoaded(mLayoutInflater, layoutResource);//mLayoutInflater在window初始化的时候赋值，layoutResource在此处代码前面通过主题判断进行资源文件选择
+    mDecor.onResourcesLoaded(mLayoutInflater, layoutResource);//mLayoutInflater在window初始化的时候赋值，即activity的attach方法中，layoutResource在此处代码前面通过主题判断进行资源文件选择
     ViewGroup contentParent = (ViewGroup)findViewById(ID_ANDROID_CONTENT);
     //....
     //....
@@ -984,6 +997,22 @@ root为空，或者不绑定父布局，result赋值资源解析出的view，也
 最后返回result。
 
 `参考链接 https://blog.csdn.net/yanbober/article/details/45970721`
+
+上述的分析过程可以很好地应用到一个listview中item的使用场景：
+一般这个item的布局文件要有一个总的layout包裹，否则inflate的时候可能有各种问题，比如布局中的尺寸设置可能失效。通过最外层包裹，使得最外层尺寸参数可能失效，但是内部尺寸参数得以保持。
+是否失效在于inflate返回result之前是否对tmp设置params即temp.setLayoutParams(params)或者执行root.addView(temp, params)，这里有许多不同场景，根据实际源码并结合params的生成进行分析。
+
+
+又因为listview的addview是默认抛异常的，所以inflate的时候参数配合不能触发parent的addview操作，否则会有异常。`为什么AdapterView禁止addview操作?设计原因?`
+
+
+inflate最终都要执行如下过程：
+1. inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot)，对资源文件进行xml解析，得到parser,进入到下一步；
+2. inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot),首先找到根布局tmp，遍历children，最后返回root或者tmp。
+rInflateChildren是2中会用到的遍历子布局的方法。
+rInflateChildren->rInflate->rInflateChildren递归调用。每个view遍历结束都会执行view的onFinishInflate。
+
+
 
 ```java
    View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot)说明
