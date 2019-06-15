@@ -577,6 +577,19 @@ fragment对3.0Honeycomb前后支持差异。
 #Android 消息循环机制
 进一步，消息队列阻塞读(确认下一是否阻塞读取，虽然不一定阻塞多久，一般情况下消息应该是连续很多地读不尽的直到程序终止)如何实现的，c、java、Android、系统层面如何做到。
 
+## looper和handler
+
+Looper
+
+Handler
+
+Message
+
+MessageQueue
+
+ThreadLocal
+-使用一个全局的ThreadLocal变量，其中get和set会获取当前线程thread,然后对thread的ThreadLocalMap进行add操作，key为全局的ThreadLocal变量。
+
 ##httpclient legacy使用
 org.apache.http.legacy.jar对应源码
 https://android.googlesource.com/platform/external/apache-http/+/master/src/org/apache/http/
@@ -862,7 +875,7 @@ socket的实现原理
 4. ObjectAnimator属性动画
 
 5. view、viewgroup事件分发，父子布局空间传递，重叠空间事件分发。
-基本事件传递(事件如何触发activity的dispatch方法这里不涉及，只包含从activity处理开始后续环节)
+基本事件传递(`事件如何触发activity的dispatch方法这里不涉及`，只包含从activity处理开始后续环节)
 activity的dispatchTouchEvent:
 A1. 如果是down事件，触发onUserInteraction函数，此函数用户重写定义行为,否则直接下一步;
 A2. 调用getWindow().superDispatchTouchEvent，如果其调用返回值为true，则直接返回true，否则下一步；
@@ -876,17 +889,17 @@ A3. 计算intercepted(根据字面含义，viewgroup是否拦截事件，如果�
 A3-1. 如果down事件或者mFirstTouchTarget不为空，判断disallowIntercept。disallowIntercept为true，则intercepted为false，否则将onInterceptTouchEvent(ev)赋值为intercepted，此方法默认返回false;
 (如果发生down事件，前面说了会重置一些数据，mFirstTouchTarget必定也为空；如果不是down事件但mFirstTouchTarget为空，对应场景为：之前的down事件没有找到子view处理，也就是A4过程没有找到mFirstTouchTarget)。
 A3-2. 不满足A3-1的判断条件，即这不是一个按下事件并且之前没有给mFirstTouchTarget赋值，则intercepted赋值true;
-A4. 如果intercepted为false,说明不拦截，对于down事件，从子view中寻找处理对象，从上向下遍历，根据触摸区域，会将事件分发给对应区域的子view，并记录能处理的第一个子view，退出分发查找过程，用mFirstTouchTarget标记，对应方法addTouchTarget。否则下一步。
+A4. 如果intercepted为false,说明不拦截，对于down事件，从子view中寻找处理对象，从上向下遍历，根据触摸区域，会将事件分发给对应区域的子view，并记录能处理的第一个子view，退出分发查找过程，用mFirstTouchTarget标记，对应方法addTouchTarget。否则下一步。 
 A5.判断mFirstTouchTarget，如果为空，交由父类处理，通过dispatchTransformedTouchEvent调用父类的也就是view的dispatchTouchEvent，表示viewgroup自己处理该事件，并将返回值赋给handled。否则下一步
 A6.mFirstTouchTarget不为空，说明前面的down事件在A3-2中找到了处理子view，通过dispatchTransformedTouchEvent调用该子view的dispatchTouchEvent，并将返回值赋给handled。注意子view可能是view也可能是viewgroup。(场景分析：如果是down事件走到这里，说明在A3-1中找到了target，而且已经向其分发过事件，这里实际上通过判断alreadyDispatchedToNewTouchTarget发现之前分发过而且子view能处理，就会直接对handled赋值true，而不会再去调用dispatchTransformedTouchEvent；如果不是down事件走到这里，说明是down事件后续的move和up，则会通过通过dispatchTransformedTouchEvent调用该子view的dispatchTouchEvent，并将返回值赋给handled。)
 A7.返回handled。
 
 View的dispatchTouchEvent主要环节(对代码流程进行了一定扩展以便于描述，更易于理解，实际代码可能比较简练晦涩):
 A1. 初始result为false。(result为最终要返回的数值，表示是否处理了该事件)
-A2. 检查是否设置了onTouchListener,如果设置有则执行A2,否则A3.
-A2. 检测控件是否enable，enable的话才去调用onTouchListener，如果listener的onTouch返回true，则对result进行赋值true。
-A3. 检查result，如果不为true，则执行onTouchEvent,如果该方法返回true，则对result赋值true。
-A4. 返回result
+A2. 检查是否设置了onTouchListener,如果设置有则执行A3,否则A4.
+A3. 检测控件是否enable，enable的话才去调用onTouchListener，如果listener的onTouch返回true，则对result进行赋值true。
+A4. 检查result，如果不为true，则执行onTouchEvent,如果该方法返回true，则对result赋值true。
+A5. 返回result
 
 onTouchEvent方法中默认行为：检测控件的是否满足以下条件之CLICKABLE或者LONGCLICKABLE或者CONTEXT_CLICKABLE，满足之前就会进行事件处理并返回true，否则返回false。在onTouchEvent的的actionUp事件处理中会调用onClick的listener(如果设置了的话)。
 
@@ -913,30 +926,55 @@ https://blog.csdn.net/chunqiuwei/article/details/41084921
 1分析各种常见场景实例加深理解。
 2低版本源码看起来更简单,高版本许多附加判断或者新增安全机制，不好把握重点。
 
+一些场景:
+view设置disable的话，即使设置了onTouchListener也不会调用，进而执行onTouchEvent，在onTouchEvent中默认行为如下：如果按钮可以点击(满足三者中的一个CLICKABLE、LONG_CLICKABLE、CONTEXT_CLICKABLE)，则会消费事件(return true，无论view是否disable)。如果view enable才会在action up的时候performClick。`其中longclick的处理也可以思考下`
+
 6. findviewbyid的实现
 通过activity的findviewbyid方法->window.fbd->decorview.fbd->view.fbd->view.findViewTraversal（由于decorview是viewgroup，这里实际上调用的是viewgroup的findViewTraversal）
 最终调用viewgroup的findViewTraversal，会对children进行遍历，依此调用view的fbd->findViewTraversal,找到符合id的view并返回，否则返回null。
-注意decorview是在setcontentview中初始化的，最后都会用到inflate和addview两个方法，前者从xml得到view(也可能把这个view加到parent中)，后者向父容器添加子view。
+`注意decorview是在setcontentview中初始化的，最后都会用到inflate和addview两个方法，前者从xml得到view(也可能把这个view加到parent中)，后者向父容器添加子view`。
 
 7. setcontentview的实现，布局空间初始化过程，结合activity的创建过程，context的创建等。
-调用getWindow().setContentView,这里的mWindow实际是PhoneWindow对象，  最终到phoneWindow的setContentView。
+调用getWindow().setContentView,这里的mWindow实际是PhoneWindow对象，  最终到phoneWindow的setContentView。`Activity的attach方法中对mWindow进行初始化,这里不分析activity生成过程，以及attach方法调用的时机`
 具体过程：
 A1. 判断mContentParent，为空则installDecor来初始化mContentParent，否则移除mContentParent的所有子view。
 A2. 填充mContentParent内容，通过inflate方法将指定id的xml资源初始化，并添加到mContentParent这个viewgroup中。
-A3. 回调activity的onContentChanged方法，默认行为空。
+A3. 回调activity的onContentChanged方法，默认行为空。`这里的Callback对象cb是在Activity的attach方法中，mWindow初始化后，通过mWindow.setCallback(this)设置的，实际行为是activity的onContentChanged方法`
 
 其中,A1的installDecor具体行为如下：
-A1-1. new一个decorview(继承自framelayout)，[首先判断mDecor，为空，则mDecor = generateDecor(-1)]
+A1-1. new一个decorview(继承自framelayout)，[首先判断mDecor，为空，则mDecor = generateDecor(-1);否则利用已有的decorview设置对应窗体:mDecor.setWindow(this);]
 A1-2. mContentParent赋值[判断mContentParent，为空则mContentParent = generateLayout(mDecor);]
-A1-3. mLayoutInflater.inflate(layoutResID, mContentParent);布局文件实例化，并添加到mContentParent中。
+//A1-3. mLayoutInflater.inflate(layoutResID, mContentParent);布局文件实例化，并添加到mContentParent中。
 
-A1-2中contentParent的生成过程，也就是 generateLayout(mDecor)的详细过程
-首先根据主题选择对应的窗体框架资源，布局中一般都要包含一个id为content的framelayout。
-然后mDecor.onResourcesLoaded将对应窗体框架初始化，也就是mContentRoot，并将其添加到decorview中。
-然后赋值contentParent，从window也就是decorview中找id为content的viewgroup，也就是前面描述的framelayout。
-返回contentParent。
+A1-2中mContentParent的生成过程，也就是 generateLayout(mDecor)的详细过程:
+A1-2-1. 首先根据主题选择对应的窗体框架资源，即layoutResource的赋值，布局中一般都要包含一个id为content的framelayout。 //这也是我们通过代码设置activity窗体属性的时候，要在setcontentview之前的原因.
+A1-2-2. 然后mDecor.onResourcesLoaded将对应窗体框架初始化，可以理解为inflate窗体框架资源文件后添加到添加到decorview中(并将实例化的资源root赋值给DecorView中的成员mContentRoot)。
+A1-2-3. 然后赋值contentParent，从window也就是decorview中找id为content的viewgroup，也就是前面描述的framelayout。返回contentParent。
 
-setcontentview后，界面并没有显示，实际的显示是在ActivityThread.的handleResumeActivity，会调用activity.makeVisible()最终会mDecor.setVisibility(View.VISIBLE)，这里才显示。
+A1-2-2 DecorView的onResourcesLoaded过程如下
+通过final View root = inflater.inflate(layoutResource, null);获得实例化view。
+试着生成mDecorCaptionView，如果生成，则添加到DecorView中，并将root添加到mDecorCaptionView中。
+如果mDecorCaptionView为空，直接通过add将root加到DecorView中。
+
+`setcontentview后，界面并没有显示，实际的显示是在ActivityThread.的handleResumeActivity，会调用activity.makeVisible()最终会mDecor.setVisibility(View.VISIBLE)，这里才显示。`
+
+
+```java
+    // This is the view in which the window contents are placed. It is either
+    // mDecor itself, or a child of mDecor where the contents go.
+    ViewGroup mContentParent;
+
+
+    //generateLayout(DecorView decor)中关键部分，模板资源加载部分
+    mDecor.startChanging();
+    mDecor.onResourcesLoaded(mLayoutInflater, layoutResource);//mLayoutInflater在window初始化的时候赋值，即activity的attach方法中，layoutResource在此处代码前面通过主题判断进行资源文件选择
+    ViewGroup contentParent = (ViewGroup)findViewById(ID_ANDROID_CONTENT);
+    //....
+    //....
+    //generateLayout(DecorView decor)结果返回部分
+    mDecor.finishChanging();
+    return contentParent;
+```
 
 8. button初始化的时候会根据默认的buttonstyle把clickable设置成true。看构造函数即可找到。对应的参数com.android.internal.R.attr.buttonStyle根据主题找到buttonStyle可以看到clickable设定为true。类似的去看textview，对应的文件没有设置clickable，再去看imageview，对应参数为0，直接使用父类view的初始化。
 
@@ -955,8 +993,54 @@ Activity-Window-PhoneWindow-DecorView-布局中的contentid为我们的xml布局
 首先result = root;资源解析得到的为tmp。
 如果root不为空，且不绑定父布局，则会获取其布局参数，并将设置给资源文件得到的tmp；
 root不空，且绑定父布局，调用root.addView，addview的时候会用到root的布局参数。
-root为空，或者不绑定父布局，result赋值资源解析出的view，最后返回。（这里的第二个条件是否是冗余的？）
+root为空，或者不绑定父布局，result赋值资源解析出的view，也就是把上面那个tmp给result。
+最后返回result。
+
 `参考链接 https://blog.csdn.net/yanbober/article/details/45970721`
+
+上述的分析过程可以很好地应用到一个listview中item的使用场景：
+一般这个item的布局文件要有一个总的layout包裹，否则inflate的时候可能有各种问题，比如布局中的尺寸设置可能失效。通过最外层包裹，使得最外层尺寸参数可能失效，但是内部尺寸参数得以保持。
+是否失效在于inflate返回result之前是否对tmp设置params即temp.setLayoutParams(params)或者执行root.addView(temp, params)，这里有许多不同场景，根据实际源码并结合params的生成进行分析。
+
+
+又因为listview的addview是默认抛异常的，所以inflate的时候参数配合不能触发parent的addview操作，否则会有异常。`为什么AdapterView禁止addview操作?设计原因?`
+
+
+inflate最终都要执行如下过程：
+1. inflate(@LayoutRes int resource, @Nullable ViewGroup root, boolean attachToRoot)，对资源文件进行xml解析，得到parser,进入到下一步；
+2. inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot),首先找到根布局tmp，遍历children，最后返回root或者tmp。
+rInflateChildren是2中会用到的遍历子布局的方法。
+rInflateChildren->rInflate->rInflateChildren递归调用。每个view遍历结束都会执行view的onFinishInflate。
+
+
+
+```java
+   View inflate(XmlPullParser parser, @Nullable ViewGroup root, boolean attachToRoot)说明
+   
+    /**
+     * Inflate a new view hierarchy from the specified XML node. Throws
+     * {@link InflateException} if there is an error.
+     * <p>
+     * <em><strong>Important</strong></em>&nbsp;&nbsp;&nbsp;For performance
+     * reasons, view inflation relies heavily on pre-processing of XML files
+     * that is done at build time. Therefore, it is not currently possible to
+     * use LayoutInflater with an XmlPullParser over a plain XML file at runtime.
+     * 
+     * @param parser XML dom node containing the description of the view
+     *        hierarchy.
+     * @param root Optional view to be the parent of the generated hierarchy (if
+     *        <em>attachToRoot</em> is true), or else simply an object that
+     *        provides a set of LayoutParams values for root of the returned
+     *        hierarchy (if <em>attachToRoot</em> is false.)
+     * @param attachToRoot Whether the inflated hierarchy should be attached to
+     *        the root parameter? If false, root is only used to create the
+     *        correct subclass of LayoutParams for the root view in the XML.
+     * @return The root View of the inflated hierarchy. If root was supplied and
+     *         attachToRoot is true, this is root; otherwise it is the root of
+     *         the inflated XML file.
+     */
+     
+```
 
 11. statusbar的处理
 https://developer.android.com/training/system-ui/status#java
