@@ -403,12 +403,29 @@ Activity-ContextThemeWrapper-ContextWrapper-Context
                                     |__getApplicationContext()
                                     |__attachBaseContext(Context base)
 ```
+
 attachBaseContext的引用，这是一个关键操作，涉及到真实getapplicationcontext的具体实现。
 Activity、Application、Service都用到这个操作。
 ContextImpl和ActivityThread两个类不在android sdk系统中，未提示这里的引用，但这两个文件很关键。
-context的实际实现是ContextImpl。
+`context的实际实现是ContextImpl`。
 
-```
+context的使用，可能是一层一层的包装。注意几点：
+1. Activity、Service、Application何时初始化context的，和2、3、4关联
+2. ActivityThread的各种handle和perform，比如handleBindApplication，performLaunchActivity.
+3. LoadedApk的makeApplication
+4. ContextImp的createAppContext
+5. getApplication 和 getApplicationContext
+
+context.getSystemService源码分析；
+LayoutInflater提供了cloneInContext()函数的用处；
+
+context简单解析:
+https://blog.csdn.net/singwhatiwanna/article/details/21829971
+https://blog.csdn.net/chunqiuwei/article/details/50068141
+https://my.oschina.net/youranhongcha/blog/1807189
+
+
+```java
     attachBaseContext(Context)
     Found usages
     Activity.java
@@ -576,19 +593,90 @@ fragment对3.0Honeycomb前后支持差异。
 
 #Android 消息循环机制
 进一步，消息队列阻塞读(确认下一是否阻塞读取，虽然不一定阻塞多久，一般情况下消息应该是连续很多地读不尽的直到程序终止)如何实现的，c、java、Android、系统层面如何做到。
+java的wait和notify底层实现?
+android消息循环中nativePollOnce和nativeWake方法到c++层使用epoll方式，超时阻塞以及唤醒。
 
 ## looper和handler
 
-Looper
+Looper/Handler/Message/MessageQueue
 
-Handler
+对于实现消息循环的线程，需要有一个looper对象，prepare方法进行初始化操作(线程和looper关联，初始化looper的消息队列)，loop方法开启消息循环。
+loop方法基本流程描述：
+从实例变量MessageQueue对象mQueue中取消息(队列的next方法)，取到了message则开始处理消息，循环执行上述过程。如果next返回了message但是message为null，会退出上述循环，这就是Looper的quit机制。message不为null则进行消息处理，这个消息是通过handler发送的，发送后会放到队列里来，message的处理我们可以简单认为调用handler的handleMessage方法，因为这是我们使用handler时最常用的方式。
 
-Message
+loop方法主要流程：
 
-MessageQueue
+1. 通过mQueue.next()获取队列中的消息message
+2. message为null,则函数返回，循环结束，否则执行3。(这里一定是调用了looper的quit方法，才出现这种message为null的情况)
+3. 调用message.tartget.dispatchMessage方法处理消息，即handler得dispatchMessage方法。随后回到1，继续循环。
+
+其中handler的dispatchMessage方法:
+1. 首先判断msg的callBack是否为null,优先使用msg的callBack进行处理(是一个runnable对象)并返回；
+2. 次选地，如果当前handler设置了mCallback(一个handleMessage的接口)，则执行mCallback.handleMessage并返回；
+3. 最后地, 1、2都不满足，则使用handler自身的handleMessage方法处理。
+
+其中1场景，在handler.post(Runnable)的时候会生成一个自带runnable的msg；
+2场景，new Handler的可以指定mCallback。
+3场景，自定义handler类重写handleMessage方法。(比较常见的用法，但会生成新的类)
+
+进一步，上述用到队列的next方法，此方法是阻塞的，直到队列中有消息才返回。
+next方法主要流程:
+
+1. 初始化nextPollTimeoutMillis=0，开始循环：
+2. nativePollOnce(ptr, nextPollTimeoutMillis);表示等待指定时间;
+3. 从队列头开始检查，如果首个消息的时间戳小于等于当前时间，说明此消息可以被执行，返回消息，调整队列;否则计算等待时间(过一段时间再来检查)，跳转2;如果没有消息，nextPollTimeoutMillis = -1，转2(下次等待超时设置为-1，表示没有超时限制，直到有新消息进入队列进行唤醒操作才会结束阻塞)
+
+(上述过程进行了简化，没有考虑同步消息、异步消息、以及消息屏障相关内容)
+
+队列中的消息来源，通过和Looper对象关联的handler进行消息发送：
+首先，handler的创建，分析源码，handler的创建可以指定looper,如果不指定，则会使用当前线程的looper。如果当前线程没有looper的话(没有调用Looper.prepare),则不允许创建，会抛出异常。
+其次，handler发送消息的过程：
+一种是通过sendMessage(sendMessagexxx、sendEmptyMessageXXX等方法)
+另一种是通过post(Runnable runnable)方法；
+两者最终都使用sendMessageAtTime方法，调用handler的enqueueMessage，最终使用相关联looper的消息队列queue的enqueueMessage方法放入到消息队列中。
+消息入队会根据执行时间进行查找合适的位置，根据需要判断是否needWake，如果需要，则进行nativeAwake进行唤醒阻塞的取消息方法。
+
 
 ThreadLocal
--使用一个全局的ThreadLocal变量，其中get和set会获取当前线程thread,然后对thread的ThreadLocalMap进行add操作，key为全局的ThreadLocal变量。
+
+下面是对ThreadLocal的解释
+```java
+/**
+ * Implements a thread-local storage, that is, a variable for which each thread
+ * has its own value. All threads share the same {@code ThreadLocal} object,
+ * but each sees a different value when accessing it, and changes made by one
+ * thread do not affect the other threads. The implementation supports
+ * {@code null} values.
+ *
+ * @see java.lang.Thread
+ * @author Bob Lee
+ */
+```
+简而言之，就是所有的线程可以共用一个threadlocal的对象，通过这个对象保存归属于每个线程自己变量。在不同的线程中通过同一个threadlocal对象的get和set可以获取或者设置对应线程的的待存储变量。
+具体通过get和set方法可以分析实现机制，每个thread对象都有一个本地的ThreadLocalMap(内部有一个Entry数组)，threadlocal的get和set操作，会首先获取当前线程thread，然后以threadlocal对象为key生成entry加入到对应threadlocalmap(set操作)或者从threadlocalmap中获取对应key值的entry，返回value(get操作)。
+
+-Looper中使用了一个全局的ThreadLocal变量(即类型为static final,为所有looper对象共享)，其中get和set会将当前Looper对象存到当前Thread对象的ThreadLocalMap(内部有一个entry数组)中，entry的key为这个static final的ThreadLocal对象，源码中是ThreadLocal<Looper> sThreadLocal，value即当前这个looper对象。
+
+```java
+static final ThreadLocal<Looper> sThreadLocal = new ThreadLocal<Looper>();
+```
+
+Looper的static的prepare方法会对sThreadLocal进行操作，并会判断之前是否设置过looper。
+获取UI线程，主线程。Looper.getMainLooper().getThread()即可。
+判断是否为主线程的两种方法：
+Looper.getMainLooper().getThread() == Thread.currentThread();
+Looper.myLooper() == Looper.getMainLooper()；
+
+子线程中想要更新UI，使用runOnUiThread,实际是通过Activity中的mHandler对象向主looper发送消息，这里使用的handler的post方法。
+
+延伸点：message的obtain复用实现、ThreadHandler、IntentService等的实现。
+
+`不错的参考资料`
+renyugang 消息循环解析，概要介绍、提到HandlerThread、IntentService等
+https://blog.csdn.net/singwhatiwanna/article/details/17361775
+
+更为深入的探讨消息循环，涉及handler、looper、messageQueue、同步分隔栏(postSyncBarrier&removeSyncBarrier)、进入不nativeWake()和nativePollOnce()的底层(c++)实现，epoll机制。
+https://my.oschina.net/youranhongcha/blog/492591
 
 延伸项：
 Messenger(handler中有这个东西，延伸用法,getIMessenger())
