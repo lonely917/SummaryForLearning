@@ -590,6 +590,13 @@ MessageQueue
 ThreadLocal
 -使用一个全局的ThreadLocal变量，其中get和set会获取当前线程thread,然后对thread的ThreadLocalMap进行add操作，key为全局的ThreadLocal变量。
 
+延伸项：
+Messenger(handler中有这个东西，延伸用法,getIMessenger())
+HandlerThread(可以使用handler的thread,自带looper，不需要我们去设计looper)
+IntentService(进一步有IntentService的实现使用了HadlerThread)
+## Handler vs Messenger vs aidl
+
+
 ##httpclient legacy使用
 org.apache.http.legacy.jar对应源码
 https://android.googlesource.com/platform/external/apache-http/+/master/src/org/apache/http/
