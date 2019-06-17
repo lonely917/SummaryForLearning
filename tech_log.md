@@ -394,7 +394,7 @@ https://blog.csdn.net/jiujiedexiaoming/article/details/76520376
 # so库和abi架构
 https://www.cnblogs.com/Bugtags2015/p/5578541.html
 
-#Context探究
+#Context源码分析
 ```
 Activity-ContextThemeWrapper-ContextWrapper-Context
                                     |            |__abstract getApplicationContext()
@@ -403,18 +403,38 @@ Activity-ContextThemeWrapper-ContextWrapper-Context
                                     |__getApplicationContext()
                                     |__attachBaseContext(Context base)
 ```
+`Activity Service Application 与 ContextWrapper Context ContextImpl这样层次设计的目的?代理，包装，设计缘由?`
 
-attachBaseContext的引用，这是一个关键操作，涉及到真实getapplicationcontext的具体实现。
+attachBaseContext的引用，这是一个关键操作，涉及到真实getapplicationcontext的具体实现。Activity,Service,Application实例创建后，最终都会通过attachBaseContext关联一个contextImpl对象。可以从ActivityThread出发进行分析：
+- performLaunchActivity -> 
+ContextImpl.createActivityContext 创建ContextImpl的实例对象，通过activity的attach方法最终调用attachBaseContext，将activity关联上contextImpl.->
+activity.onCreate会被调用
+
+
+- handleCreateService ->
+ ContextImpl.createAppContext -> 
+ service.attach 将service关联上contextImpl.->
+ service的onCreate会被调用
+
+
+- handleBindApplication -> 
+loadedapk.makeApplication -> 
+ContextImpl.createAppContext创建ContextImpl的实例对象->
+mActivityThread.mInstrumentation.newApplication(cl, appClass, appContext)创建Application对象->
+newApplication方法中通过app.attach 进行application和ContextImpl的关联->
+instrumentation.callApplicationOnCreate(app);最终调用application的onCreate.
+
+
 Activity、Application、Service都用到这个操作。
 ContextImpl和ActivityThread两个类不在android sdk系统中，未提示这里的引用，但这两个文件很关键。
 `context的实际实现是ContextImpl`。
 
 context的使用，可能是一层一层的包装。注意几点：
-1. Activity、Service、Application何时初始化context的，和2、3、4关联
+1. Activity、Service、Application何时初始化context的 => 和2、3、4关联
 2. ActivityThread的各种handle和perform，比如handleBindApplication，performLaunchActivity.
 3. LoadedApk的makeApplication
-4. ContextImp的createAppContext
-5. getApplication 和 getApplicationContext
+4. ContextImpl的createSystemContext、createSystemUiContext、createAppContext、createActivityContext，被调用的创建ContextImpl的方法。
+5. Activity的getApplication 和 getApplicationContext最终返回应该是一样的，都是唯一的Application的对象。(?`Application对象只能有一个吗？`)
 
 context.getSystemService源码分析；
 LayoutInflater提供了cloneInContext()函数的用处；
@@ -596,7 +616,7 @@ fragment对3.0Honeycomb前后支持差异。
 java的wait和notify底层实现?
 android消息循环中nativePollOnce和nativeWake方法到c++层使用epoll方式，超时阻塞以及唤醒。
 
-## looper和handler
+## looper和handler源码分析
 
 Looper/Handler/Message/MessageQueue
 
@@ -808,10 +828,11 @@ ApplicationThread
 ActivityThread
    H handleMessage
 
-``注意api26和23已经有了差异，部分Native和Proxy过失被移除，简化了设计``
+``注意api26和23已经有了差异，部分Native和Proxy过时被移除，简化了设计``
 
 ## Activity的startActivity和 getApplicationContext.StartActivity()区别?
 最后都是通过Instrumentation 的execStartActivity，有什么区别，对于后者进行分析，涉及到baseContext的赋值，在app启动阶段。
+解答：最终都要通过instrumentation对象进行execStartActivity方法，前者是activity创建的时候进行attach来关联的，关联的对象就是ActivityThread中的instrumentation；后者通过mMainThread.getInstrumentation()获取对象，两者是同一个对象。
 
 ##synchronized 锁的是什么，具体底层的实现，延申到各种锁以及线程同步问题
 
