@@ -472,6 +472,25 @@ Binder与AMS流程。AMS负责四大组件生命周期。
 https://blog.csdn.net/bfboys/article/details/52564531
 https://www.jianshu.com/p/e69d22ec0582
 
+## ServiceManager、AMS、XXMS、Binder相关
+这是一些很好的文章，综合起来看，多看几遍：
+binder系列文章开篇,内有一个提纲，从系统启动到服务注册，从c++到java。
+http://gityuan.com/2015/10/31/binder-prepare/
+
+侯亮系列，binder开篇，binder以及servicemanager
+https://my.oschina.net/youranhongcha/blog/149575
+
+renyugang,这篇文章介绍了另外两篇，比较有深度的两篇。
+https://blog.csdn.net/singwhatiwanna/article/details/19756201
+
+1. http://www.cnblogs.com/innost/archive/2011/01/09/1931456.html(邓平凡，阿拉神农)
+
+2. http://blog.csdn.net/universus/article/details/6211589
+
+其余的比较初级
+http://liuwangshu.cn/framework/component/1-activity-start-2.html
+
+
 #Toast工具类
 ## DisplayToast
 静态内部类实现的单例模式
