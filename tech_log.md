@@ -483,13 +483,76 @@ https://my.oschina.net/youranhongcha/blog/149575
 renyugang,这篇文章介绍了另外两篇，比较有深度的两篇。
 https://blog.csdn.net/singwhatiwanna/article/details/19756201
 
-1. http://www.cnblogs.com/innost/archive/2011/01/09/1931456.html(邓平凡，阿拉神农)
+1. http://www.cnblogs.com/innost/archive/2011/01/09/1931456.html(邓平凡?，阿拉神农)
 
 2. http://blog.csdn.net/universus/article/details/6211589
 
 其余的比较初级
 http://liuwangshu.cn/framework/component/1-activity-start-2.html
 
+## Android binder机制
+从c++到java
+https://blog.csdn.net/luoshengyang/article/details/6618363
+System Server进程启动众多服务进程并addservice，这些服务进程会在ServiceManager中进行注册。
+许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
+通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
+jni是可以实现双向操作的，java访问navtive,navtive访问java。
+
+## binder机制原理
+java层
+https://blog.csdn.net/luoshengyang/article/details/6642463(内含一个binder学习路线，若干篇老罗出品，依次学习)
+c++层若干篇
+https://blog.csdn.net/luoshengyang/article/details/6618363
+
+## binder概述
+
+## 系统启动 概述
+长摁电源键后，系统启动(这里不涉及上电后引导区加载等过程，直接从系统的第一个进程开始分析)
+
+1. init进程启动，用户空间的第一个进程。具体文件system\core\init\init.c,main函数启动后会解析init.rc脚本文件。
+2. 解析init.rc脚本，init_parse_config_file("/init.rc")生成service_list和action_list。
+3. 构建action_queue，可以理解为init进程要执行的一些动作。
+4. 逐步执行各种行为，可以理解为开启各种进程。(首先是core类型服务，然后启动main类型服务)
+5. 无限循环，等待其他进程发来的信号，响应的执行行为。
+6. 服务对应的进程挂掉后会给init进程发送信号，init进程的回调行为是尝试restart服务。
+
+4中涉及的core服务代表举例:console(/system/bin/sh), servicemanager(/system/bin/servicemanager) ;
+4中涉及的main服务代表举例:zygote(/system/bin/app_process),media(/system/bin/mediaserver),netd(/system/bin/netd);
+
+7. ServiceManager服务进程启动，启动后最终进入loop状态(binder_loop),涉及内核交互,可以理解为从任务队列里取任务并执行，没有任务会进入阻塞状态等待唤醒。
+
+8. Zygote进程启动，这是Android应用层进程的母体，其中会调用start_system_server开启SystemServer进程，而后进程进入loop状态，通过socket监听信号，执行动作。
+(zygote进程创建时会初始化binder相关结构，开启binder监听线程等工作)
+
+9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，systemUI线程等，启动webview进程，最后开会开启桌面launcher。
+
+10. 开启桌面会启动新的Activity,首先会创建对应的进程，启动ActivityThread，然后scheduleLaunchActivity开启Activity。
+(开启新进程时通过socket和Zygote通信然后创建的新进程,新进程加载的ActivityThread的main方法，启动Activity是利用跨进程binder通信来实现的，进程内部使用handler发消息最终scheduleLaunch方法被调用)
+
+
+## 系统启动 init过程分析
+
+## 系统启动 Zygote进程分析
+
+## 系统启动 ServiceManager进程分析
+
+## 系统启动 SystemServer进程分析
+
+## 系统启动 AMS服务开启
+
+## Android中进程的创建
+
+## 系统启动过程中binder知识点
+
+## Activity的开启
+
+## Service的开启
+
+## ContentProvider
+
+## BrocastReceiver
+
+## Intent原理
 
 #Toast工具类
 ## DisplayToast
@@ -952,13 +1015,7 @@ https://en.wikipedia.org/wiki/Decorator_pattern
 decorator作为subclass的一种替换方案。
 contex的具体实现，一些组件的实现使用了装饰器模式。
 
-## Android binder机制
-从c++到java
-https://blog.csdn.net/luoshengyang/article/details/6618363
-System Server进程启动众多服务进程并addservice，这些服务进程会在ServiceManager中进行注册。
-许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
-通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
-jni是可以实现双向操作的，java访问navtive,navtive访问java。
+
 
 ## intent filter 作用原理
 启动标识，launcher程序会用到，用于解析决定图标点击后启动哪个应用的哪个activity
@@ -972,11 +1029,7 @@ http://liuwangshu.cn/framework/pms/1-packageinstaller-initialize.html
 http://liuwangshu.cn/framework/pms/2-packageinstaller-apk.html
 http://www.cnblogs.com/Jax/p/6910745.html
 
-## binder机制原理
-java层
-https://blog.csdn.net/luoshengyang/article/details/6642463
-c++层若干篇
-https://blog.csdn.net/luoshengyang/article/details/6618363
+
 
 ##Android 学习路线
 renyugang https://blog.csdn.net/singwhatiwanna/article/details/49560409
