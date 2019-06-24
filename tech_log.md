@@ -527,7 +527,7 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，systemUI线程等，启动webview进程，最后开会开启桌面launcher。
 
 10. 开启桌面会启动新的Activity,首先会创建对应的进程，启动ActivityThread，然后scheduleLaunchActivity开启Activity。
-(开启新进程时通过socket和Zygote通信然后创建的新进程,新进程加载的ActivityThread的main方法，启动Activity是利用跨进程binder通信来实现的，进程内部使用handler发消息最终scheduleLaunch方法被调用)
+(开启新进程时通过socket和Zygote通信然后创建的新进程,新进程加载的ActivityThread的main方法，启动Activity是利用跨进程binder通信来实现的，进程内部调用scheduleLaunchActivity使用handler发消息最终handleLaunchActivity方法被调用，Activity的attach方法触发，最终onCreate被调用)
 
 
 ## 系统启动 init过程分析
@@ -553,6 +553,97 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 ## BrocastReceiver
 
 ## Intent原理
+
+## 窗口启动
+
+## IMS(InputManagerService)
+
+1. 启动IMS:
+SystemServer -> 
+    startOtherServices -> 
+        inputManager = new InputManagerService(context)
+        ServiceManager.addService(Context.INPUT_SERVICE, inputManager);
+        inputManager.start();
+
+2. InputManagerService实例化过程:
+    设置InputManagerService的handler关联"android.display"线程(DisplayThread);
+    创建InputDispatcher和InputReader本地对象。
+
+3. IMS.start过程：
+    通过native调用开启两个线程，InputReader和InputDispatcher。(java层使用android.display线程处理消息?)
+
+4. Input事件流程：
+`这里是从屏幕触摸到ViewRootImp处理，最终如何从viewrootImp到Activity的呀？`
+`https://blog.csdn.net/singwhatiwanna/article/details/50775201 这个是解答`
+
+```
+    屏幕触摸-硬件驱动-信号和事件
+    InputReader不断获取由驱动产生的按键事件，传给InputDispatcher。
+    InputDispatcher线程从队列取事件，并进行事件传递，派发到合适的窗口。这里会从SystemServer和目标进程进行跨进程通信，InputDispatcher通过socket和远程进程通信(异步非阻塞)。
+        -publishKeyEvent->
+            -mChannel->sendMessage(&msg);
+        收到消息返回调用receiveFinishedSignal进行处理
+
+    目标APP的UI主线程(android.ui线程)looper循环，处理派发到窗口的事件,处理完毕后socket通信发送信号给InputDispatcher。
+        -nativePollOnce
+            -Looper::pollInner
+                -InputConsumer.consume
+                    -....
+                        -viewrootImp.deliverInputEvent
+                        -finishInputEvent
+                            -sendFinishedSignal
+                                -mChannel->sendMessage(&msg);
+```
+
+## WMS(WindowManagerService)
+1. 启动WMS
+SystemServer->
+    startOtherServices->
+        wm = WindowManagerService.main(context, inputManager,
+                    mFactoryTestMode != FactoryTest.FACTORY_TEST_LOW_LEVEL,
+                    !mFirstBoot, mOnlyCore);
+        ServiceManager.addService(Context.WINDOW_SERVICE, wm);
+        wm.displayReady();
+        wm.systemReady();
+
+2. WMS实例化(main方法)
+```java
+    public static WindowManagerService main(final Context context,
+            final InputManagerService im,
+            final boolean haveInputMethods, final boolean showBootMsgs,
+            final boolean onlyCore) {
+        final WindowManagerService[] holder = new WindowManagerService[1];
+        DisplayThread.getHandler().runWithScissors(new Runnable() {
+            @Override
+            public void run() {
+                holder[0] = new WindowManagerService(context, im,
+                        haveInputMethods, showBootMsgs, onlyCore);
+            }
+        }, 0);
+        return holder[0];
+    }
+```
+
+ 利用DisplayThread.getHandler().runWithScissors来调用wms初始化，这里注意两点：初始化过程是在display线程执行，当前线程会等待执行结束(同步操作，runWithScissors特性)，再进行返回。
+ `runWithScissors实现，源码学习一下`
+ 
+ WMS实例化：其中调用initPolicy方法，该方法会利用runWithScissors在UIThread中执行mPolicy.init的过程,UiThread.getHandler().runWithScissors,阻塞操作,等待执行后返回本线程再继续走.
+
+ 3. 涉及线程
+ system_server主线程, “android.display”线程, “android.ui”线程
+ `这里的UI线程和app进程中的UI线程?UIThread的单例模式?跨进程?android.ui何时启动的`
+
+ 4. 调用流图
+
+ SystemServer->
+ WMS.main->
+        new WMS[android.display]->
+        initPolicy[android.display]->
+            mPolicy(PhoneWindowManager对象).init[android.ui]->
+            <-
+        <-
+WMS.displayReady
+WMS.systemReady
 
 #Toast工具类
 ## DisplayToast
