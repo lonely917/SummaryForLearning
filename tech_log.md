@@ -557,14 +557,61 @@ system    261   1     1596   384   ffffffff 00000000 S /system/bin/servicemanage
 system    881   300   1140772 66924 ffffffff 00000000 S system_server
 u0_a99    19200 300   1133264 108280 ffffffff 00000000 S com.aisino.xfb.pay
 ```
-分析：
+分析结论：
 init为pid为1 ppid为0，servicemanager父进程为init(ppid=1),zygote父进程为init(ppid=1);
 servicemanager进程先于zygote进程创建(pid更小)
 
 系统进程system_server由zygote孵化
-普通应用com.aisino.xfb.pay由zygote孵化
+普通应用进程com.aisino.xfb.pay由zygote孵化(是通过socket给zygote发送信号创建的进程)
 
-## 系统启动 Zygote进程分析
+## 系统启动 Zygote进程分析(trace dump监测应用变化?)
+init.rc脚本文件中描述的服务之一，init进程通过service_start启动的服务，顾名思义，zygote主要功能就是孵化新的进程。
+zygote工作流程(frameworks\base\cmds\app_process\App_main.cpp)：
+1 构造appruntime,设置进程名字zygote.
+2 runtime.start("com.android.internal.os.ZygoteInit",
+                startSystemServer ? "start-system-server" : "");
+对2的过程描述：
+1 初始化jni环境(其中dlopen会加载libdvm.so或libart.so)
+2 启动虚拟机startVm
+3 注册JNI函数startReg
+4 转移到java层ZygoteInit的main方法 
+
+对4的描述：
+1 如果传参有"start-system-server"、判定startSystemServer=true
+2 registerZygoteSocket(socketName); socketName为"zygote",对应会去从环境里解析出"ANDROID_SOCKET_zygote"文件描述符，生成LocalServerSocket对象sServerSocket，用于后续接收指令。
+3 preload,预加载类、资源等等
+```java
+        preloadClasses();
+        preloadResources();
+        preloadOpenGL();
+        preloadSharedLibraries();
+        preloadTextResources();
+```
+4 如果startSystemServer为true则调用startSystemServer(abiList, socketName);
+5 runSelectLoop开启循环
+    5.1 针对指令最终会调用peers.get(i).runOnce()->Zygote.forkAndSpecialize->nativeForkAndSpecialize->底层fork
+    5.2 pid=0表示子进程，则执行handleSystemServerProcess->RuntimeInit.zygoteInit执行各种初始化最后抛出异常(MethodAndArgsCaller类型)
+6 捕获异常执行caller.run()
+
+注意：其中4为true，则开启system_server,父进程也就是zygote进入循环，子进程system_server进程执行中实际会抛出异常，到6，然后caller.run开启了systemserver的main方法。
+同样地，循环监听过程收到信号后，fork的新进程也是这个流程，caller.run调用main方法。
+
+其中5.2环节中RuntimeInit.zygoteInit ->nativeZygoteInit 通过本地方法最终执行c++层 gCurRuntime->onZygoteInit()，这里有binder线程池开启过程，所有zygote产生的新进程都会在这个环节初始化binder线程池。
+
+其中5，ams开启线程会使用Process.start的方法，实际就是通过套接字向zygote发送开启进程的信号，一般传过来的是"android.app.ActivityThread"这个进程描述。
+
+```c++
+virtual void onZygoteInit()
+    {
+        // Re-enable tracing now that we're no longer in Zygote.
+        atrace_set_tracing_enabled(true);
+
+
+        sp<ProcessState> proc = ProcessState::self();
+        ALOGV("App process: starting thread pool.\n");
+        proc->startThreadPool();
+    }
+```
 
 ## 系统启动 ServiceManager进程分析
 
