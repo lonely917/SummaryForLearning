@@ -506,6 +506,7 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 
 ## binder概述
 
+
 ## 系统启动 概述
 长摁电源键后，系统启动(这里不涉及上电后引导区加载等过程，直接从系统的第一个进程开始分析)
 
@@ -531,6 +532,37 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 
 
 ## 系统启动 init过程分析
+Android系统底层基于Linux Kernel，内核启动过程会建立用户空间的第一个进程即init进程，pid为1。文件位置 /system/core/init/Init.cpp，main方法开启。
+1.一些初始化设置(如文件属性、内核log、属性服务，初始化epoll功能、初始化子进程退出处理函数、启动属性服务器);
+2.解析"init.rc"文件,init_parse_config_file("/init.rc");
+3.构建action_queue，可以理解为init进程要执行的一些动作。这里利用action_for_each_trigger、queue_builtin_action多次处理，生成合适的执行顺序。
+4.while循环，执行队列中的指令来开启服务、检测是否需要重启某些服务、监听子进程的退出信号等。
+    4.1 execute_one_command 取指令执行服务对应的方法
+    4.2 service_start 遍历2中得到的服务列表，根据需要进行重启服务
+
+其中4中会按照一定顺序执行开启各种服务进程，有core类型、main类型，比如servicemanager属于前者，zygote属于后者。
+
+ps查看进程系统情况如下：
+
+```
+shell@CB03:/ $ ps | grep init
+root      1     0     1000   640   ffffffff 00000000 S /init
+
+shell@CB03:/ $ ps | grep zygote
+root      300   1     938404 11380 ffffffff 00000000 S zygote
+shell@CB03:/ $ ps | grep servicemanager
+system    261   1     1596   384   ffffffff 00000000 S /system/bin/servicemanager
+
+1|shell@CB03:/ $ ps | grep system_server
+system    881   300   1140772 66924 ffffffff 00000000 S system_server
+u0_a99    19200 300   1133264 108280 ffffffff 00000000 S com.aisino.xfb.pay
+```
+分析：
+init为pid为1 ppid为0，servicemanager父进程为init(ppid=1),zygote父进程为init(ppid=1);
+servicemanager进程先于zygote进程创建(pid更小)
+
+系统进程system_server由zygote孵化
+普通应用com.aisino.xfb.pay由zygote孵化
 
 ## 系统启动 Zygote进程分析
 
@@ -540,30 +572,39 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 
 ## 系统启动 AMS服务开启
 
+
 ## Android中进程的创建
 
 ## 系统启动过程中binder知识点
 
-## Activity的开启
+## APP启动
 
-## Service的开启
+## APP安装
+
+## Activity
+
+## Service
 
 ## ContentProvider
 
 ## BrocastReceiver
 
-## Intent原理
+## Intent
 
-## 窗口启动
+## Window建立
+
 
 ## IMS(InputManagerService)
 
 1. 启动IMS:
+
+```
 SystemServer -> 
     startOtherServices -> 
         inputManager = new InputManagerService(context)
         ServiceManager.addService(Context.INPUT_SERVICE, inputManager);
         inputManager.start();
+```
 
 2. InputManagerService实例化过程:
     设置InputManagerService的handler关联"android.display"线程(DisplayThread);
@@ -574,7 +615,7 @@ SystemServer ->
 
 4. Input事件流程：
 `这里是从屏幕触摸到ViewRootImp处理，最终如何从viewrootImp到Activity的呀？`
-`https://blog.csdn.net/singwhatiwanna/article/details/50775201 这个是解答`
+`https://blog.csdn.net/singwhatiwanna/article/details/50775201 这个是解答，其中Thread.dumpStack是一个很好的分析工具`
 
 ```
     屏幕触摸-硬件驱动-信号和事件
@@ -594,9 +635,28 @@ SystemServer ->
                             -sendFinishedSignal
                                 -mChannel->sendMessage(&msg);
 ```
+进一步viewrootImp.deliverInputEvent的处理
+
+-viewrootImp.deliverInputEvent
+    -InputStage.deliver
+        -InputStage.onDeliverToNext
+            -InputStage.deliver
+                -ViewPostImeInputStage.onProcess
+                    -ViewPostImeInputStage.processPointerEvent
+                        -ViewPostImeInputStage.processPointerEvent
+                            -view.dispatchPointerEvent
+                                -decorview.dispatchTouchEvent
+                                    -wc.dispatchTouchEvent(即windowcallback的dispatchtouchevent方法,是activity attach方法的时候对mWindow进行设置的)
+                                        -Activity.dispatchTouchEvent(后续正常分发)
+                                            -PhoneWindow.superDispatchTouchEvent
+                                                -PhoneWindow$DecorView.superDispatchTouchEvent
+                                                    -ViewGroup.dispatchTouchEvent(ViewGroup和view按键事件传递)
 
 ## WMS(WindowManagerService)
+
 1. 启动WMS
+
+```
 SystemServer->
     startOtherServices->
         wm = WindowManagerService.main(context, inputManager,
@@ -605,8 +665,10 @@ SystemServer->
         ServiceManager.addService(Context.WINDOW_SERVICE, wm);
         wm.displayReady();
         wm.systemReady();
+```
 
 2. WMS实例化(main方法)
+
 ```java
     public static WindowManagerService main(final Context context,
             final InputManagerService im,
