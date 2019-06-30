@@ -615,9 +615,104 @@ virtual void onZygoteInit()
 
 ## 系统启动 ServiceManager进程分析
 
+
 ## 系统启动 SystemServer进程分析
+1. zygote启动后首先孵化出SystemServer进程
+2. 新进程中最终执行SystemServer的入口函数main
+下面分析systemserver.main关键流程:
+main函数中直接执行new SystemServer().run()具体我们看run的主要流程：
+
+```java
+System.loadLibrary("android_servers");// Initialize native services.
+createSystemContext();// Initialize the system context.
+startBootstrapServices();//各种相关服务    ams的setSystemProcess会被调用，向sm注册各种binder服务
+startCoreServices();//各种相关服务
+startOtherServices();//各种相关服务 ims wms dms会注册 ams的systemReady中会启动桌面应用
+Looper.loop();//消息循环
+```
+
+createSystemContext();
+    [
+        利用ActivityThread.systemMain()生成AT对象
+        进一步对mSystemContext以及mSystemUIContext设置主题相关
+    ]
+...
+startBootstrapServices();
+    [
+        //注意下述startservice都是SystemServiceManager的对象的方法，不同于ServiceManger(我们使用ServiceManger的addservice和findservice来进行aidl相关的服务注册和查询)
+        Installer installer = mSystemServiceManager.startService(Installer.class);//开启installer服务，这个是SystemService子类，非AIDL调用的那种服务，比如SMS、AMS、PMS等。
+        ...
+        mActivityManagerService = mSystemServiceManager.startService(
+                ActivityManagerService.Lifecycle.class).getService(); //开启ActivityManagerService.Lifecycle服务，也是SystemService子类
+        ...
+        PackageManagerService启动//aidl服务
+        mActivityManagerService.setSystemProcess(); //设置ams，其中会调用ServiceManager进行注册各种binder,包括AMS自身。
+    ]
+startCoreServices();
+    [
+
+    ]
+startOtherServices();
+    [
+        各种mSystemServiceManager.startService(xxxx);//SystemService子类
+        各种ActivityManager.addService(xxxx);//binder服务
+        此环节这里会有IMS、WMS、DisplayManagerService、NetworkManagerService等的相关启动和设置
+        mActivityManagerService.systemReady(Runnable,TimingsTraceLog)
+            [
+                执行runnable()
+                    [
+                        ...
+                        startSystemUi(context, windowManagerF);//开启com.android.systemui.SystemUIService服务
+                            [
+                                SystemUIService.onCreate
+                                    [
+                                        ((SystemUIApplication) getApplication()).startServicesIfNeeded()
+                                        [
+                                            `资源文件如何搜寻，比如config_systemUIServiceComponents具体在哪里?`
+                                            获取names数组(R.array.config_systemUIServiceComponents);(比如com.android.systemui.SystemBars、Recents、PowerUI等，都是SystemUI的子类)
+                                            startServicesIfNeeded(names);
+                                            [
+                                                循环实例化service，这里的service不同于Service组件，只是SystemUI的子类
+                                                mServices[i].start(); //开启各个SystemUI组件服务
+                                                `具体选择一两个service看下执行过程、如何关联到界面UI绘制?`
+                                                如果mBootCompleted则mServices[i].onBootCompleted调用;
+                                            ]
+                                        ]
+                                    ]
+
+                            ]
+                        ...
+                    ]
+                startHomeActivityLocked(currentUserId, "systemReady");//开启桌面
+            ]
+    ]
+
+辅助*通过ps -T pid可以查看进程下的线程：
+system_server进程下有很多线程：
+system_server
+android.bg
+android.ui
+android.io
+android.display
+CpuTracker
+ActivityManager(若干个)
+binder_xxx(若干个)
+InputDispatcher
+InputReader
+AccountManagerService
 
 ## 系统启动 AMS服务开启
+
+ams的初始化以及注册过程：
+SystemServer.main()->run()->startBootstrapServices->
+     mSystemServiceManager.startService(ActivityManagerService.Lifecycle.class).getService();//获取AMS对象，实例化过程也会开启ActivityManagerService线程，一个ServiceThread.
+     mActivityManagerService.setSystemProcess->ServiceManager.add(name, this);//向SM注册AMS
+
+实例化细节：
+
+ams中关于Activity的参数：
+
+ams和wms的关系：
 
 
 ## Android中进程的创建
@@ -641,7 +736,11 @@ virtual void onZygoteInit()
 ## Window建立
 
 
+
 ## IMS(InputManagerService)
+
+## 系统桌面服务 
+
 
 1. 启动IMS:
 
@@ -753,6 +852,24 @@ SystemServer->
         <-
 WMS.displayReady
 WMS.systemReady
+
+5. wms中涉及的一些线程
+SystemServer主线程、display线程、android.ui线程。
+DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
+UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
+HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
+
+## aidl 源码版本演进
+几个关键类
+ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
+ActivityManagerProxy(AMN的内部类，位置ActivityManagerNative.java)
+IApplicationThread接口(IApplicationThread.java)
+IActivityManager接口(IActivityManager.java)
+
+7.1源码framework目录还有代理类实现。
+8.2源码中ATN和AMN被标记为过时的，并且移除了ATP和AMP；同时移除了IApplicationThread.java和IActivityManager.java两个定义接口的文件，但是添加了IActivityMananger.aidl和IApplicationThread.aidl两个文件用于辅助生成aidl相关类。
+binder的调用本质没有改变，之前是手动写java层native和proxy代理类，后来使用aidl文件来统一生成相关的中间类。
+`生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
 
 #Toast工具类
 ## DisplayToast
@@ -1509,6 +1626,9 @@ math.net结合zedgraph进行绘制，一种数学分析+曲线绘制的组合。
 查找方法的具体实现 ctrl+alt+B (find implementation)
 查找引用 alt+F7， ctrl+shift+alt+F7  (ctrl+鼠标点击)
 跳转到变量定义或者方法原型(ctrl+鼠标点击)
+
+添加书签 F11、Ctrl+F11
+查看书签列表 Shit+F11
 
 ## android studio & gradle
 1. 项目加载过程
