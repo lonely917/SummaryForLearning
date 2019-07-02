@@ -1280,7 +1280,13 @@ binder的调用本质没有改变，之前是手动写java层native和proxy代�
 `生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
 
 ## APP安装
-
+PMS提供包管理服务
+installXXX->
+    handler发送INIT_COPY消息处理->
+        handle
+            handler发送MCS_BOUND消息处理->
+                handle
+                    .....
 
 ## Activity
 
