@@ -1267,6 +1267,40 @@ DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
 UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
 HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
 
+
+## ams wms system_server一些知识点
+AMS负责四大组件以及进程管理,各种record和stack。
+WMS负责窗口管理，会跟APP、SurfaceFlinger交互，实现UI呈现。
+SF负责UI绘制,SF在一个单独的进程，也是init开启的子进程，AMS和WMS都在system_server进程中，对应若干个工作线程。
+
+Activity的一些成员变量:
+mWindow - PhoneWindow
+mWindowManager - WindowManagerImpl
+mDecor - View  onResume之后展示的视图
+
+ViewRootImpl:
+    mWindowSession - IWindowSession (进程对应的session代理对象，和wms通信)
+    mWindow - IWindow.Stub 
+
+WindowState:
+    mSession - Session(binder服务端)
+    mClient - IWindow(ViewRootImpl.W的代理对象，对应着ViewRootImpl的W类型对象)
+    mSurfaceSession - 和SF通信
+
+Session:
+    mSurfaceSession - 和SF通信
+
+Binder服务端： 
+WMS/Session/ActivityRecord.Token(system_server进程)
+ViewRootImpl.W(app进程)
+SF(SF进程)
+
+一个activity对应一个窗口，一个窗口对应一个ViewRootImpl对象
+一个app进程有唯一的WindowManagerGlobal对象
+一个app进程对应相同的session
+Activity最终视图是decorview
+ViewRootImpl用于DecorView和wms的交互，每次wm.addview会创建一个VRI对象
+
 ## aidl 源码版本演进
 几个关键类
 ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
