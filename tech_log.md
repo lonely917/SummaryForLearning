@@ -873,7 +873,9 @@ systemserver中开启系统UI:
 ```
 
 桌面开启的调用链:
-    ams.systemReady->ams.startHomeActivityLocked->ActivityStarter.startHomeActivityLocked->as.startActivityLocked `具体如何开启launcher的启动activity?`
+    ams.systemReady->ams.startHomeActivityLocked->ActivityStarter.startHomeActivityLocked->as.startActivityLocked 
+    `具体如何开启launcher的启动activity?`
+    intent的显示调用和隐式调用，显示可以指定对应activity，隐式需要解析出对应的activity列表。
 
 ams中的handler：
 AMS.mUiHandler - UiHandler - android.ui线程
@@ -891,6 +893,7 @@ wms:AppWindowToken;Task;TaskStack;
 
 
 ## Android中进程的创建
+
 新进程产生的场景：
 1. 系统启动，init进程开启后，根据init.rc文件启动一系列子进程。
 2. zygote进程启动后，开启system_server进程，并执行runSelectLoop进入socket监听状态。
@@ -990,10 +993,127 @@ Laucher启动
 launcher -> app
 过程类似`Android中进程的创建`章节中先启动新进程再开启Activity的情况。
 
+1.点击桌面app
+2.launcher 进行本地startActivity操作，通过binder调用向system_server发起远程调用startActivity的请求，具体是ams来实现这个过程
+3.system_server通过socket向Zygote进程发送请求，要求创建新进程
+4.zygote进行分裂，产生新APP进程，执行ActivityThread的main方法
+5.新APP进程启动后要求attachApplication，也是binder调用转到system_server进程
+6.system_server进程最终会通过binder调用要求新APP进程执行scheduleLaunchActivity操作
+7.新App进程执行scheduleLaunchActivity，通过向主线程handler发送消息触发相关操作
+8.新APP进程主线程执行handleLaunchActivity
+9.目标Activity会被创建，最终onCreate被回调
+
+紧接着思考：
+    window的建立
+    ui的绘制
+
 ## Window建立
 
 1. 窗口的建立
 2. view的绘制
+
+WMS负责处理窗口相关，wms通过向android.display线程的handler发送不同消息，display线程进行对应的处理。
+下面列举几个:
+
+DO_TRAVERSAL
+ADD_STARTING //添加启动窗口
+REMOVE_STARTING //移除启动窗口
+FINISHED_STARTING //完成启动
+
+处理行为见WMS.H的handleMessage方法
+
+
+startingwindow的创建过程：
+
+背景:
+源进程通过startActivity开启新应用，首先通过binder调用system_server中ams的startactivity,
+ams通过as、ass等执行到ActivityStack.startActivityLocked方法:
+
+流程链:
+[ActivityStack.startActivityLocked]
+ActivityStack.startActivityLocked->
+    r.showStartingWindow(prev, showStartingIcon)->
+
+[ActivityRecord.showStartingWindow]
+    shown = service.mWindowManager.setAppStartingWindow->
+
+[WMS.setAppStartingWindow]
+    Message m = mH.obtainMessage(H.ADD_STARTING, wtoken);//ADD_STARTING消息
+    mH.sendMessageAtFrontOfQueue(m);//向display线程发送消息 
+    (由于WMS实例化是在display线程中，这里的mH初始化也是display线程中,无参构造函数，使用的是当前线程也就是display线程的looper。)
+
+[WMS.H]
+    handleMessage
+        mPolicy.addStartingWindow
+    
+[PhoneWindowManager.addStartingWindow]
+    addStartingWindow->
+        final PhoneWindow win = new PhoneWindow(context);
+        wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE); //wm为WindowManagerImpl
+        view = win.getDecorView();
+        wm.addView(view, params);
+
+[WindowManagerImpl.addview]
+        mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
+
+[WindowManagerGlobal.addview]
+        root = new ViewRootImpl(view.getContext(), display);
+        root.setView(view, wparams, panelParentView);
+[ViewRootImpl.setView]
+         requestLayout()->
+            scheduleTraversals()->
+         mWindowSession.addToDisplay
+[Session.addToDisplay]
+         wms.addWindow
+[WMS.addWindow]
+    updateFocusedWindowLocked->
+        mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
+                            updateInputWindows);
+[WindowSurfacePlacer.performLayoutLockedInner]
+    mService.mPolicy.beginLayoutLw
+    mService.mPolicy.finishLayoutLw();
+
+[PhoneWindowManager.beginLayoutLw]
+    updateSystemUiVisibilityLw
+
+总结:
+Activity启动的时候，组件相关AMS处理,窗口相关WMS处理。
+需要展示starting窗口的话wms、PhoneWindowManager、ViewRootImpl、Session等共同参与、启动窗口。
+
+Activity在ActivityThread中创建之后：
+handleLaunchActivity->
+    performLaunchActivity->
+        Activity.attach-> //设置activity和window
+    handleResumeActivity->
+        performResumeActivity->
+            r.activity.makeVisible() //真正界面展示
+
+
+makevisible方法，如果没有添加window则通过binder调用添加window，最后设置view可见
+
+```java
+void makeVisible() {
+    if (!mWindowAdded) {
+        ViewManager wm = getWindowManager();
+        wm.addView(mDecor, getWindow().getAttributes());
+        mWindowAdded = true;
+    }
+    mDecor.setVisibility(View.VISIBLE);
+}
+```
+
+一些类:
+View 
+ViewGroup 
+ViewRootImpl 
+ViewManager
+DecorView
+PhoneWindow
+PhoneWindowManager
+WindowManagerGlobal
+WindowManagerImpl
+
+## 图形绘制相关服务
 
 ## 系统UI服务
 
@@ -1160,6 +1280,7 @@ binder的调用本质没有改变，之前是手动写java层native和proxy代�
 `生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
 
 ## APP安装
+
 
 ## Activity
 
