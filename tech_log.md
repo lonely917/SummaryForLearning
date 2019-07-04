@@ -1315,12 +1315,21 @@ binder的调用本质没有改变，之前是手动写java层native和proxy代�
 
 ## APP安装
 PMS提供包管理服务
-installXXX->
+installPackageAsUser->
     handler发送INIT_COPY消息处理->
         handle
             handler发送MCS_BOUND消息处理->
                 handle
-                    .....
+                    params.startCopy()
+                    params.handleStartCopy()
+                        xxArgs.copyApk()  //apk复制到 /data/app/
+
+拷贝后有apk的解析
+AppDirObserver这个类在api24中已经没有了?
+
+data/system/目录，里面有两个文件
+packages.list-手机上安装的所有应用列表
+packages.xml-所有应用的设置应用
 
 ## Activity
 
