@@ -1314,22 +1314,64 @@ binder的调用本质没有改变，之前是手动写java层native和proxy代�
 `生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
 
 ## APP安装
-PMS提供包管理服务
-installPackageAsUser->
+PMS(PackageManagerService)提供包管理服务
+PackageInstallerService提供APP安装服务
+
+pms.installPackageAsUser->
     handler发送INIT_COPY消息处理->
         handle
             handler发送MCS_BOUND消息处理->
                 handle
                     params.startCopy()
-                    params.handleStartCopy()
-                        xxArgs.copyApk()  //apk复制到 /data/app/
+                        handleStartCopy()
+                            installArgs.copyApk()  //apk复制到目录 /data/app/
+                        handleReturnCode()
+                            pms.processPendingInstall(mArgs, mRet) //解析apk
+                              pms.installPackageTracedLI
+                                pms.installPackageLI
+                                    (替换应用)replacePackageLIF
 
-拷贝后有apk的解析
-AppDirObserver这个类在api24中已经没有了?
+                                    (新应用)  installNewPackageLIF
+                                                    -scanPackageTracedLI //扫描
+                                                    -updateSettingsLI    //更新信息
+
+
 
 data/system/目录，里面有两个文件
 packages.list-手机上安装的所有应用列表
 packages.xml-所有应用的设置应用
+
+查看system_server中PMS相关线程
+```
+shell@CB03:/ $ ps grep system_server
+USER     PID   PPID  VSIZE  RSS     WCHAN    PC        NAME
+system    881   300   1125064 65688 ffffffff 00000000 S system_server
+
+shell@CB03:/ $ ps -t 881 | grep Package
+system    1746  881   1125064 65836 ffffffff 00000000 S PackageManager
+system    2553  881   1125064 65836 ffffffff 00000000 S PackageInstalle
+```
+
+
+应用程序安装器：
+/packages/apps/PackageInstaller/
+
+PackageInstallerActivity是安装应用的入口
+onCreate
+    initiateInstall
+         startInstallConfirm()
+            mInstallConfirm.setVisibility(View.VISIBLE);
+            mOk.setOnClickListener(this);
+                ok-startInstall()
+                    startActivity  InstallAppProgress
+InstallAppProgress
+    onCreate
+        initView
+            installExistingPackage/installPackageWithVerificationAndEncryption - 经由binder调用最终进入到PMS-installPackageAsUser
+后续开始了apk拷贝解析等。
+
+`这里binder调用在安装的过程中，源activity处于什么状态？`
+
 
 ## Activity
 
