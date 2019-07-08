@@ -1072,9 +1072,12 @@ ActivityStack.startActivityLocked->
 [WindowSurfacePlacer.performLayoutLockedInner]
     mService.mPolicy.beginLayoutLw
     mService.mPolicy.finishLayoutLw();
+    mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
 
 [PhoneWindowManager.beginLayoutLw]
     updateSystemUiVisibilityLw
+
+Session中有SurfaceSession对象用于和surfaceflinger进程通信
 
 总结:
 Activity启动的时候，组件相关AMS处理,窗口相关WMS处理。
@@ -1114,6 +1117,9 @@ WindowManagerGlobal
 WindowManagerImpl
 
 ## 图形绘制相关服务
+
+SurfaceFingler进程
+
 
 ## 系统UI服务
 
@@ -1279,13 +1285,13 @@ mWindowManager - WindowManagerImpl
 mDecor - View  onResume之后展示的视图
 
 ViewRootImpl:
-    mWindowSession - IWindowSession (进程对应的session代理对象，和wms通信)
-    mWindow - IWindow.Stub 
+    mWindowSession - IWindowSession (进程对应的wms中session的代理对象，和wms中Session通信)
+    mWindow - IWindow.Stub (ViewRootImpl.W)
 
 WindowState:
     mSession - Session(binder服务端)
     mClient - IWindow(ViewRootImpl.W的代理对象，对应着ViewRootImpl的W类型对象)
-    mSurfaceSession - 和SF通信
+    mSurfaceSession - 和SF通信 //api-28没有找到这个成员
 
 Session:
     mSurfaceSession - 和SF通信
@@ -1293,6 +1299,7 @@ Session:
 Binder服务端： 
 WMS/Session/ActivityRecord.Token(system_server进程)
 ViewRootImpl.W(app进程)
+ApplicationThread(app进程)
 SF(SF进程)
 
 一个activity对应一个窗口，一个窗口对应一个ViewRootImpl对象
@@ -1300,6 +1307,107 @@ SF(SF进程)
 一个app进程对应相同的session
 Activity最终视图是decorview
 ViewRootImpl用于DecorView和wms的交互，每次wm.addview会创建一个VRI对象
+
+
+## activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal
+
+ActivityThread.main
+    Looper.loop()
+
+    scheduleLaunchActivity
+        ActivityClientRecord r = new ActivityClientRecord();
+        sendMessage(H.LAUNCH_ACTIVITY, r);
+    handleLaunchActivity
+        performLaunchActivity
+            mInstrumentation.newActivity
+            makeApplication //内部创建application是一个单例模式，多数情况此前已经创建过application了
+            createBaseContextForActivity//创建实际的contexImpl
+                ContextImpl.createActivityContext
+            activity.attach
+                attachBaseContext(context)
+                mWindow = new PhoneWindow(this, window) //mWindow为Window  PhoneWindow
+                mWindow.setWindowManager((WindowManager)context.getSystemService(Context.WINDOW_SERVICE),mToken,xx) //注意SystemServiceRegistry初始化过程
+                mWindowManager = mWindow.getWindowManager()
+
+            mInstrumentation.callActivityOnCreate
+                activity.performCreate
+                    activity.onCreate
+            mInstrumentation.callActivityOnRestoreInstanceState
+                activity.performRestoreInstanceState
+                    onRestoreInstanceState
+            performStart
+                activity.onStart
+        handleResumeActivity
+            performResumeActivity
+                activity.performResume()
+                    activity.onResume()
+             r.activity.makeVisible()
+                 wm.addView(mDecor, getWindow().getAttributes());// 这里的wm是windowmanager，前文有setWindowManager和getWindowManager
+                    windowManagerImpl.addView;
+                        windowManagerGlobal.addView;
+                             root = new ViewRootImpl(view.getContext(), display)//view就是传入的decorView
+                                    mWindowSession = WindowManagerGlobal.getWindowSession(); //
+                                         IWindowManager windowManager = getWindowManagerService(); //这里取名windowManager，但实际是一个IWindowManager类型，binder client不同于前文WindowManager的对象
+                                            sWindowManagerService = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
+                                            return sWindowManagerService
+                                         sWindowSession = windowManager.openSession //binder调用进入到WMS.openSession 返回Session对象 Session extends IWindowSession.Stub
+                                         return sWindowSession
+                                    mWindow = new W(this); //ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理。                                    
+                             root.setView(view)
+                                 requestLayout();
+                                 mWindowSession.addToDisplay(mWindow)// binder调用;mWindowSession是WMS中Session的代理，这里mWindow是ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理，作为参数传到WMS中
+                                     
+                                [binder调用进入Session]
+                                    mService.addWindow //mService就是wms
+                                        wms.addWindow //addWindow具体过程参考## Window建立中wms.addWindow部分
+
+                 mDecor.setVisibility(View.VISIBLE);
+
+IWindowSession
+/frameworks/base/core/java/android/view/
+IWindowSession.aidl
+final class Session extends IWindowSession.Stub
+
+
+IWindowManager
+/frameworks/base/core/java/android/view/
+IWindowManager.aidl
+
+public class WindowManagerService extends IWindowManager.Stub
+
+
+对比ActivityManagerService
+
+public final class ActivityManagerService extends ActivityManagerNative
+public abstract class ActivityManagerNative extends Binder implements IActivityManager
+class ActivityManagerProxy implements IActivityManager
+public interface IActivityManager extends IInterface
+
+/frameworks/base/core/java/android/app/
+IActivityManager.java	
+
+对比发现，这里AMS是手动编写而WMS使用aidl文件生成相关类
+但是高版本中AMN被标记为过时的，并且移除AMP；同时移除了IActivityManager.java定义接口的文件，但是添加了IActivityMananger.aidl。
+
+
+高版本中如下设计：
+a：ViewRootImpl-IWindowSession-WMS.Session-WMS.       通过viewRootImpl的setview到wms.addWindow，其中会传入IWindow对象，即ViewRootImpl.W对象，是ViewRootImpl.W服务的客户端
+b：WMS-IWindow-ViewRootImpl
+
+```java
+    void makeVisible() {
+        if (!mWindowAdded) {
+            ViewManager wm = getWindowManager();
+            wm.addView(mDecor, getWindow().getAttributes());
+            mWindowAdded = true;
+        }
+        mDecor.setVisibility(View.VISIBLE);
+    }
+```
+
+
+App进程：
+            
 
 ## aidl 源码版本演进
 几个关键类
@@ -1372,6 +1480,12 @@ InstallAppProgress
 
 `这里binder调用在安装的过程中，源activity处于什么状态？`
 
+
+## context获取各种服务
+
+SystemServiceRegistry初始化过程
+静态代码块各种registerService
+`这里的registerService和SercieManager的addService比较?`
 
 ## Activity
 
