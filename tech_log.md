@@ -1309,6 +1309,31 @@ Activity最终视图是decorview
 ViewRootImpl用于DecorView和wms的交互，每次wm.addview会创建一个VRI对象
 
 
+WindowManager可以通过getSystemService(Context.WINDOW_SERVICE)来获取，实际是一个windowManagerImpl对象,可以认为是WMS的代理，但是方法不会完全对应上，不想我们之前看到的xxxProxy那种形式，client和server很好对应，因为这里Windowmanager继承自ViewManager，vm定义了一些操作，wm实现了这些操作，wm对操作的实现是通过windowManagerImpl、进一步通过WindowManagerGlobal来实现的。
+WindowManage的AddView调用链:
+ wm.addView
+    windowManagerImpl.addView
+        windowManagerGlobal.addView
+            ViewRootImpl.setView
+                mWindowSession.addToDisplay  ----  binder调用到wms的Session服务端  session.addToDisplay -> wms.addWindow
+相关类梳理：
+
+ViewManager - WindowManager - WindowManagerImpl - WindowManagerGlobal
+ViewManager - ViewGroup
+
+ViewParent - ViewRootImpl - ViewRootImpl.W - IWindowSession.stub(Server端)
+ViewParent - ViewGroup
+WMS - IWindowManager.Stub(Server端)
+Session
+
+IWindowManger.aidl
+IWindowSession.aidl
+
+参考 深入理解ViewRootImpl 
+https://blog.csdn.net/Innost/article/details/47660471
+https://wizardforcel.gitbooks.io/deepin-android-vol3/content/7.html
+https://silencedut.github.io/2016/08/10/Android%E8%A7%86%E5%9B%BE%E6%A1%86%E6%9E%B6Activity,Window,View,ViewRootImpl%E7%90%86%E8%A7%A3/
+
 ## activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal
 
 ActivityThread.main
@@ -1355,6 +1380,8 @@ ActivityThread.main
                                     mWindow = new W(this); //ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理。                                    
                              root.setView(view)
                                  requestLayout();
+                                    checkThread();
+                                    scheduleTraversals();//向主线程发消息执行performTraversals
                                  mWindowSession.addToDisplay(mWindow)// binder调用;mWindowSession是WMS中Session的代理，这里mWindow是ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理，作为参数传到WMS中
                                      
                                 [binder调用进入Session]
@@ -1405,9 +1432,60 @@ b：WMS-IWindow-ViewRootImpl
     }
 ```
 
-
-App进程：
             
+## ViewRootImpl
+
+前面谈到WindowManager实际的操作最终调用到ViewRootImpl的一些方法。
+ViewRootImpl的setView分析:
+调用图前面分析过，截取部分作为概览如下
+root.setView(view)
+    requestLayout();// Schedule the first layout -before- adding to the window manager 邓大神说这里会产生巧妙地效果，我是没搞明白为啥这样做
+    checkThread();//检测是否为主线程，否则不能进行UI操作
+    scheduleTraversals();//向主线程发消息执行performTraversals
+    mWindowSession.addToDisplay(mWindow)// wms窗口添加到屏幕
+
+1. 其中requestLayout实际是发消息告诉主线程执行performTraversals方法：
+requestLayout
+    checkThread() //非UI不能发起，因为这里requestLayout是一个public方法，很多地方都可能发起调用
+    mLayoutRequested = true//标志是通过requestLayout发起的请求
+    scheduleTraversals()//通过mChoreographer向主线程发送消息，传入了一个mTraversalRunnable对象，最终执行该对象的run方法调用doTraversal()->performTraversals()具体见4
+
+2. 其中checkThread检测线程，非UI线程不可更新：
+
+```java
+void checkThread() {
+    if (mThread != Thread.currentThread()) {
+        throw new CalledFromWrongThreadException(
+                "Only the original thread that created a view hierarchy can touch its views.");
+    }
+}
+```
+
+3. 其中addToDisplay通过binder进入到session对应方法:
+
+session.addToDisplay
+    mService.addWindow
+        ..`如何添加到屏幕可以细细分析` 窗口尺寸问题 图形渲染进程交互等 `截取前文分析的片段 并没有彻底搞清`..
+
+```java
+[WMS.addWindow]
+    updateFocusedWindowLocked->
+        mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
+                            updateInputWindows);
+[WindowSurfacePlacer.performLayoutLockedInner]
+    mService.mPolicy.beginLayoutLw
+    mService.mPolicy.finishLayoutLw();
+    mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
+
+[PhoneWindowManager.beginLayoutLw]
+    updateSystemUiVisibilityLw
+
+Session中有SurfaceSession对象用于和surfaceflinger进程通信
+```
+
+4. 主线程执行performTraversals流程分析:
+
+
 
 ## aidl 源码版本演进
 几个关键类
