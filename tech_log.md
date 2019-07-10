@@ -1485,6 +1485,76 @@ Session中有SurfaceSession对象用于和surfaceflinger进程通信
 
 4. 主线程执行performTraversals流程分析:
 
+performTraversals
+    measureHierarchy(这个方法在performTraversals中两次被调用)
+        performMeasure
+    performLayout
+        measureHierarchy
+        host.layout
+    performDraw
+
+measureHierarchy
+    {
+    childWidthMeasureSpec//计算
+        getRootMeasureSpec //根据window size和root view的layout参数设定 root的尺寸参数 ->源码对应规则
+    childHeightMeasureSpec//计算
+        getRootMeasureSpec
+    performMeasure(childWidthMeasureSpec,childHeightMeasureSpec)//对根view执行测量
+        view.measure
+            view.onMeasure //这个方法很多ViewGroup的子类会重写，各种布局类型有自己的measure逻辑 分析见`后续章节## onMeasure的流程分析`
+                view.getDefaultSize //根据一个基准尺寸和传入的规格，计算width/height
+                view.setMeasuredDimension
+                    
+    }
+    return windowSizeMayChange //这个数值根据当前尺寸和测量后host的尺寸是否一致来判定true/false
+
+注意这里的measureHierarchy过程中最多可能执行三次performMeasure，也就是上述{}内部这个流程可能进行三次，首先从一个较小的宽度进行尝试，如果两次都没能达到goodMeasure的目的，直接使用窗口宽度，进行第三次测量。
+
+源码中的解释:
+```java
+// On large screens, we don't want to allow dialogs to just
+// stretch to fill the entire width of the screen to display
+// one line of text.  First try doing the layout at a smaller
+// size to see if it will fit.
+```
+
+##控件绘制 View/ViewGroup Measure、Layout、Draw
+
+### onMeasure 流程分析
+ViewGroup的onMeasure实现其测量，不同于单个子view只测量自身，viewgroup的子类都对onMeasure进行了重写。
+其基本思路如下
+对所有的child也就是子view进行如下流程
+    measureChildWithMargins(child, ....)
+        view.measure->view.onMeasure->view.setMeasuredDimension
+然后综合所有child的测量结果，得到其自身的测量结果
+    setMeasuredDimension
+
+以framelayout为例进行分析：
+1. 遍历children，对所有的child分别调用measureChildWithMargins
+2. 如果传入的widthMeasureSpec或者heightMeasureSpec不为exactly，则需要把带有match_parent的child记录一下，加入mMatchParentChildren
+  对应如下场景
+    framelayout设置的wrapcontent，
+    子view的为match_parent，
+    因此这种情况下第一轮measure只是确定framelayout的整体尺寸，随后要根据这个具体的尺寸再这些待定子view进一步measure并设置
+3. 根据需要对mMatchParentChildren中的child重新measure，此时framelayout的尺寸已经经过前面确定了，因此内部的这些match_parent的尺寸也可以确定了。
+
+以LinearLayout vertical为例分析
+
+vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeasureSpec)
+本质是调用child的measure并最终确定linearlayout的尺寸，然后setMeasuredDimension。
+
+1. 开始遍历并调用measureChildBeforeLayout进一步调用child的measure
+2. 宽度上记录最大宽度
+3. 长度上累计child高度，计算totalLength
+4. 最后根据宽度和高度以及传入的父类规格，生成新规格，进行setMeasuredDimension
+
+其中会有针对weight的处理，如果父类传入的是exactly，并且子view的useExcessSpace为true(lp.height == 0 && lp.weight > 0)，意味着子view使用剩余空间进行weight分布，第一次循环时会跳过该child不进行measure，因为剩余空间没有确定，待整体的高度确定后再处理weight类控件。
+上述场景：linearlayout高度设置matchparent或者固定数值，子view使用weight>0并且没有设置height，不满足上述条件的话第一轮也会measure，但是最终会根据剩余空间进行调整。
+
+
+### onLayout 流程分析
+
+### draw 流程分析
 
 
 ## aidl 源码版本演进
