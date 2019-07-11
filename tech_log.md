@@ -525,7 +525,7 @@ https://blog.csdn.net/luoshengyang/article/details/6618363
 8. Zygote进程启动，这是Android应用层进程的母体，其中会调用start_system_server开启SystemServer进程，而后进程进入loop状态，通过socket监听信号，执行动作。
 (zygote进程创建时会初始化binder相关结构，开启binder监听线程等工作)
 
-9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，systemUI线程等，启动webview进程，最后开会开启桌面launcher。
+9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，systemUI线程(有待考究?有一个system.ui的服务是一个service进程)等，启动webview进程，最后开会开启桌面launcher。
 
 10. 开启桌面会启动新的Activity,首先会创建对应的进程，启动ActivityThread，然后scheduleLaunchActivity开启Activity。
 (开启新进程时通过socket和Zygote通信然后创建的新进程,新进程加载的ActivityThread的main方法，启动Activity是利用跨进程binder通信来实现的，进程内部调用scheduleLaunchActivity使用handler发消息最终handleLaunchActivity方法被调用，Activity的attach方法触发，最终onCreate被调用)
@@ -693,7 +693,7 @@ startOtherServices();
                 执行runnable()
                     [
                         ...
-                        startSystemUi(context, windowManagerF);//开启com.android.systemui.SystemUIService服务
+                        startSystemUi(context, windowManagerF);//开启com.android.systemui.SystemUIService服务 这个继承自Service组件
                             [
                                 SystemUIService.onCreate
                                     [
@@ -1518,7 +1518,53 @@ measureHierarchy
 // size to see if it will fit.
 ```
 
-##控件绘制 View/ViewGroup Measure、Layout、Draw
+performLayout(lp, mWidth, mHeight)
+    measureHierarchy // `为什么又要来一次?`
+    host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight())//注意这里的host是DecorView-framelayout
+        onLayout //布局内部的子view 分析见`后续章节## onLayout的流程分析`
+            framelayout.layoutChildren//
+                child.layout//所有child都会调用其layout方法
+                    child.onLayout// 具体的view或者viewgroup会重写或者实现该方法
+                
+
+performDraw()
+    draw(fullRedrawNeeded)
+        trackFPS //DEBUG_FPS标志设置的话会记录
+        scrollToRectOrFocus
+        dirty区域计算
+        mAttachInfo.mTreeObserver.dispatchOnDraw();
+            OnDrawListener.onDraw
+        mAttachInfo.mHardwareRenderer.draw
+            updateRootDisplayList
+                view.updateDisplayListIfDirty
+                    view.draw // draw的流程分析见`后续章节## draw的流程分析`
+            nSyncAndDrawFrame
+   
+## requestLayout 和 invalidate
+
+view.requestLayout
+    viewparent.requestLayout        //viewparent实际是viewRootImpl，通过assignParent进行设置的
+        viewRootImpl.requestLayout
+            checkThread             //必须UI线程
+            mLayoutRequested = true //这里会打标记，有了这个标记才会进行measure和layout
+            scheduleTraversals     //->doTraversal->performTraversal
+
+
+view.invalidate()
+    view.invalidate(true) //Whether the drawing cache for this view should be invalidated
+        invalidateInternal
+            viewRootImpl.invalidateChild
+                 viewRootImpl.invalidateChildInParent
+                    viewRootImpl.invalidate/invalidateRectOnScreen
+                         viewRootImpl.scheduleTraversals //最终都是到scheduleTraversals方法
+
+前者会执行measure和layout再进行draw
+后者只是draw
+
+view.postInvalidate可以在非UI线程发起，最终UI线程执行view.invalidate方法。
+
+
+## 控件绘制 View/ViewGroup Measure、Layout、Draw
 
 ### onMeasure 流程分析
 ViewGroup的onMeasure实现其测量，不同于单个子view只测量自身，viewgroup的子类都对onMeasure进行了重写。
@@ -1553,9 +1599,52 @@ vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeas
 
 
 ### onLayout 流程分析
+view的onLayout默认空实现；layout有自己的逻辑
+viewGroup的onLayout为抽象方法；//改了父类方法的类别?
+ViewGroup的layout方法为final类型，不可重写，其中会调用父类也就是view的layout方法。
+
+- frameLayout的onLayout过程(最早调用的是根布局，frameLayout的子类):
+
+- linearlayout的onLayout过程：
+
+- TextView的onLayout过程:
+
 
 ### draw 流程分析
 
+看源码中的说明，一共包含六个步骤
+```java
+/*
+    * Draw traversal performs several drawing steps which must be executed
+    * in the appropriate order:
+    *
+    *      1. Draw the background
+    *      2. If necessary, save the canvas' layers to prepare for fading
+    *      3. Draw view's content
+    *      4. Draw children
+    *      5. If necessary, draw the fading edges and restore layers
+    *      6. Draw decorations (scrollbars for instance)
+    */
+``` 
+注意view的draw方法规范了整个绘制流程，如果定义子类一般重写onDraw而不要重写这个方法，如果重写draw也一定要调用super.draw方法。
+
+```java
+/**
+* When implementing a view, implement
+* {@link #onDraw(android.graphics.Canvas)} instead of overriding this method.
+* If you do need to override this method, call the superclass version.
+*/
+```
+流程中的2、5根据情况可以跳过
+
+1. drawBackground //draw background
+2. canvas.saveLayer 
+3. onDraw //draw itself
+4. dispatchDraw //draw children
+5. canvas.drawRect 
+6. onDrawForeground //draw decorations (foreground, scrollbars)
+
+其中 onDraw和dispatchDraw的实际行为都在实现类中重写了，view默认的是空方法。
 
 ## aidl 源码版本演进
 几个关键类
