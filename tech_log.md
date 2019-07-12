@@ -318,18 +318,18 @@ adjustPan：是保证控件不会因为输入法的弹出而发生形变的。
 
 # handler
 
-#Android 跨进程调用途径和原理
+# Android 跨进程调用途径和原理
 intent、广播、aidl。
 intent 的action和uri跳转。
 网页调用app。
 
 
-#自定义控件
+# 自定义控件
 组合，继承，绘制
 
-#activity启动模式
+# activity启动模式
 
-#adb shell 启动关闭应用
+# adb shell 启动关闭应用
 adb install XX.apk
 adb install -r XX.apk
 adb uninstall com.spdb.apiservice.test
@@ -338,10 +338,10 @@ unstall -k 包名
 adb shell am force-stop
 adb shell am start -n 包名/启动类名称
 
-#退出adb shell
+# 退出adb shell
 如果ctrl+c不能退出adb shell则使用exit命令。
 
-#action 和 category
+# action 和 category
 
 android.intent.action.MAIN
 android.intent.category.LAUNCHER
@@ -356,24 +356,24 @@ https://blog.csdn.net/ljz2009y/article/details/26621815
 
 <action android:name="android.intent.action.BOOT_COMPLETED"/>
 
-#Context & Activity
+# Context & Activity
 
-#打印驱动的几种模式
+# 打印驱动的几种模式
 1. 有deviceServiceApi服务层，利用aidl调用，aidl相关类以及上层方法可以打成jar包，一般不涉及so文件，服务层apk中会用到so库，底层硬件调用。
 2. 一个jar包封装接口和底层操作，so库提供支持，所以一般一个jar包一个so库。
 上述结论待核实
 
-#settext null的处理
+# settext null的处理
 EditText 的 settext以及Toast的toast都会到TextView的setText(CharSequence text, BufferType type,boolean notifyBefore, int oldlen)方法，会对传入数值判断，null则变为""。
 
-#gradle相关目录
+# gradle相关目录
 1. 下载第三方依赖库
 .gradle\caches\modules-2\files-2.1
 
 2. gradle不同版本的目录
 .gradle\wrapper\dists
 
-#打包aar以及依赖本地aar
+# 打包aar以及依赖本地aar
 allprojects {
     repositories {
         jcenter()
@@ -384,17 +384,18 @@ allprojects {
 
 compile (name:'printerutils-debug',ext:'aar')
 
-#引入多个jar包带来的jar包冲突，或引入aar和项目其他jar包冲突，aar的生成是否包含其依赖包也是一种考量。
+# 引入多个jar包带来的jar包冲突，或引入aar和项目其他jar包冲突，aar的生成是否包含其依赖包也是一种考量。
 https://blog.csdn.net/jiujiedexiaoming/article/details/76520376
 
-#构建app最小系统
+# 构建app最小系统
 
-#FragmentActivity
+# FragmentActivity
 
 # so库和abi架构
 https://www.cnblogs.com/Bugtags2015/p/5578541.html
 
-#Context源码分析
+
+# Context源码分析
 ```
 Activity-ContextThemeWrapper-ContextWrapper-Context
                                     |            |__abstract getApplicationContext()
@@ -984,6 +985,18 @@ server的binder线程根据获取的操作、参数进行对应的行为，根�
 android系统中AMS、WMS、PMS的操作：
 首先通过获取SM的binder proxy，然后通过aidl通信获取AMS的proxy,然后通过aidl通信进行AMS相关操作。
 
+## aidl binder相关 源码版本演进
+几个关键类
+ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
+ActivityManagerProxy(AMN的内部类，位置ActivityManagerNative.java)
+IApplicationThread接口(IApplicationThread.java)
+IActivityManager接口(IActivityManager.java)
+
+7.1源码framework目录还有代理类实现。
+8.2源码中ATN和AMN被标记为过时的，并且移除了ATP和AMP；同时移除了IApplicationThread.java和IActivityManager.java两个定义接口的文件，但是添加了IActivityMananger.aidl和IApplicationThread.aidl两个文件用于辅助生成aidl相关类。
+binder的调用本质没有改变，之前是手动写java层native和proxy代理类，后来使用aidl文件来统一生成相关的中间类。
+`生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
+
 ## APP启动
 
 场景1：
@@ -1116,10 +1129,33 @@ PhoneWindowManager
 WindowManagerGlobal
 WindowManagerImpl
 
-## 图形绘制相关服务
+WMS中对窗口类型的定义，数值越大，显示的时候越靠前
 
-SurfaceFingler进程
+窗口的主序
+TYPE_UNIVERSE_BACKGROUND	11000	
+TYPE_WALLPAPER	21000
+TYPE_PHONE	31000	
+TYPE_SEARCH_BAR	41000
+TYPE_RECENTS_OVERLAY	51000	
+TYPE_SYSTEM_DIALOG	51000
+TYPE_TOAST	61000	
+TYPE_PRIORITY_PHONE	71000
+TYPE_DREAM	81000	
+TYPE_SYSTEM_ALERT	91000
+TYPE_INPUT_METHOD	101000	
+TYPE_INPUT_METHOD_DIALOG	111000
+TYPE_KEYGUARD	121000	
+TYPE_KEYGUARD_DIALOG	131000
+TYPE_STATUS_BAR_SUB_PANEL	141000	
+应用窗口与未知类型的窗口	21000
 
+
+子窗口类型	子序
+TYPE_APPLICATION_PANEL	1
+TYPE_APPLICATION_ATTACHED_DIALOG	1
+TYPE_APPLICATION_MEDIA	-2
+TYPE_APPLICATION_MEDIA_OVERLAY	-1
+TYPE_APPLICATION_SUB_PANEL	2
 
 ## 系统UI服务
 
@@ -1179,7 +1215,7 @@ SystemServer ->
 
 ```
     屏幕触摸-硬件驱动-信号和事件
-    InputReader不断获取由驱动产生的按键事件，传给InputDispatcher。
+    InputReader不断获取由驱动产生的按键事件，传给InputDispatcher。`input_event(设备节点) -> RawEvent(EventHub)->inputReader加工一些列低级事件转化为android输入事件`
     InputDispatcher线程从队列取事件，并进行事件传递，派发到合适的窗口。这里会从SystemServer和目标进程进行跨进程通信，InputDispatcher通过socket和远程进程通信(异步非阻塞)。
         -publishKeyEvent->
             -mChannel->sendMessage(&msg);
@@ -1211,6 +1247,63 @@ SystemServer ->
                                             -PhoneWindow.superDispatchTouchEvent
                                                 -PhoneWindow$DecorView.superDispatchTouchEvent
                                                     -ViewGroup.dispatchTouchEvent(ViewGroup和view按键事件传递)
+
+
+5. system_server中的ims相关核心线程
+
+shell@CB03:/ $ ps | grep system_server
+system    881   300   1167360 76556 ffffffff 00000000 S system_server
+
+shell@CB03:/ $ ps -t 881 | grep input
+system    2557  881   1167360 76556 ffffffff 00000000 S InputDispatcher
+system    2558  881   1167360 76556 ffffffff 00000000 S InputReader
+
+
+6. android 系统输入事件流程总结(邓平凡)
+
+Android输入系统的工作原理概括来说，就是监控/dev/input/下的所有设备节点，当某个节点有数据可读时，将数据读出并进行一系列的翻译加工，然后在所有的窗口中寻找合适的事件接收者，并派发给它。
+
+内核将原始事件写入到设备节点中，InputReader不断地通过EventHub将原始事件取出来并翻译加工成Android输入事件，然后交给InputDispatcher。InputDispatcher根据WMS提供的窗口信息将事件交给合适的窗口。窗口的ViewRootImpl对象再沿着控件树将事件派发给感兴趣的控件。控件对其收到的事件作出响应，更新自己的画面、执行特定的动作。所有这些参与者以IMS为核心，构建了Android庞大而复杂的输入体系。
+
+当两个线程启动后，InputReader在其线程循环中不断地从EventHub中抽取原始输入事件，进行加工处理后将加工所得的事件放入InputDispatcher的派发发队列中。InputDispatcher则在其线程循环中将派发队列中的事件取出，查找合适的窗口，将事件写入到窗口的事件接收管道中。窗口事件接收线程的Looper从管道中将事件取出，交由事件处理函数进行事件响应。整个过程共有三个线程首尾相接，像三台水泵似的一层层地将事件交付给事件处理函数
+
+`ims启动前,wms已经启动,这样wms才能接收inputdispatcher派发来的事件并寻找合适的处理对象`
+
+其中用到了Inotify和Epool,线程相关知识 邓系列 https://blog.csdn.net/Innost/article/details/90633199
+
+
+7. 查看输入设备以及输入事件
+
+adb shell getevent -t
+
+设备列表
+add device 1: /dev/input/event4
+  name:     "msm8909-skue-snd-card Headset Jack"
+add device 2: /dev/input/event3
+  name:     "msm8909-skue-snd-card Button Jack"
+add device 3: /dev/input/event1
+  name:     "qpnp_pon"
+add device 4: /dev/input/event0
+  name:     "goodix-ts"
+could not get driver version for /dev/input/mice, Not a typewriter
+add device 5: /dev/input/event2
+  name:     "gpio-keys"
+
+基本事件(下面是手头机器电源键按下抬起的记录)
+
+[ 3385509.651590] /dev/input/event1: 0001 0074 00000001
+[ 3385509.651590] /dev/input/event1: 0000 0000 00000000
+[ 3385509.861141] /dev/input/event1: 0001 0074 00000000
+[ 3385509.861141] /dev/input/event1: 0000 0000 00000000
+
+两种方式模拟按键
+1. 模拟指定输入设备的指定基本事件 
+adb shell sendevent /dev/input/event1 xx xx xx
+
+2. 更为高层的按键事件 
+adb shell input keyevent xx(xx为按键码)
+adb shell input tap 50 250(点击) 
+adb shell input swipe 50 250 250 250 500(滑动) 
 
 ## WMS(WindowManagerService)
 
@@ -1272,6 +1365,7 @@ SystemServer主线程、display线程、android.ui线程。
 DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
 UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
 HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
+
 
 
 ## ams wms system_server一些知识点
@@ -1646,18 +1740,6 @@ ViewGroup的layout方法为final类型，不可重写，其中会调用父类也
 
 其中 onDraw和dispatchDraw的实际行为都在实现类中重写了，view默认的是空方法。
 
-## aidl 源码版本演进
-几个关键类
-ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
-ActivityManagerProxy(AMN的内部类，位置ActivityManagerNative.java)
-IApplicationThread接口(IApplicationThread.java)
-IActivityManager接口(IActivityManager.java)
-
-7.1源码framework目录还有代理类实现。
-8.2源码中ATN和AMN被标记为过时的，并且移除了ATP和AMP；同时移除了IApplicationThread.java和IActivityManager.java两个定义接口的文件，但是添加了IActivityMananger.aidl和IApplicationThread.aidl两个文件用于辅助生成aidl相关类。
-binder的调用本质没有改变，之前是手动写java层native和proxy代理类，后来使用aidl文件来统一生成相关的中间类。
-`生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
-
 ## APP安装
 PMS(PackageManagerService)提供包管理服务
 PackageInstallerService提供APP安装服务
@@ -1717,6 +1799,12 @@ InstallAppProgress
 
 `这里binder调用在安装的过程中，源activity处于什么状态？`
 
+
+## 图形绘制相关服务
+
+SurfaceFingler进程
+
+## SurfaceView 和 Canvas
 
 ## context获取各种服务
 
