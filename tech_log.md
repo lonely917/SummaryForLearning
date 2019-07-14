@@ -251,7 +251,13 @@ listview源码和recycleview对比
 
 #lib包和libs包，eclipse对dependency引用的包添加源码关联
 
-#插件化和组件化，热更新和增量更新
+# 插件化和组件化，热更新和增量更新
+
+技术方案探讨
+任玉刚DL
+https://blog.csdn.net/singwhatiwanna/article/details/39937639
+
+连续几篇文章，研读时侧重方案设计的思路分析，如何一步一步实现。
 
 #app托管平台
 蒲公英，frm，pre
@@ -1157,6 +1163,9 @@ TYPE_APPLICATION_MEDIA	-2
 TYPE_APPLICATION_MEDIA_OVERLAY	-1
 TYPE_APPLICATION_SUB_PANEL	2
 
+
+`WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
+
 ## 系统UI服务
 
 ams.systemReady->
@@ -1799,9 +1808,11 @@ InstallAppProgress
 
 `这里binder调用在安装的过程中，源activity处于什么状态？`
 
+## framework层源码调试跟踪执行过程的实现?
+
+如何查看源码中日志输出部分(root机?)
 
 ## 图形绘制相关服务
-
 SurfaceFingler进程
 
 ## SurfaceView 和 Canvas
@@ -1814,6 +1825,71 @@ SystemServiceRegistry初始化过程
 
 ## Activity
 
+注意对组件的认识可以从不同的角度，比如启动过程、内部组织、生命周期管理等。
+
+### Activity的启动
+
+1. 名义上第一个APK的启动-Launcher的启动
+
+见章节`## launcher启动`
+
+这里涉及到先启动进程(`## Android中进程的创建`),然后再启动对应Activity。
+?wms.systemReady开始进行一些列调用，最后启动launcher. 这里应该是隐式调用。
+?我们自定义launcher一般是通过xml设置filter标签，由于隐式调用，我们就有机会选择自定义的launcher
+?boot完成广播信号的发起是何时，开机自启动的关键。
+
+2. 桌面图标点击后启动应用程序
+
+进程角度看调用流程：
+ launcher app -> system_server -> zygote -> app1 
+
+3. 应用程序内部startActivity/startActivityForResult进行显式或者隐式调用
+
+startActivity调用流程
+
+- 发起端
+[Activity]startActivity
+    [Activity]startActivityForResult
+        [Activity]mParent.startActivityFromChild
+            [Activity]mInstrumentation.execStartActivity
+                [Instrumentation] ActivityManager.getService().startActivitystartActivity
+                    [IActivityManager] startActivity //这里binder调用到system_server进程中ams服务，ams对应的的binder线程进行处理
+
+高版本使用IAcvitityManager.aidl机制替换了之前完全手写实现的方式
+
+
+- system_server中ams服务提供(binder线程池中某一线程提供client调用的服务-startActivity)
+具体可以参考章节`## Android中进程的创建`
+概述：
+ams.startActivity
+    mActivityStarter.startActivityMayWait
+        mTargetStack.startActivityLocked
+            mStackSupervisor.startSpecificActivityLocked 进程创建/ realStartActivityLocked 已有进程直接启动activity
+
+
+
+- system_server主线程 handler处理launcheActivity的消息
+[ActivityThread] 
+handleMessage
+    handleLaunchActivity
+        performLaunchActivity
+            mInstrumentation.newActivity
+            activity.attach
+            mInstrumentation.callActivityOnCreate
+                activity.performCreate                   
+                    onCreate // onCreate触发
+            activity.performStart()
+                mInstrumentation.callActivityOnStart
+                    onStart // onStart触发
+    handleResumeActivity
+        ....
+        onResume // onResume触发
+        ....
+
+
+
+### Activity 成员分析
+
 ## Service
 
 ## ContentProvider
@@ -1821,6 +1897,19 @@ SystemServiceRegistry初始化过程
 ## BrocastReceiver
 
 ## Intent
+
+## PackageInfo & LoadedApk & Context中的base以及ContextImpl中的
+
+## getWidth getMeasuredWidth getLayoutParams.witdth 比较
+
+注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
+
+## Window Dialog Toast分析
+
+https://blog.csdn.net/yanbober/article/details/46361191
+
+## 资源加载过程
+
 
 #Toast工具类
 ## DisplayToast
