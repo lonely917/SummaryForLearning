@@ -1904,12 +1904,344 @@ handleMessage
 
 注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
 
-## Window Dialog Toast分析
+## Window Dialog PopupWindow Toast分析
 
 https://blog.csdn.net/yanbober/article/details/46361191
 
+都要调用wm.addView
+
+
+## 从Activity中WindowManager谈起
+
+1. getWindowManager
+
+```java
+  public WindowManager getWindowManager() {
+        return mWindowManager;
+    }
+```
+
+2. getSystemService(Context.WINDOW_SERVICE)
+
+```java
+public Object getSystemService(@ServiceName @NonNull String name) {
+    if (getBaseContext() == null) {
+        throw new IllegalStateException(
+                "System services not available to Activities before onCreate()");
+    }
+
+    if (WINDOW_SERVICE.equals(name)) {
+        return mWindowManager;
+    } else if (SEARCH_SERVICE.equals(name)) {
+        ensureSearchManager();
+        return mSearchManager;
+    }
+    return super.getSystemService(name);
+}
+```
+
+3. getApplicationContext.getSystemService(Context.WINDOW_SERVICE)
+
+
+getApplicationContext 等同于 getBaseContext.getApplicationContext；
+都是调用其中base的方法，而这个base是主线程启动Activity的时候创建并attach上的，是一个ContextImpl对象。
+
+因此3的实际实现在ContextImpl中：contextImpl中的getSystemService：
+
+```java
+public Object getSystemService(String name) {
+    return SystemServiceRegistry.getSystemService(this, name);
+}
+```
+
+4. 对比分析
+
+对比1和2，1直接返回mWindowManager成员变量，这个变量是ActivityThread中启动Activity的时候调用activity的attach时赋值的。
+2方法对window类型的服务进行了拦截，直接返回了本地变量mWindowManager，因此实际上对于获取wm服务两者得到的对象是一样的。
+2中除了WINDOW_SERVICE和SEARCH_SERVICE，会调用父类方法，父类中又会对LAYOUT_INFLATER_SERVICE一次过滤，除了这三种类型，最终都会调用contextImpl的getsystemservice方法，也就和3效果一样了。
+3方法是一个最根本的方法，甚至于在对mWindowManager赋值的时候也用到了这个方法。
+
+activity的attach方法(`mWindowManager初始化过程`)
+
+```java
+final void attach(...){
+    mWindow.setWindowManager(
+            (WindowManager)context.getSystemService(Context.WINDOW_SERVICE),
+            mToken, mComponent.flattenToString(),
+            (info.flags & ActivityInfo.FLAG_HARDWARE_ACCELERATED) != 0);
+    if (mParent != null) {
+        mWindow.setContainer(mParent.getWindow());
+    }
+    mWindowManager = mWindow.getWindowManager();
+}
+
+```
+其中 setWindowManager方法
+
+```java
+public void setWindowManager(WindowManager wm, IBinder appToken, String appName,
+        boolean hardwareAccelerated) {
+    mAppToken = appToken;
+    mAppName = appName;
+    mHardwareAccelerated = hardwareAccelerated
+            || SystemProperties.getBoolean(PROPERTY_HARDWARE_UI, false);
+    if (wm == null) {
+        wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+    }
+    mWindowManager = ((WindowManagerImpl)wm).createLocalWindowManager(this);  //这里生成WindowManagerImpl对象
+}
+```
+实际上这里通过类似3的方式获取了WindowManger，然后又创建了一个本地的mWindowManager。
+
+1和2获取一个本地副本，3则是直接获取全局唯一的WindowManager服务类。具体差别我们继续看：
+
+```java
+public WindowManagerImpl createLocalWindowManager(Window parentWindow) {
+    return new WindowManagerImpl(mContext, parentWindow);
+}
+
+private WindowManagerImpl(Context context, Window parentWindow) {
+    mContext = context;
+    mParentWindow = parentWindow;
+}
+```
+这个mWindowManager的mParentWindow是被赋值的，也就是我们最初的mWindow，是一个PhoneWindow对象。
+
+而3的方式获取的对象其mParentWindow为空，我们根据源码追踪:
+```java
+//ContextImpl.java
+public Object getSystemService(String name) {
+    return SystemServiceRegistry.getSystemService(this, name);
+}
+
+//SystemServiceRegistry.java 静态代码块中有对应的初始化
+static{
+registerService(Context.WINDOW_SERVICE, WindowManager.class,
+        new CachedServiceFetcher<WindowManager>() {
+    @Override
+    public WindowManager createService(ContextImpl ctx) {
+        return new WindowManagerImpl(ctx);
+    }});
+}
+
+//WindowManagerImpl.java 构造函数
+public WindowManagerImpl(Context context) {
+    this(context, null);   //传入的window为null
+}
+
+private WindowManagerImpl(Context context, Window parentWindow) {
+    mContext = context;
+    mParentWindow = parentWindow;
+}
+
+```
+
+WindowManangerGlobal中addView的时候会判断window.parentWindow
+```java
+    final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams) params;
+    if (parentWindow != null) {
+        parentWindow.adjustLayoutParamsForSubWindow(wparams);           //有parent，说明添加的是子窗口，调整参数
+    } else {
+        // If there's no parent, then hardware acceleration for this view is
+        // set from the application's hardware acceleration setting.
+        final Context context = view.getContext();
+        if (context != null
+                && (context.getApplicationInfo().flags
+                        & ApplicationInfo.FLAG_HARDWARE_ACCELERATED) != 0) {
+            wparams.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+        }
+    }
+```
+
+
+5. 关于Dialog、PopupWindow、Toast
+
+都要传入一个context，前两者不可使用getApplicationContext，否则会报错。Toast可以使用。
+注意三者对应的窗口类型：TYPE_APPLICATION、TYPE_APPLICATION_PANEL、TYPE_TOAST。(wm.layoutparams.type参数)
+原因分析：
+最终都会调用mWindowManager.addView方法，而这个mWindowManager就是根据我们传入的context获取的，我们
+前两类窗口显示的时候要求能够关联对应的Activity的窗体，因此需要传入activity这种类型的context，但是传入getApplicationContext的话在addview检查的时候会报错token为null。
+
+核心问题在于wms服务端的addWindow方法的校验过程，`有待进一步分析并测试`。
+
+```java
+/**
+    * Window type: a normal application window.  The {@link #token} must be
+    * an Activity token identifying who the window belongs to.
+    * In multiuser systems shows only on the owning user's window.
+    */
+public static final int TYPE_APPLICATION        = 2;
+
+/**
+    * Window type: a panel on top of an application window.  These windows
+    * appear on top of their attached window.
+    */
+public static final int TYPE_APPLICATION_PANEL = FIRST_SUB_WINDOW;
+
+/**
+    * Window type: transient notifications.
+    * In multiuser systems shows only on the owning user's window.
+    */
+public static final int TYPE_TOAST              = FIRST_SYSTEM_WINDOW+5;
+
+```
+
+
+
+
+## Toast调用流程(跨进程、多次binder交互)  
+
+Toast的实现流程:
+Toast.makeText.show
+
+makeText:
+```java
+public static Toast makeText(Context context, CharSequence text, @Duration int duration) {
+    Toast result = new Toast(context);  //实例化，其中会构建TN对象
+
+    LayoutInflater inflate = (LayoutInflater)
+            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    View v = inflate.inflate(com.android.internal.R.layout.transient_notification, null);
+    TextView tv = (TextView)v.findViewById(com.android.internal.R.id.message);
+    tv.setText(text);
+    
+    result.mNextView = v;      //设置view
+    result.mDuration = duration;//设置持续时间
+
+    return result;
+}
+```
+
+makeText的时候会实例化一个Toast对象，实例化的过程中会构造一个TN对象(这里可以认为是App端的ToastNative对象，app的服务端，类似一个token，后续传给TMS用于回调)
+
+```java
+private static class TN extends ITransientNotification.Stub{
+    .....
+    .....
+        final Runnable mShow = new Runnable() {
+            @Override
+            public void run() {
+                handleShow();
+            }
+        };
+
+        final Runnable mHide = new Runnable() {
+            @Override
+            public void run() {
+                handleHide();
+                // Don't do this in handleHide() because it is also invoked by handleShow()
+                mNextView = null;
+            }
+        };
+
+        public void show() {
+            if (localLOGV) Log.v(TAG, "SHOW: " + this);
+            mHandler.post(mShow);
+        }
+
+           public void hide() {
+            if (localLOGV) Log.v(TAG, "HIDE: " + this);
+            mHandler.post(mHide);
+        }
+}
+
+```
+最后app进程中tn对应的binder线程会调用show和hide来展示和取消toast，通过向app主线程发送消息来实现。
+也就是说handleShow和handleHide会在App进程中的UI线程执行。
+
+那么什么时候发生上述所说的`tn对应的binder线程会调用show和hide`？分析如下：
+
+toast.show方法
+
+```java
+  public void show() {
+        if (mNextView == null) {
+            throw new RuntimeException("setView must have been called");
+        }
+
+        INotificationManager service = getService();    //对应   INotificationManager.Stub服务端的一个代理，用于binder调用
+        String pkg = mContext.getOpPackageName();
+        TN tn = mTN;
+        tn.mNextView = mNextView;   //设置tn的view
+
+        try {
+            service.enqueueToast(pkg, tn, mDuration); //binder调用到systemserver进程
+        } catch (RemoteException e) {
+            // Empty
+        }
+    }
+```
+会调用目标服务(我们可以称之为ToastManagerService)的enqueueToast方法，将工作加入一个toast队列。
+enqueueToast的服务端代码位于：
+
+```java
+
+ private final IBinder mService = new INotificationManager.Stub() {
+     public void enqueueToast(String pkg, ITransientNotification callback, int duration){
+         //注意这里的callback就是我们客户端binder调用时传过来的TN的代理
+         //传过来的这个callback是app端ITransientNotification.stub服务的代理
+         ....
+     }
+ }
+```
+随后会构建ToastRecord并加入一个队列中(其中先进行一些规则验证)，这里有队列就应有一个`消费者线程`取任务，任务执行使用callback进行回调向app进程发送消息。
+通过调用callback的show和hide进行binder调用，触发我们之前TN的show和hide方法。正常是先调用callback.show，设置超时任务，过duration时间段后调用callback.hide
+
+
+toast展示到窗口的过程：
+
+Toast.Tn.handleShow最终在主线程执行
+
+1. 根据需要进行handlehide
+2. 获取context对象
+    2.1 优先获取application级别 mView.getContext().getApplicationContext()
+    2.2 前一步为空则使用mView.getContext()
+3. 根据context获取windowmanager
+4. 设置params
+5. 利用wm的addview添加view到窗口
+
+补充说明:
+1. ToastManagerService何时注册(更为准确地描述,注册的是 INotificationManager.Stub的一个实例化binder服务对象)
+注册流程链：
+
+SystemServer.main
+    run
+        mSystemServiceManager.startService(NotificationManagerService.class);
+            NotificationManagerService.onStart
+                publishBinderService(Context.NOTIFICATION_SERVICE, mService);
+                    SM.addService //注册服务
+        notification = INotificationManager.Stub.asInterface(
+                    ServiceManager.getService(Context.NOTIFICATION_SERVICE));
+
+2. `tms中的toastqueue对应的消费者线程在哪里?没找到`
+
+enqueToast方法分析:
+
+第一次调用成功将ToastRecord放入队列后，会立即执行showNextToastLocked;
+showNextToastLocked主要做两件事：
+    向app端发起callback.show的调用(app端会处理toast的展示)
+    scheduleTimeoutLocked,利用本线程的WorkerHandler发送一个消息，延时触发cancelToastLocked
+cancelToastLocked执行过程也主要两件事：
+     向app端发起callback.hide的调用(app端会处理toast的展示)、队列中移除记录
+     如果队列中还有任务，执行showNextToastLocked，`这里就形成了一个循环`
+
+`每次enqueueToast都会确定消费掉queue中的所有事件`
+     
+
+
+3. 为何使用这种模式?app->tms->app
+
+完全可以省略掉于tms交互的环节，内部使用handler也可以做到。
+具体原因没找到，一些猜测：
+Toast窗口级别问题，代码版本演进问题。
+可能早期toast这种系统级窗口需要系统进程来发起，那么通过tms来实现就可以理解了，但是24版本代码addview依然是在app发起的，可以在看下更早的版本实现。
+
+不过snackbar就是app进程内使用handler来操作的。`snackbar应属于应用窗口?`
+
 ## 资源加载过程
 
+
+## Android 性能优化
 
 #Toast工具类
 ## DisplayToast
