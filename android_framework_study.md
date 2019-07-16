@@ -5,36 +5,60 @@
     - [mBase的赋值以及ContextImpl的生成](#mbase的赋值以及contextimpl的生成)
     - [attachBaseContext的usuages](#attachbasecontext的usuages)
     - [关于Context的几点说明](#关于context的几点说明)
-    - [探索性问题](#探索性问题)
+    - [延伸问题](#延伸问题)
     - [一些资料](#一些资料)
-- [Android binder](#android-binder)
-    - [概述](#概述)
+- [**Android Binder](#android-binder)
+    - [一些知识点](#一些知识点)
     - [学习资料](#学习资料)
 - [**binder机制原理](#binder机制原理)
 - [**ServiceManager、AMS、XXMS、Binder相关资料](#servicemanageramsxxmsbinder相关资料)
 - [系统启动 概述](#系统启动-概述)
 - [系统启动 init进程分析](#系统启动-init进程分析)
+    - [进程描述](#进程描述)
     - [启动流程](#启动流程)
     - [系统分析](#系统分析)
 - [系统启动 Zygote进程分析(trace dump监测应用变化?)](#系统启动-zygote进程分析trace-dump监测应用变化)
+    - [进程描述](#进程描述-1)
     - [启动流程](#启动流程-1)
     - [onZygoteInit源码](#onzygoteinit源码)
 - [系统启动 ServiceManager进程分析](#系统启动-servicemanager进程分析)
-    - [功能概述](#功能概述)
+    - [进程描述](#进程描述-2)
     - [源码分析](#源码分析)
+    - [一份服务相关的表格](#一份服务相关的表格)
+    - [dumpsys工具](#dumpsys工具)
 - [系统启动 SystemServer进程分析](#系统启动-systemserver进程分析)
-    - [基本说明](#基本说明)
-    - [流程分析](#流程分析)
-- [系统启动 AMS服务开启](#系统启动-ams服务开启)
-- [Android中进程的创建](#android中进程的创建)
+    - [进程描述](#进程描述-3)
+    - [源码分析](#源码分析-1)
+    - [系统分析](#系统分析-1)
+- [系统启动 AMS服务](#系统启动-ams服务)
+    - [启动流程](#启动流程-2)
+    - [源码分析](#源码分析-2)
+    - [AMS.systemReady](#amssystemready)
+    - [AMS中的handler：](#ams中的handler)
+    - [AMS和WMS涉及的一些类:](#ams和wms涉及的一些类)
+    - [AMS超时处理](#ams超时处理)
+- [Launcher启动](#launcher启动)
+    - [调用链](#调用链)
+    - [扩展](#扩展)
+- [Android中进程的创建/含Activity启动](#android中进程的创建含activity启动)
+    - [新进程产生的场景](#新进程产生的场景)
+    - [场景3分析(AMS startActivity)](#场景3分析ams-startactivity)
 - [系统启动过程中binder知识点](#系统启动过程中binder知识点)
-- [aidl binder相关 源码版本演进](#aidl-binder相关-源码版本演进)
-- [APP启动](#app启动)
-- [Window建立](#window建立)
+- [Binder-AIDL 源码版本演进](#binder-aidl-源码版本演进)
+    - [关键类分析](#关键类分析)
+    - [7.1 vs 8.2](#71-vs-82)
+    - [总结](#总结)
+    - [扩展](#扩展-1)
+- [APP启动流程](#app启动流程)
+    - [场景](#场景)
+    - [扩展](#扩展-2)
 - [系统UI服务](#系统ui服务)
-- [launcher启动](#launcher启动)
+    - [调用链](#调用链-1)
+    - [startSystemUi](#startsystemui)
+    - [SystemUIService](#systemuiservice)
 - [IMS(InputManagerService)](#imsinputmanagerservice)
 - [WMS(WindowManagerService)](#wmswindowmanagerservice)
+- [Window建立](#window建立)
 - [ams wms system_server一些知识点](#ams-wms-system_server一些知识点)
 - [activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal](#activitywindowviewrootimplwindowmanagerwindowmanagreimplwindowmanagerglobal)
 - [ViewRootImpl](#viewrootimpl)
@@ -110,12 +134,11 @@ Application
     newApplication方法中通过app.attach 进行application和ContextImpl的关联->
     instrumentation.callApplicationOnCreate(app);最终调用application的onCreate.
 
+### attachBaseContext的usuages
 
 Activity、Application、Service都用到这个操作。
 ContextImpl和ActivityThread两个类不在android sdk系统中，未提示这里的引用，但这两个文件很关键。
 `context的实际实现是ContextImpl`。
-
-### attachBaseContext的usuages
 
 ```java
     attachBaseContext(Context)
@@ -145,7 +168,7 @@ context的使用，可能是一层一层的包装。注意几点：
 4. ContextImpl的createSystemContext、createSystemUiContext、createAppContext、createActivityContext，被调用的创建ContextImpl的方法。
 5. Activity的getApplication 和 getApplicationContext最终返回应该是一样的，都是唯一的Application的对象。(?`Application对象只能有一个吗？`)
 
-### 探索性问题
+### 延伸问题
 
 1. 关注ContextImpl和ActivityThread的流程，探索`apk安装以及启动全过程`。
 2. app启动-注意launcher process - system process - app process结合思考。
@@ -166,15 +189,13 @@ https://blog.csdn.net/bfboys/article/details/52564531
 https://www.jianshu.com/p/e69d22ec0582
 
 
-## Android binder
+## **Android Binder
 
-### 概述
-System Server进程启动众多服务进程并addservice，这些服务进程会在ServiceManager中进行注册。
-许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
-
-通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
-
-jni是可以实现双向操作的，java访问navtive,navtive访问java。
+### 一些知识点
+1. System Server进程启动众多服务并addservice，这些服务会在ServiceManager中进行注册。
+2. 许多java层类方法同过jni调用转到c++层对应的类中进行相关操作。
+3. 通过ServiceManager的getService我们可以获取服务的binderProxy，然后通过binder驱动和远程的服务进行跨进程通信。
+4. jni是可以实现双向操作的，java访问navtive,navtive访问java。
 
 ### 学习资料
 从c++到java、罗升阳博客
@@ -214,19 +235,24 @@ http://liuwangshu.cn/framework/component/1-activity-start-2.html
 2. 解析init.rc脚本，init_parse_config_file("/init.rc")生成service_list和action_list。
 3. 构建action_queue，可以理解为init进程要执行的一些动作。
 4. 逐步执行各种行为，可以理解为开启各种进程。(首先是core类型服务，然后启动main类型服务)
-5. 无限循环，等待其他进程发来的信号，响应的执行行为。
-6. 服务对应的进程挂掉后会给init进程发送信号，init进程的回调行为是尝试restart服务。
+5. 无限循环，等待其他进程发来的信号，并进行响应。
+6. 服务对应的进程挂掉后会给init进程发送信号，init进程的对应的响应(回调方法)是尝试restart服务。
 
 ```
-4中涉及的core服务代表举例:console(/system/bin/sh), servicemanager(/system/bin/servicemanager) ;
-4中涉及的main服务代表举例:zygote(/system/bin/app_process),media(/system/bin/mediaserver),netd(/system/bin/netd);
+4中涉及的core服务代表举例:
+    console(/system/bin/sh),
+    servicemanager(/system/bin/servicemanager) ;
+4中涉及的main服务代表举例:
+    zygote(/system/bin/app_process),
+    media(/system/bin/mediaserver),
+    netd(/system/bin/netd);
 ```
 7. ServiceManager服务进程启动，启动后最终进入loop状态(binder_loop),涉及内核交互,可以理解为从任务队列里取任务并执行，没有任务会进入阻塞状态等待唤醒。
 
-8. Zygote进程启动，这是Android应用层进程的母体，其中会调用start_system_server开启SystemServer进程，而后进程进入loop状态，通过socket监听信号，执行动作。
+8. Zygote进程启动，这是Android应用层进程的母体，其中会调用start_system_server开启system_server进程，而后进程进入loop状态，通过socket监听信号，执行动作。
 (zygote进程创建时会初始化binder相关结构，开启binder监听线程等工作)
 
-9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，systemUI线程(有待考究?有一个system.ui的服务是一个service进程)等，启动webview进程，最后开会开启桌面launcher。
+9. SystemServer进程启动，会加载各种服务，比如AMS实例化,并将AMS注册到SM中，开启AM线程，启动webview进程(`待确定`)，最后开会开启桌面launcher。这里涉及很多服务的注册，ams、wms、ims、pms等等。
 
 10. 开启桌面会启动新的Activity,首先会创建对应的进程，启动ActivityThread，然后scheduleLaunchActivity开启Activity。
 (开启新进程时通过socket和Zygote通信然后创建的新进程,新进程加载的ActivityThread的main方法，启动Activity是利用跨进程binder通信来实现的，进程内部调用scheduleLaunchActivity使用handler发消息最终handleLaunchActivity方法被调用，Activity的attach方法触发，最终onCreate被调用)
@@ -234,18 +260,29 @@ http://liuwangshu.cn/framework/component/1-activity-start-2.html
 
 ## 系统启动 init进程分析
 
-### 启动流程
+### 进程描述
 Android系统底层基于Linux Kernel，内核启动过程会建立用户空间的第一个进程即init进程，pid为1。文件位置 /system/core/init/Init.cpp，main方法开启。
 
-    1.一些初始化设置(如文件属性、内核log、属性服务，初始化epoll功能、初始化子进程退出处理函数、启动属性服务器);
-    2.解析"init.rc"文件,init_parse_config_file("/init.rc");
-    3.构建action_queue，可以理解为init进程要执行的一些动作。这里利用action_for_each_trigger、queue_builtin_action多次处理，生成合适的执行顺序。
-    4.while循环，执行队列中的指令来开启服务、检测是否需要重启某些服务、监听子进程的退出信号等。
-        4.1 execute_one_command 取指令执行服务对应的方法
-        4.2 service_start 遍历2中得到的服务列表，根据需要进行重启服务
+### 启动流程
+1. 一些初始化设置(如文件属性、内核log、属性服务，初始化epoll功能、初始化子进程退出处理函数、启动属性服务器);
+2. 解析"init.rc"文件,init_parse_config_file("/init.rc");
+3. 构建action_queue，可以理解为init进程要执行的一些动作。这里利用action_for_each_trigger、queue_builtin_action多次处理，生成合适的执行顺序。
+4. while循环，执行队列中的指令来开启服务、检测是否需要重启某些服务、监听子进程的退出信号等。
 
-    其中4中会按照一定顺序执行开启各种服务进程，有core类型、main类型，比如servicemanager属于前者，zygote属于后者。
+    4.1 execute_one_command 取指令执行服务对应的方法<br/>
+    4.2 service_start 遍历2中得到的服务列表，根据需要进行重启服务<br/>
 
+```
+其中4中会按照一定顺序执行开启各种服务进程，有core类型、main类型，比如servicemanager属于前者，zygote属于后者。
+
+4中涉及的core服务代表举例:
+    console(/system/bin/sh),
+    servicemanager(/system/bin/servicemanager) ;
+4中涉及的main服务代表举例:
+    zygote(/system/bin/app_process),
+    media(/system/bin/mediaserver),
+    netd(/system/bin/netd);
+```
 
 ### 系统分析
 
@@ -276,10 +313,11 @@ u0_a99    19200 300   1133264 108280 ffffffff 00000000 S com.aisino.xfb.pay
 
 ## 系统启动 Zygote进程分析(trace dump监测应用变化?)
 
-### 启动流程
-zygote服务为init.rc脚本文件中描述的服务之一，init进程通过service_start启动的服务，顾名思义，zygote主要功能就是孵化新的进程。
+###进程描述
+zygote服务为init.rc脚本文件中描述的服务之一，init进程通过service_start启动的服务，顾名思义，zygote主要功能就是孵化新的进程。zygote对应文件路径(frameworks\base\cmds\app_process\App_main.cpp)。
 
-    zygote工作流程(frameworks\base\cmds\app_process\App_main.cpp)：
+### 启动流程
+
     1 构造appruntime,设置进程名字zygote.
     2 runtime.start("com.android.internal.os.ZygoteInit",
                     startSystemServer ? "start-system-server" : "");
@@ -332,13 +370,13 @@ virtual void onZygoteInit()
 
 ## 系统启动 ServiceManager进程分析
 
-### 功能概述
+### 进程描述
 1. init进程开启的诸多子进程之一
 2. 顾名思义，提供服务管理功能，类似一个服务注册表
-3. 本身也是一个服务，对应一个固定地址的binder。
+3. 本身也是一个服务，对应一个固定地址的binder(0号binder)。
 
 ### 源码分析
-源码：frameworks\base\cmds\servicemanager\Service_manager.c
+源码：frameworks\base\cmds\servicemanager\service_manager.c
 
 ```c
 
@@ -366,18 +404,45 @@ int main(int argc, char **argv)
     binderParse进行命令解析;
     svcmgr_handler执行对应动作(包括服务的注册和检索);
 
+### 一份服务相关的表格
+
+`表格取自gityuan`
+
+服务名	|类名	|功能
+-|-|-
+activity	|ActivityManagerService	|AMS
+procstats	|ProcessStatsService	|进程统计
+meminfo	|MemBinder	|内存
+gfxinfo	|GraphicsBinder	|图像信息
+dbinfo	|DbBinder	|数据库
+cpuinfo	|CpuBinder	|CPU
+permission	|PermissionController	|权限
+processinfo	|ProcessInfoService	|进程服务
+usagestats	|UsageStatsService	|应用的使用情况    
+
+### dumpsys工具
+
+通过dumpsys 服务名 查看运行详情：
+
+    dumpsys activity
+    dumpsys cpuinfo
+    dumpsys window
+
+
 ## 系统启动 SystemServer进程分析
 
-### 基本说明
+### 进程描述
 1. zygote启动后首先孵化出SystemServer进程
 2. 新进程中最终执行SystemServer的入口函数main
 
-### 流程分析
+### 源码分析
 
 下面分析systemserver.main关键流程:
-main函数中直接执行new SystemServer().run()具体我们看run的主要流程：
+
+main函数中直接执行new SystemServer().run()，关键代码如下：
 
 ```java
+Looper.prepareMainLooper();//消息循环初始化,对应最后开启循环
 System.loadLibrary("android_servers");// Initialize native services.
 createSystemContext();// Initialize the system context.
 startBootstrapServices();//各种相关服务    ams的setSystemProcess会被调用，向sm注册各种binder服务
@@ -392,17 +457,24 @@ createSystemContext();
         利用ActivityThread.systemMain()生成AT对象
         进一步对mSystemContext以及mSystemUIContext设置主题相关
     ]
-...
+
+
 startBootstrapServices();
     [
         //注意下述startservice都是SystemServiceManager的对象的方法，不同于ServiceManger(我们使用ServiceManger的addservice和findservice来进行aidl相关的服务注册和查询)
-        Installer installer = mSystemServiceManager.startService(Installer.class);//开启installer服务，这个是SystemService子类，非AIDL调用的那种服务，比如SMS、AMS、PMS等。
+
+        //开启installer服务，这个是SystemService子类，非AIDL调用的那种服务，比如SMS、AMS、PMS等。
+        Installer installer = mSystemServiceManager.startService(Installer.class);
         ...
+        //开启ActivityManagerService.Lifecycle服务，也是SystemService子类
         mActivityManagerService = mSystemServiceManager.startService(
-                ActivityManagerService.Lifecycle.class).getService(); //开启ActivityManagerService.Lifecycle服务，也是SystemService子类
+                ActivityManagerService.Lifecycle.class).getService(); 
         ...
         PackageManagerService启动//aidl服务
-        mActivityManagerService.setSystemProcess(); //设置ams，其中会调用ServiceManager进行注册各种binder,包括AMS自身。
+        ...
+        
+        //设置ams，其中会调用ServiceManager进行注册各种binder,包括AMS自身。
+        mActivityManagerService.setSystemProcess(); 
     ]
 startCoreServices();
     [
@@ -443,53 +515,63 @@ startOtherServices();
             ]
     ]
 ```
+### 系统分析
 
-辅助*通过ps -T pid可以查看进程下的线程：
-system_server进程下有很多线程：
-system_server
-android.bg
-android.ui
-android.io
-android.display
-CpuTracker
-ActivityManager(若干个)
-binder_xxx(若干个)
-InputDispatcher
-InputReader
-AccountManagerService
+adb shell进入后，通过ps -T pid可以查看某一进程下的线程。
 
-## 系统启动 AMS服务开启
+system_server进程下有很多线程，下面列出一些：
 
-ams的初始化以及注册调用流程：
+    android.bg
+    android.ui
+    android.io
+    android.display
+    CpuTracker
+    ActivityManager(若干个)
+    binder_xxx(若干个)
+    InputDispatcher
+    InputReader
+    AccountManagerService
 
-SystemServer.main()->
-    run()->
-        startBootstrapServices->
-            mSystemServiceManager.
-            startService(ActivityManagerService.Lifecycle.class).getService();//获取AMS对象，实例化过程也会开启ActivityManagerService线程，一个ServiceThread.
-            mActivityManagerService.setSystemProcess->ServiceManager.add(name, this);//向SM注册AMS
+## 系统启动 AMS服务
+
+### 启动流程
+```
+SystemServer.main()
+    SystemServer.run()
+        startBootstrapServices()
+            mSystemServiceManager.startService(ActivityManagerService.Lifecycle.class).getService();
+            mActivityManagerService.setSystemProcess
+                ServiceManager.add(name, this);//向SM注册AMS
+```
+
+### 源码分析
 
 AMS初始化关键代码
+
 ```java 
+
+//获取AMS对象，实例化过程也会开启ActivityManagerService线程，一个ServiceThread.
 mActivityManagerService = mSystemServiceManager.startService(
                 ActivityManagerService.Lifecycle.class).getService();
 ```
 
-ams实例化细节：
+AMS实例化细节
 
 mSystemServiceManager.startService((ActivityManagerService.Lifecycle.class))->
-    创建ActivityManagerService.Lifecycle->
-        LifeCycle实例化过程会生成ams
+1. 创建ActivityManagerService.Lifecycle、LifeCycle实例化过程会生成ams
+2. 调用lifecycle的onStart方法   
 
-    liftcycle调用onstart->
-        最终调用ams.start->
-            mProcessCpuThread.start();//启动cpuTracker线程
-            mBatteryStatsService.publish(mContext);//注册atteryStatsService
-                ->ServiceManager.addService(BatteryStats.SERVICE_NAME, asBinder());
-            mAppOpsService.publish(mContext);//注册AppOpsService服务
-                ->ServiceManager.addService(Context.APP_OPS_SERVICE, asBinder());
+```
+lifecycle.onstart
+    ams.start
+        mProcessCpuThread.start();//启动cpuTracker线程
+        mBatteryStatsService.publish(mContext);//注册atteryStatsService
+            ServiceManager.addService(BatteryStats.SERVICE_NAME, asBinder());
+        mAppOpsService.publish(mContext);//注册AppOpsService服务
+            ServiceManager.addService(Context.APP_OPS_SERVICE, asBinder());
+```
 
-ams内部类lifecycle
+AMS内部类lifecycle
 ```java
 
     public static final class Lifecycle extends SystemService {
@@ -511,7 +593,8 @@ ams内部类lifecycle
     }
 ```
 
-ams构造函数
+AMS构造函数
+
 ```java
 public ActivityManagerService(Context systemContext) {
     ....
@@ -526,7 +609,8 @@ public ActivityManagerService(Context systemContext) {
 }
 ```
 
-ams的start方法
+AMS的start方法
+
 ```java
 private void start() {
     Process.removeAllProcessGroups();
@@ -539,53 +623,247 @@ private void start() {
 }
 ```
 
-ams注册调用链：
+AMS注册调用链：
+
 startBootstrapServices方法最后会对生成的ams进行注册操作，注册到sm。
 
-    mActivityManagerService.setSystemProcess()->
-        ServiceManager.addService(Context.ACTIVITY_SERVICE, this, true);
+    systemserver.startBootstrapServices
+        ams.setSystemProcess
+            sm.addService
 
 ```java
-    public void setSystemProcess() {
-        try {
-            ServiceManager.addService(Context.ACTIVITY_SERVICE, this, true);
-            ServiceManager.addService(ProcessStats.SERVICE_NAME, mProcessStats);
-            ServiceManager.addService("meminfo", new MemBinder(this));
-            ServiceManager.addService("gfxinfo", new GraphicsBinder(this));
-            ServiceManager.addService("dbinfo", new DbBinder(this));
-            ....
-        }
-        .....
+public void setSystemProcess() {
+    try {
+        ServiceManager.addService(Context.ACTIVITY_SERVICE, this, true);
+        ServiceManager.addService(ProcessStats.SERVICE_NAME, mProcessStats);
+        ServiceManager.addService("meminfo", new MemBinder(this));
+        ServiceManager.addService("gfxinfo", new GraphicsBinder(this));
+        ServiceManager.addService("dbinfo", new DbBinder(this));
+        ....
     }
+    .....
+}
 
 ```
 
-`表格取自gityuan`
+### AMS.systemReady
 
-服务名	|类名	|功能
--|-|-
-activity	|ActivityManagerService	|AMS
-procstats	|ProcessStatsService	|进程统计
-meminfo	|MemBinder	|内存
-gfxinfo	|GraphicsBinder	|图像信息
-dbinfo	|DbBinder	|数据库
-cpuinfo	|CpuBinder	|CPU
-permission	|PermissionController	|权限
-processinfo	|ProcessInfoService	|进程服务
-usagestats	|UsageStatsService	|应用的使用情况    
+1. 传入一个runnable动作，根据条件执行runnable行为；
+   其中runnable会调用startSystemUi开启系统UI服务；
+   
+2. 开启桌面： startHomeActivityLocked(currentUserId, "systemReady");
 
-通过dumpsys 服务名 查看运行详情：
-dumpsys activity
-dumpsys cpuinfo
-dumpsys window
+### AMS中的handler：
 
-ams.systemReady方法：
+    AMS.mUiHandler - UiHandler - android.ui线程
+    AMS.mBgHandler - Handler - android.bg
+    AMS.mHandler - MainHandler - 'ActivityManager'
 
-    传入一个runnable动作，根据条件执行runnable行为；
-        其中runnable会调用startSystemUi开启系统UI服务；
-    开启桌面： startHomeActivityLocked(currentUserId, "systemReady");
+### AMS和WMS涉及的一些类:
 
-systemserver中开启系统UI:
+    ams:ActivityRecord;TaskRecord;ActivityStack;
+    wms:AppWindowToken;Task;TaskStack;
+
+### AMS超时处理
+
+`所有跟超时相关的工作都运行在ActivityManager线程，唯独input的超时处理过程并非发生在ActivityManager线程，而是inputDispatcher线程发生的。`
+
+`对于ANR/Crash/Error等几乎所有错误、警告相关的对话框都运行在android.ui线程。`
+
+
+## Launcher启动
+
+### 调用链
+桌面开启的完整调用链:
+
+    ss.main->
+    ss.run->
+    ss.startOtherService->
+    ams.systemReady->
+    ams.startHomeActivityLocked->
+    ActivityStarter.startHomeActivityLocked->
+    as.startActivityLocked 
+
+### 扩展
+
+1. `具体如何开启launcher的启动activity?`
+2. intent的显示调用和隐式调用实现原理，显示可以指定对应activity，隐式需要解析出对应的activity列表。
+3. `boot信号获取在哪里?源码分析`
+
+
+## Android中进程的创建/含Activity启动
+
+### 新进程产生的场景
+
+1. 系统启动，init进程开启后，根据init.rc文件启动一系列子进程。
+2. zygote进程启动后，开启system_server进程，并执行runSelectLoop进入socket监听状态。
+3. startActivity或者startService等开启组件，如果需要开启新进程，会通过ActivityThread和SystemServer交互，再有SystemServer向Zygote发起请求进行进程开辟。
+
+### 场景3分析(AMS startActivity)
+
+进程创建最终都是c++层fork方法，对场景3进行java层流程梳理：
+1. App进程执行startActivity或者startService
+2. aidl通信、SystemServer进程中AMS执行对应的startActivity或者startService
+```
+    [AMS]   startActivity->
+        [AMS]   startActivityAsUser->
+            [ActivityStarter]   mActivityStarter.startActivityMayWait->
+                [ActivityStarter]   mActivityStarter.startActivityLocked->
+                    [ActivityStarter]   mActivityStarter.startActivityUnchecked->
+                        [ActivityStack]    mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions)->
+                            [ActivityStack]    ensureActivitiesVisibleLocked->
+                                [ActivityStack]     makeVisibleAndRestartIfNeeded->
+                                    [ActivityStackSupervisor]   mStackSupervisor.resumeTopActivitiesLocked->
+                                        [ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked 进程创建/ realStartActivityLocked 已有进程直接启动activity
+    如果目标进程已经存在，直接进行activity启动；否则创建进程，进程创建完毕后会继续执行没有启动的这个activity。
+```
+
+上述realStartActivityLocked后续步骤，分system_server和新app进程两方面来看：
+
+    1. system_server进程
+        
+    [ActivityStackSupervisor] realStartActivityLocked->
+    [ActivityStackSupervisor]   app.thread.scheduleLaunchActivity->
+    `aidl调用进入到ActivityThread的scheduleLaunchActivity`
+
+    旧版本有如下aidl调用链：
+    从ApplicationThreadProxy发起(旧版本含有ApplicationThreadProxy这个文件)  
+    ApplicationThreadProxy.scheduleLaunchActivity->
+    transact->
+    ApplicationThreadNative.onTransact->
+    ActivityThread.scheduleLaunchActivity
+
+    2. app进程
+
+        [ActivityThread] scheduleLaunchActivity->
+        [ActivityThread]  sendMessage(H.LAUNCH_ACTIVITY, r)-> 发送消息给app主线程
+
+        [ActivityThread] handler处理消息最终handleLaunchActivity
+
+上述startSpecificActivityLocked 进程创建后续步骤:
+    system_server进程：
+    [ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked
+        [AMS]   startProcessLocked->
+                [AMS]  Process.start->
+                    [Process]   startViaZygote->
+                        [Process]   zygoteSendArgsAndGetResult->
+                            通过zygoteState.writer写数据，和zygote进程进行socket通信
+
+    zygote进程:
+    [ZygoteInit] runSelectLoop循环等待消息
+        [ZygoteInit] peers.get(i).runOnce()
+            [ZygoteConnection] runonce
+                [ZygoteConnection]  pid = Zygote.forkAndSpecialize
+                            [Zygote]   VM_HOOKS.preFork()
+                            [Zygote]   pid = nativeForkAndSpecialize
+                            [Zygote]   VM_HOOKS.postForkCommon()
+
+    接上文子进程(pid>0)执行handleChildProc
+    [ZygoteConnection] RuntimeInit.handleChildProc
+        [ZygoteConnection] RuntimeInit.zygoteInit
+            [RuntimeInit]   commonInit
+            [RuntimeInit]   nativeZygoteInit
+                [AndroidRuntime.cpp]gCurRuntime->onZygoteInit() //这里会开启binder线程
+            [RuntimeInit]   applicationInit
+                [RuntimeInit]   invokeStaticMain //抛出异常，指定方法名称main,异常捕获的时候会执行对应类的main方法
+    [ZygoteInit] MethodAndArgsCaller.run
+        [ZygoteInit] mMethod.invoke(null, new Object[] { mArgs });//执行ActivityThread main方法
+        
+    继续子进程，即目标app进程：
+    [APP2 ActivityThread]
+    [ActivityThread] main->
+        [ActivityThread]  attach(false)->
+                        [AMS]   ams.attachApplication->......
+                        .....
+                            [ActivityStackSupervisor] realStartActivityLocked->后续同前文`realStartActivityLocked后续步骤`
+
+## 系统启动过程中binder知识点
+
+1. IPC的一些方式：共享内存、管道、socket。
+2. binder用于进程间通信，设计思想：客户端binder client,内存映射到内核区域，服务端binder server，和内核进行共享内存，因此双方同步只需要进行一次拷贝操作。
+3. 用户空间首个进程init进程启动时会进行binder设备初始化操作。
+4. 特殊的binder、固定0号binder为ServiceManager，SM进程启动时初始化。
+5. 其他的binder都会通过sm.addService进行服务注册，通过sm.getService进行服务检索。
+6. 0号binder是固定的，因此可以直接找到。其他的通过名字来进行检索。
+7. 一个进程中可以有多个binder服务。
+8. app进程都是由zygote分裂而来，进程初始化后通过onZygoteInit会开启binder线程池，用于binder通信。
+9. 可以理解认为不同的进程中都有很多binder线程(binder线程池)，通过和底层通信来监听binder相关的信号，以进行binder通信。
+
+`一个简化的模型来进行理解binder通信`：
+client想要执行server的A操作，于是通过server的binderproxy写入操作名、参数等，并根据需要接收服务端返回的数据；
+server的binder线程根据获取的操作、参数进行对应的行为，使用传来的参数并执行A，根据需要返回数据等；
+
+`android系统中AMS、WMS、PMS服务的获取和使用`：
+首先获取SM的binder proxy，然后通过binder通信获取某一服务的binder proxy,然后通过binder通信调用服务的一些方法。
+
+
+
+## Binder-AIDL 源码版本演进
+
+`AIDL` : Android Interface Definition Language
+
+
+### 关键类分析
+
+    ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
+    ActivityManagerProxy(AMN的内部类，位置ActivityManagerNative.java)
+    IApplicationThread接口(IApplicationThread.java)
+    IActivityManager接口(IActivityManager.java)
+
+### 7.1 vs 8.2 
+7.1源码framework目录还有代理类实现。
+8.2源码中ATN和AMN被标记为过时的，并且移除了ATP和AMP；同时移除了IApplicationThread.java和IActivityManager.java两个定义接口的文件，但是添加了IActivityMananger.aidl和IApplicationThread.aidl两个文件用于辅助生成aidl相关类。
+
+### 总结
+
+Binder调用本质没有改变，之前是手动写java层native和proxy代理类，后来使用aidl文件来统一生成相关的中间类。
+中间类xxx.stub是服务端, xxx是客户端。同一个进程在多次binder交互中可能既是某次调用的发起端，也是另一次调用的服务端。
+以App1调用ams启动App2的某个Activity为例。这个过程中会有如下交互：App1 利用binder调用使用system_server中的ams服务(ActivityManangerProxy->ActivityManagerNative);system_server利用binder调用使用app2中的PerformLaunchActivity方法(ApplicationThreadProxy->ApplicationThreadNative);system_server利用binder调用触发app1的schedulePauseActivity(ApplicationThreadProxy->ApplicationThreadNative)。
+
+### 扩展
+
+`生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
+
+## APP启动流程
+
+### 场景
+场景1：
+Laucher启动
+
+场景2：普通应用启动
+
+launcher -> app
+过程类似`Android中进程的创建`章节中先启动新进程再开启Activity的情况。
+
+1. 点击桌面app
+2. launcher 进行本地startActivity操作，通过binder调用向system_server发起远程调用startActivity的请求，具体是ams来实现这个过程
+3. system_server通过socket向Zygote进程发送请求，要求创建新进程
+4. zygote进行分裂，产生新APP进程，执行ActivityThread的main方法
+5. 新APP进程启动后要求attachApplication，也是binder调用转到system_server进程
+6. system_server进程最终会通过binder调用要求新APP进程执行scheduleLaunchActivity操作
+7. 新App进程执行scheduleLaunchActivity，通过向主线程handler发送消息触发相关操作
+8. 新APP进程主线程执行handleLaunchActivity
+9. 目标Activity会被创建，最终onCreate被回调
+
+### 扩展
+1. window的建立
+2. ui的绘制
+
+
+## 系统UI服务
+
+### 调用链
+
+    ss.main->
+    ss.run->
+      ss.startOtherService->
+       ams.systemReady->
+        runnable执行->
+            startSystemUi->
+                context.startServiceAsUser(intent, UserHandle.SYSTEM);
+                ("com.android.systemui.SystemUIService"))
+
+### startSystemUi
 
 ```java
     static final void startSystemUi(Context context) {
@@ -598,325 +876,23 @@ systemserver中开启系统UI:
     }    
 ```
 
-桌面开启的调用链:
-    ams.systemReady->ams.startHomeActivityLocked->ActivityStarter.startHomeActivityLocked->as.startActivityLocked 
-    `具体如何开启launcher的启动activity?`
-    intent的显示调用和隐式调用，显示可以指定对应activity，隐式需要解析出对应的activity列表。
+### SystemUIService
 
-ams中的handler：
-AMS.mUiHandler - UiHandler - android.ui线程
-AMS.mBgHandler - Handler - android.bg
-AMS.mHandler - MainHandler - 'ActivityManager'
-
-`所有跟超时相关的工作都运行在ActivityManager线程，唯独input的超时处理过程并非发生在ActivityManager线程，而是inputDispatcher线程发生的。`
-
-`对于ANR/Crash/Error等几乎所有错误、警告相关的对话框都运行在android.ui线程。`
-
-ams和wms的涉及的一些类:
-
-ams:ActivityRecord;TaskRecord;ActivityStack;
-wms:AppWindowToken;Task;TaskStack;
-
-
-## Android中进程的创建
-
-新进程产生的场景：
-1. 系统启动，init进程开启后，根据init.rc文件启动一系列子进程。
-2. zygote进程启动后，开启system_server进程，并执行runSelectLoop进入socket监听状态。
-3. startActivity或者startService等开启组件，如果需要开启新进程，会通过ActivityThread和SystemServer交互，再有SystemServer向Zygote发起请求进行进程开辟。
-
-最终都是c++层fork方法，对场景3进行java层流程梳理：
-- App进程执行startActivity或者startService
-- aidl通信、SystemServer进程中AMS执行对应的startActivity或者startService,通过A
-
-[AMS]   startActivity->
-    [AMS]   startActivityAsUser->
-        [ActivityStarter]   mActivityStarter.startActivityMayWait->
-            [ActivityStarter]   mActivityStarter.startActivityLocked->
-                [ActivityStarter]   mActivityStarter.startActivityUnchecked->
-                     [ActivityStack]    mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions)->
-                        [ActivityStack]    ensureActivitiesVisibleLocked->
-                            [ActivityStack]     makeVisibleAndRestartIfNeeded->
-                                [ActivityStackSupervisor]   mStackSupervisor.resumeTopActivitiesLocked->
-                                    [ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked 进程创建/ realStartActivityLocked 已有进程直接启动activity
-如果目标进程已经存在，直接进行activity启动；否则创建进程，进程创建完毕后会继续执行没有启动的这个activity。
-
-- 上述realStartActivityLocked后续步骤：
-system_server进程：
-[ActivityStackSupervisor] realStartActivityLocked->
-    [ActivityStackSupervisor]   app.thread.scheduleLaunchActivity->`aidl调用进入到ActivityThread的scheduleLaunchActivity`
-    旧版本有如下aidl调用链：
-        [ ApplicationThreadProxy]   ApplicationThreadProxy.scheduleLaunchActivity->transact->ApplicationThreadNative.onTransact->ActivityThread.scheduleLaunchActivity
-
-目前app进程：
-[ActivityThread] scheduleLaunchActivity->
-            [ActivityThread]  sendMessage(H.LAUNCH_ACTIVITY, r)-> 发送消息给app主线程
-
-[ActivityThread] handler处理消息最终handleLaunchActivity
-
-- 上述startSpecificActivityLocked 进程创建后续步骤:
-system_server进程：
-[ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked
-    [AMS]   startProcessLocked->
-            [AMS]  Process.start->
-                [Process]   startViaZygote->
-                    [Process]   zygoteSendArgsAndGetResult->
-                        通过zygoteState.writer写数据，和zygote进程进行socket通信
-
-zygote进程:
-[ZygoteInit] runSelectLoop循环等待消息
-    [ZygoteInit] peers.get(i).runOnce()
-        [ZygoteConnection] runonce
-            [ZygoteConnection]  pid = Zygote.forkAndSpecialize
-                         [Zygote]   VM_HOOKS.preFork()
-                         [Zygote]   pid = nativeForkAndSpecialize
-                         [Zygote]   VM_HOOKS.postForkCommon()
-
-接上文子进程(pid>0)执行handleChildProc
-[ZygoteConnection] RuntimeInit.handleChildProc
-     [ZygoteConnection] RuntimeInit.zygoteInit
-        [RuntimeInit]   commonInit
-        [RuntimeInit]   nativeZygoteInit
-             [AndroidRuntime.cpp]gCurRuntime->onZygoteInit() //这里会开启binder线程
-        [RuntimeInit]   applicationInit
-            [RuntimeInit]   invokeStaticMain //抛出异常，指定方法名称main,异常捕获的时候会执行对应类的main方法
-[ZygoteInit] MethodAndArgsCaller.run
-    [ZygoteInit] mMethod.invoke(null, new Object[] { mArgs });//执行ActivityThread main方法
-    
-继续子进程，即目标app进程：
-[APP2 ActivityThread]
-   [ActivityThread] main->
-     [ActivityThread]  attach(false)->
-                    [AMS]   ams.attachApplication->......
-                    .....
-                        [ActivityStackSupervisor] realStartActivityLocked->后续同前文`realStartActivityLocked后续步骤`
-
-## 系统启动过程中binder知识点
-
-IPC的一些方式：共享内存、管道、socket
-binder用于进程间通信，设计思想，客户端binder client,内存映射到内核区域，服务端binder server，和内核进行共享内存，因此双方同步只需要进行一次拷贝操作。
-用户空间首个进程init进程启动时会进行binder设备初始化操作
-特殊的binder、固定0号binder为ServiceManager，SM进程启动时初始化。
-其他的binder都会通过sm.addService进行服务注册，通过sm.getService进行服务检索。
-0号binder是固定的，因此可以直接找到。其他的通过名字来进行检索。
-一个进程中可以有多个binder服务。
-app进程都是由zygote分裂而来，进程初始化后通过onZygoteInit会开启binder线程池，用于binder通信。
-可以理解为不同的进程中都有很多binder线程(binder线程池)通过和底层通信来监听binder相关的信号，以进行binder通信。
-
-一个简化的模型来进行理解：
-client想要执行server A操作，于是通过server的binderproxy写入操作名、参数等，并根据需要接收服务端返回的数据；
-server的binder线程根据获取的操作、参数进行对应的行为，根据需要返回数据等；
-
-android系统中AMS、WMS、PMS的操作：
-首先通过获取SM的binder proxy，然后通过aidl通信获取AMS的proxy,然后通过aidl通信进行AMS相关操作。
-
-## aidl binder相关 源码版本演进
-几个关键类
-ApplicationThreadProxy(ATN的内部类,位置ApplicationThreadNative.java)
-ActivityManagerProxy(AMN的内部类，位置ActivityManagerNative.java)
-IApplicationThread接口(IApplicationThread.java)
-IActivityManager接口(IActivityManager.java)
-
-7.1源码framework目录还有代理类实现。
-8.2源码中ATN和AMN被标记为过时的，并且移除了ATP和AMP；同时移除了IApplicationThread.java和IActivityManager.java两个定义接口的文件，但是添加了IActivityMananger.aidl和IApplicationThread.aidl两个文件用于辅助生成aidl相关类。
-binder的调用本质没有改变，之前是手动写java层native和proxy代理类，后来使用aidl文件来统一生成相关的中间类。
-`生成的类在哪里可以找到？IActivityMananger 以及 IActivityManager.stub的class在哪里，源码里只有对应IActivityMananger.aidl文件`
-
-## APP启动
-
-场景1：
-Laucher启动
-
-场景2：普通应用启动
-launcher -> app
-过程类似`Android中进程的创建`章节中先启动新进程再开启Activity的情况。
-
-1.点击桌面app
-2.launcher 进行本地startActivity操作，通过binder调用向system_server发起远程调用startActivity的请求，具体是ams来实现这个过程
-3.system_server通过socket向Zygote进程发送请求，要求创建新进程
-4.zygote进行分裂，产生新APP进程，执行ActivityThread的main方法
-5.新APP进程启动后要求attachApplication，也是binder调用转到system_server进程
-6.system_server进程最终会通过binder调用要求新APP进程执行scheduleLaunchActivity操作
-7.新App进程执行scheduleLaunchActivity，通过向主线程handler发送消息触发相关操作
-8.新APP进程主线程执行handleLaunchActivity
-9.目标Activity会被创建，最终onCreate被回调
-
-紧接着思考：
-    window的建立
-    ui的绘制
-
-## Window建立
-
-1. 窗口的建立
-2. view的绘制
-
-WMS负责处理窗口相关，wms通过向android.display线程的handler发送不同消息，display线程进行对应的处理。
-下面列举几个:
-
-DO_TRAVERSAL
-ADD_STARTING //添加启动窗口
-REMOVE_STARTING //移除启动窗口
-FINISHED_STARTING //完成启动
-
-处理行为见WMS.H的handleMessage方法
-
-
-startingwindow的创建过程：
-
-背景:
-源进程通过startActivity开启新应用，首先通过binder调用system_server中ams的startactivity,
-ams通过as、ass等执行到ActivityStack.startActivityLocked方法:
-
-流程链:
-[ActivityStack.startActivityLocked]
-ActivityStack.startActivityLocked->
-    r.showStartingWindow(prev, showStartingIcon)->
-
-[ActivityRecord.showStartingWindow]
-    shown = service.mWindowManager.setAppStartingWindow->
-
-[WMS.setAppStartingWindow]
-    Message m = mH.obtainMessage(H.ADD_STARTING, wtoken);//ADD_STARTING消息
-    mH.sendMessageAtFrontOfQueue(m);//向display线程发送消息 
-    (由于WMS实例化是在display线程中，这里的mH初始化也是display线程中,无参构造函数，使用的是当前线程也就是display线程的looper。)
-
-[WMS.H]
-    handleMessage
-        mPolicy.addStartingWindow
-    
-[PhoneWindowManager.addStartingWindow]
-    addStartingWindow->
-        final PhoneWindow win = new PhoneWindow(context);
-        wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE); //wm为WindowManagerImpl
-        view = win.getDecorView();
-        wm.addView(view, params);
-
-[WindowManagerImpl.addview]
-        mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
-
-[WindowManagerGlobal.addview]
-        root = new ViewRootImpl(view.getContext(), display);
-        root.setView(view, wparams, panelParentView);
-[ViewRootImpl.setView]
-         requestLayout()->
-            scheduleTraversals()->
-         mWindowSession.addToDisplay
-[Session.addToDisplay]
-         wms.addWindow
-[WMS.addWindow]
-    updateFocusedWindowLocked->
-        mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
-                            updateInputWindows);
-[WindowSurfacePlacer.performLayoutLockedInner]
-    mService.mPolicy.beginLayoutLw
-    mService.mPolicy.finishLayoutLw();
-    mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
-
-[PhoneWindowManager.beginLayoutLw]
-    updateSystemUiVisibilityLw
-
-Session中有SurfaceSession对象用于和surfaceflinger进程通信
-
-总结:
-Activity启动的时候，组件相关AMS处理,窗口相关WMS处理。
-需要展示starting窗口的话wms、PhoneWindowManager、ViewRootImpl、Session等共同参与、启动窗口。
-
-Activity在ActivityThread中创建之后：
-handleLaunchActivity->
-    performLaunchActivity->
-        Activity.attach-> //设置activity和window
-    handleResumeActivity->
-        performResumeActivity->
-            r.activity.makeVisible() //真正界面展示
-
-
-makevisible方法，如果没有添加window则通过binder调用添加window，最后设置view可见
-
-```java
-void makeVisible() {
-    if (!mWindowAdded) {
-        ViewManager wm = getWindowManager();
-        wm.addView(mDecor, getWindow().getAttributes());
-        mWindowAdded = true;
-    }
-    mDecor.setVisibility(View.VISIBLE);
-}
-```
-
-一些类:
-View 
-ViewGroup 
-ViewRootImpl 
-ViewManager
-DecorView
-PhoneWindow
-PhoneWindowManager
-WindowManagerGlobal
-WindowManagerImpl
-
-WMS中对窗口类型的定义，数值越大，显示的时候越靠前
-
-窗口的主序
-TYPE_UNIVERSE_BACKGROUND	11000	
-TYPE_WALLPAPER	21000
-TYPE_PHONE	31000	
-TYPE_SEARCH_BAR	41000
-TYPE_RECENTS_OVERLAY	51000	
-TYPE_SYSTEM_DIALOG	51000
-TYPE_TOAST	61000	
-TYPE_PRIORITY_PHONE	71000
-TYPE_DREAM	81000	
-TYPE_SYSTEM_ALERT	91000
-TYPE_INPUT_METHOD	101000	
-TYPE_INPUT_METHOD_DIALOG	111000
-TYPE_KEYGUARD	121000	
-TYPE_KEYGUARD_DIALOG	131000
-TYPE_STATUS_BAR_SUB_PANEL	141000	
-应用窗口与未知类型的窗口	21000
-
-
-子窗口类型	子序
-TYPE_APPLICATION_PANEL	1
-TYPE_APPLICATION_ATTACHED_DIALOG	1
-TYPE_APPLICATION_MEDIA	-2
-TYPE_APPLICATION_MEDIA_OVERLAY	-1
-TYPE_APPLICATION_SUB_PANEL	2
-
-
-`WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
-
-## 系统UI服务
-
-ams.systemReady->
-    runnable执行->
-        startSystemUi->
-            context.startServiceAsUser(intent, UserHandle.SYSTEM);
-            ("com.android.systemui.SystemUIService"))
-
-经历service启动后进入onCreate方法：
-
-SystemUIService.onCreate
-    [
-        ((SystemUIApplication) getApplication()).startServicesIfNeeded()
+    SystemUIService.onCreate
         [
-            `资源文件如何搜寻，比如config_systemUIServiceComponents具体在哪里?`
-            获取names数组(R.array.config_systemUIServiceComponents);(比如com.android.systemui.SystemBars、Recents、PowerUI等，都是SystemUI的子类)
-            startServicesIfNeeded(names);
+            ((SystemUIApplication) getApplication()).startServicesIfNeeded()
             [
-                循环实例化service，这里的service不同于Service组件，只是SystemUI的子类
-                mServices[i].start(); //开启各个SystemUI组件服务
-                `具体选择一两个service看下执行过程、如何关联到界面UI绘制?`
-                如果mBootCompleted则mServices[i].onBootCompleted调用;
+                `资源文件如何搜寻，比如config_systemUIServiceComponents具体在哪里?`
+                获取names数组(R.array.config_systemUIServiceComponents);(比如com.android.systemui.SystemBars、Recents、PowerUI等，都是SystemUI的子类)
+                startServicesIfNeeded(names);
+                [
+                    循环实例化service，这里的service不同于Service组件，只是SystemUI的子类
+                    mServices[i].start(); //开启各个SystemUI组件服务
+                    `具体选择一两个service看下执行过程、如何关联到界面UI绘制?`
+                    如果mBootCompleted则mServices[i].onBootCompleted调用;
+                ]
             ]
         ]
-    ]
-
-## launcher启动
-
-桌面开启的调用链:
-    ams.systemReady->ams.startHomeActivityLocked->ActivityStarter.startHomeActivityLocked->as.startActivityLocked `具体如何开启launcher的启动activity?`
-
-`boot信号获取在哪里?源码分析`
 
 ## IMS(InputManagerService)
 
@@ -1094,6 +1070,147 @@ DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
 UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
 HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
 
+
+
+## Window建立
+
+1. 窗口的生成
+2. view的绘制
+
+WMS负责处理窗口相关，wms通过向android.display线程的handler发送不同消息，display线程进行对应的处理。
+下面列举几个:
+
+DO_TRAVERSAL
+ADD_STARTING //添加启动窗口
+REMOVE_STARTING //移除启动窗口
+FINISHED_STARTING //完成启动
+
+处理行为见WMS.H的handleMessage方法
+
+
+startingwindow的创建过程：
+
+背景:
+源进程通过startActivity开启新应用，首先通过binder调用system_server中ams的startactivity,
+ams通过as、ass等执行到ActivityStack.startActivityLocked方法:
+
+流程链:
+[ActivityStack.startActivityLocked]
+ActivityStack.startActivityLocked->
+    r.showStartingWindow(prev, showStartingIcon)->
+
+[ActivityRecord.showStartingWindow]
+    shown = service.mWindowManager.setAppStartingWindow->
+
+[WMS.setAppStartingWindow]
+    Message m = mH.obtainMessage(H.ADD_STARTING, wtoken);//ADD_STARTING消息
+    mH.sendMessageAtFrontOfQueue(m);//向display线程发送消息 
+    (由于WMS实例化是在display线程中，这里的mH初始化也是display线程中,无参构造函数，使用的是当前线程也就是display线程的looper。)
+
+[WMS.H]
+    handleMessage
+        mPolicy.addStartingWindow
+    
+[PhoneWindowManager.addStartingWindow]
+    addStartingWindow->
+        final PhoneWindow win = new PhoneWindow(context);
+        wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE); //wm为WindowManagerImpl
+        view = win.getDecorView();
+        wm.addView(view, params);
+
+[WindowManagerImpl.addview]
+        mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
+
+[WindowManagerGlobal.addview]
+        root = new ViewRootImpl(view.getContext(), display);
+        root.setView(view, wparams, panelParentView);
+[ViewRootImpl.setView]
+         requestLayout()->
+            scheduleTraversals()->
+         mWindowSession.addToDisplay
+[Session.addToDisplay]
+         wms.addWindow
+[WMS.addWindow]
+    updateFocusedWindowLocked->
+        mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
+                            updateInputWindows);
+[WindowSurfacePlacer.performLayoutLockedInner]
+    mService.mPolicy.beginLayoutLw
+    mService.mPolicy.finishLayoutLw();
+    mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
+
+[PhoneWindowManager.beginLayoutLw]
+    updateSystemUiVisibilityLw
+
+Session中有SurfaceSession对象用于和surfaceflinger进程通信
+
+总结:
+Activity启动的时候，组件相关AMS处理,窗口相关WMS处理。
+需要展示starting窗口的话wms、PhoneWindowManager、ViewRootImpl、Session等共同参与、启动窗口。
+
+Activity在ActivityThread中创建之后：
+handleLaunchActivity->
+    performLaunchActivity->
+        Activity.attach-> //设置activity和window
+    handleResumeActivity->
+        performResumeActivity->
+            r.activity.makeVisible() //真正界面展示
+
+
+makevisible方法，如果没有添加window则通过binder调用添加window，最后设置view可见
+
+```java
+void makeVisible() {
+    if (!mWindowAdded) {
+        ViewManager wm = getWindowManager();
+        wm.addView(mDecor, getWindow().getAttributes());
+        mWindowAdded = true;
+    }
+    mDecor.setVisibility(View.VISIBLE);
+}
+```
+
+一些类:
+View 
+ViewGroup 
+ViewRootImpl 
+ViewManager
+DecorView
+PhoneWindow
+PhoneWindowManager
+WindowManagerGlobal
+WindowManagerImpl
+
+WMS中对窗口类型的定义，数值越大，显示的时候越靠前
+
+窗口的主序
+TYPE_UNIVERSE_BACKGROUND	11000	
+TYPE_WALLPAPER	21000
+TYPE_PHONE	31000	
+TYPE_SEARCH_BAR	41000
+TYPE_RECENTS_OVERLAY	51000	
+TYPE_SYSTEM_DIALOG	51000
+TYPE_TOAST	61000	
+TYPE_PRIORITY_PHONE	71000
+TYPE_DREAM	81000	
+TYPE_SYSTEM_ALERT	91000
+TYPE_INPUT_METHOD	101000	
+TYPE_INPUT_METHOD_DIALOG	111000
+TYPE_KEYGUARD	121000	
+TYPE_KEYGUARD_DIALOG	131000
+TYPE_STATUS_BAR_SUB_PANEL	141000	
+应用窗口与未知类型的窗口	21000
+
+
+子窗口类型	子序
+TYPE_APPLICATION_PANEL	1
+TYPE_APPLICATION_ATTACHED_DIALOG	1
+TYPE_APPLICATION_MEDIA	-2
+TYPE_APPLICATION_MEDIA_OVERLAY	-1
+TYPE_APPLICATION_SUB_PANEL	2
+
+
+`WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
 
 
 ## ams wms system_server一些知识点
