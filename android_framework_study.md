@@ -40,6 +40,8 @@
 - [Launcher启动](#launcher启动)
     - [调用链](#调用链)
     - [扩展](#扩展)
+    - [Launcher 加载](#launcher-加载)
+    - [Launcher启动其他app](#launcher启动其他app)
 - [Android中进程的创建/含Activity启动](#android中进程的创建含activity启动)
     - [新进程产生的场景](#新进程产生的场景)
     - [场景3分析(AMS startActivity)](#场景3分析ams-startactivity)
@@ -690,6 +692,70 @@ public void setSystemProcess() {
 2. intent的显示调用和隐式调用实现原理，显示可以指定对应activity，隐式需要解析出对应的activity列表。
 3. `boot信号获取在哪里?源码分析`
 
+### Launcher 加载
+
+开启的launcher应用源码位于:
+
+    /packages/apps/Launcher3/src/com/android/launcher3/Launcher.java
+
+继承自BaseDraggingActivity
+
+```java
+public class Launcher extends BaseDraggingActivity implements LauncherExterns,
+    LauncherModel.Callbacks, LauncherProviderChangeListener, UserEventDelegate
+
+```
+onCreate进行界面初始化
+    
+```java
+    mLauncherView = LayoutInflater.from(this).inflate(R.layout.launcher, null);
+    setupViews();
+```
+
+### Launcher启动其他app
+
+点击桌面图标，触发的是launcher的startActivitySafely，最终还是activity的startActivity方法，然后进行后续调用链，包括与ams交互、新进程创建、根activity的创建。
+
+```java
+
+public boolean startActivitySafely(View v, Intent intent, ItemInfo item) {
+    boolean success = super.startActivitySafely(v, intent, item);  //父类的方法
+    if (success && v instanceof BubbleTextView) {
+        // This is set to the view that launched the activity that navigated the user away
+        // from launcher. Since there is no callback for when the activity has finished
+        // launching, enable the press state and keep this reference to reset the press
+        // state when we return to launcher.
+        BubbleTextView btv = (BubbleTextView) v;
+        btv.setStayPressed(true);
+        setOnResumeCallback(btv);
+    }
+    return success;
+}
+```
+
+后续调用链可以参考`Android中进程创建以及Activity启动`
+下面进行一个简单的概述
+Activity.startActivity
+    Instrumentation.exec
+         ActivityManagerNative.getDefault().startActivity //8.0之前的版本
+
+随后binder调用，AMS中的startActivity执行
+
+    ams.startActivity
+        ams.startActivityAsUser
+            mActivityStarter.startActivityMayWait
+                as.startActivityLocked
+                    as.startActivityUnchecked
+                        ass.resumeFocusedStackTopActivityLocked
+                            targetStack.resumeTopActivityUncheckedLocked
+                                astack.resumeTopActivityInnerLocked
+                                    mStackSupervisor.startSpecificActivityLocked
+                                        ass.realStartActivityLocked //进程已经存在
+                                            app.thread.scheduleLaunchActivity //进入目标app进程
+                                        
+                                        mService.startProcessLocked //进程不存在先创建进程
+
+概括即：ams的startActivity经过层层调用最后到ActivityStackSupervisor的startSpecificActivityLocked，然后判断目标process是否已经存在，如果存在则执行ass的realStartActivityLocked，最终通过app.thread这个目标进程binder服务的客户端发起scheduleLaunchActivity的请求；如果process不存在则会进行进程创建，创建完成后再发起Activity的启动请求。
 
 ## Android中进程的创建/含Activity启动
 
