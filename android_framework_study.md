@@ -58,8 +58,15 @@
     - [启动调用链](#启动调用链)
     - [startSystemUi](#startsystemui)
     - [SystemUIService](#systemuiservice)
-- [IMS(InputManagerService)](#imsinputmanagerservice)
-- [WMS(WindowManagerService)](#wmswindowmanagerservice)
+- [系统启动 IMS服务(InputManagerService)](#系统启动-ims服务inputmanagerservice)
+    - [启动流程](#启动流程-3)
+    - [InputManagerService实例化过程](#inputmanagerservice实例化过程)
+    - [IMS.start过程](#imsstart过程)
+    - [Input事件来源](#input事件来源)
+    - [ims相关核心线程](#ims相关核心线程)
+    - [android 系统输入事件流程总结(取自深入理解Android卷3)](#android-系统输入事件流程总结取自深入理解android卷3)
+    - [查看输入设备以及输入事件](#查看输入设备以及输入事件)
+- [系统启动 WMS服务(WindowManagerService)](#系统启动-wms服务windowmanagerservice)
 - [Window建立](#window建立)
 - [ams wms system_server一些知识点](#ams-wms-system_server一些知识点)
 - [activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal](#activitywindowviewrootimplwindowmanagerwindowmanagreimplwindowmanagerglobal)
@@ -573,7 +580,7 @@ lifecycle.onstart
             ServiceManager.addService(Context.APP_OPS_SERVICE, asBinder());
 ```
 
-AMS内部类lifecycle
+AMS内部类LifeCycle.class
 ```java
 
     public static final class Lifecycle extends SystemService {
@@ -1009,9 +1016,9 @@ launcher -> app
             ]
         ]
 
-## IMS(InputManagerService)
+## 系统启动 IMS服务(InputManagerService)
 
-1. 启动IMS:
+### 启动流程
 
 ```
 SystemServer -> 
@@ -1021,64 +1028,121 @@ SystemServer ->
         inputManager.start();
 ```
 
-2. InputManagerService实例化过程:
-    设置InputManagerService的handler关联"android.display"线程(DisplayThread);
-    创建InputDispatcher和InputReader本地对象。
+### InputManagerService实例化过程
 
-3. IMS.start过程：
-    通过native调用开启两个线程，InputReader和InputDispatcher。(java层使用android.display线程处理消息?)
+```java
 
-4. Input事件流程：
-`这里是从屏幕触摸到ViewRootImp处理，最终如何从viewrootImp到Activity的呀？`
-`https://blog.csdn.net/singwhatiwanna/article/details/50775201 这个是解答，其中Thread.dumpStack是一个很好的分析工具`
+public InputManagerService(Context context) {
+    this.mContext = context;
+    this.mHandler = new InputManagerHandler(DisplayThread.get().getLooper());
+
+    mUseDevInputEventForAudioJack =
+            context.getResources().getBoolean(R.bool.config_useDevInputEventForAudioJack);
+    Slog.i(TAG, "Initializing input manager, mUseDevInputEventForAudioJack="
+            + mUseDevInputEventForAudioJack);
+    mPtr = nativeInit(this, mContext, mHandler.getLooper().getQueue());
+
+    LocalServices.addService(InputManagerInternal.class, new LocalService());
+}
+    
+```
+    设置InputManagerService的handler关联"android.display"线程(DisplayThread);//这也说明(DisplayManagerService在startBootstrapServices时被启动)
+
+    nativeInit创建InputDispatcher和InputReader本地对象。
+
+### IMS.start过程
+
+```java
+    public void start() {
+        Slog.i(TAG, "Starting input manager");
+        nativeStart(mPtr);
+
+        // Add ourself to the Watchdog monitors.
+        Watchdog.getInstance().addMonitor(this);
+
+        registerPointerSpeedSettingObserver();
+        registerShowTouchesSettingObserver();
+        registerAccessibilityLargePointerSettingObserver();
+
+        mContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updatePointerSpeedFromSettings();
+                updateShowTouchesFromSettings();
+                updateAccessibilityLargePointerFromSettings();
+            }
+        }, new IntentFilter(Intent.ACTION_USER_SWITCHED), null, mHandler);
+
+        updatePointerSpeedFromSettings();
+        updateShowTouchesFromSettings();
+        updateAccessibilityLargePointerFromSettings();
+    }
 
 ```
-    屏幕触摸-硬件驱动-信号和事件
-    InputReader不断获取由驱动产生的按键事件，传给InputDispatcher。`input_event(设备节点) -> RawEvent(EventHub)->inputReader加工一些列低级事件转化为android输入事件`
-    InputDispatcher线程从队列取事件，并进行事件传递，派发到合适的窗口。这里会从SystemServer和目标进程进行跨进程通信，InputDispatcher通过socket和远程进程通信(异步非阻塞)。
-        -publishKeyEvent->
-            -mChannel->sendMessage(&msg);
+
+会通过native调用开启两个线程，InputReader和InputDispatcher。一个用于从文件读取事件、一个用于派发事件。
+
+### Input事件来源
+这里分三个阶段进行分析
+
+1.原始输入事件到ViewRootImpl的过程：
+
+屏幕触摸->硬件驱动->信号和事件；
+InputReader不断获取由驱动产生的按键事件，加入队列。`事件依次经过input_event(设备节点) -> RawEvent(EventHub)->inputReader等节点，从一些列低级事件转化为android应用层输入事件`。
+InputDispatcher线程从队列取事件，并进行事件传递，派发到合适的窗口。这里会从SystemServer和目标进程进行跨进程通信，InputDispatcher通过socket和远程进程通信(异步非阻塞)。
+```
+-publishKeyEvent->
+    -mChannel->sendMessage(&msg);
+
         收到消息返回调用receiveFinishedSignal进行处理
-
-    目标APP的UI主线程(android.ui线程)looper循环，处理派发到窗口的事件,处理完毕后socket通信发送信号给InputDispatcher。
-        -nativePollOnce
-            -Looper::pollInner
-                -InputConsumer.consume
-                    -....
-                        -viewrootImp.deliverInputEvent
-                        -finishInputEvent
-                            -sendFinishedSignal
-                                -mChannel->sendMessage(&msg);
 ```
-进一步viewrootImp.deliverInputEvent的处理
+目标APP的UI主线程(android.ui线程)looper循环，处理派发到窗口的事件,处理完毕后socket通信发送信号给InputDispatcher。 `socket通信最后如何触发主线程handler消息的?`
 
--viewrootImp.deliverInputEvent
-    -InputStage.deliver
-        -InputStage.onDeliverToNext
-            -InputStage.deliver
-                -ViewPostImeInputStage.onProcess
-                    -ViewPostImeInputStage.processPointerEvent
+```
+-nativePollOnce
+    -Looper::pollInner
+        -InputConsumer.consume
+            -....
+                -viewrootImp.deliverInputEvent
+                -finishInputEvent
+                    -sendFinishedSignal
+                        -mChannel->sendMessage(&msg);
+```
+
+2.ViewRootImpl到Activity和窗口的过程(viewRootImp.deliverInputEvent)
+
+    -viewrootImp.deliverInputEvent
+        -InputStage.deliver
+            -InputStage.onDeliverToNext
+                -InputStage.deliver
+                    -ViewPostImeInputStage.onProcess
                         -ViewPostImeInputStage.processPointerEvent
-                            -view.dispatchPointerEvent
-                                -decorview.dispatchTouchEvent
-                                    -wc.dispatchTouchEvent(即windowcallback的dispatchtouchevent方法,是activity attach方法的时候对mWindow进行设置的)
-                                        -Activity.dispatchTouchEvent(后续正常分发)
-                                            -PhoneWindow.superDispatchTouchEvent
-                                                -PhoneWindow$DecorView.superDispatchTouchEvent
-                                                    -ViewGroup.dispatchTouchEvent(ViewGroup和view按键事件传递)
+                            -ViewPostImeInputStage.processPointerEvent
+                                -view.dispatchPointerEvent
+                                    -decorview.dispatchTouchEvent
+                                        -wc.dispatchTouchEvent(即windowcallback的dispatchtouchevent方法,是activity attach方法的时候对mWindow进行设置的)
+                                            -Activity.dispatchTouchEvent(后续正常分发)
+                                                -PhoneWindow.superDispatchTouchEvent
+                                                    -PhoneWindow$DecorView.superDispatchTouchEvent
+                                                        -ViewGroup.dispatchTouchEvent(ViewGroup和view按键事件传递)
+
+3.后续就是常见的ViewGroup的事件传递(具体分析见ViewGroup事件派发专题)
 
 
-5. system_server中的ims相关核心线程
+资料：
+`https://blog.csdn.net/singwhatiwanna/article/details/50775201` 是对2过程的一个详细介绍，其中Thread.dumpStack是一个很好的分析工具。
 
-shell@CB03:/ $ ps | grep system_server
-system    881   300   1167360 76556 ffffffff 00000000 S system_server
+### ims相关核心线程
 
-shell@CB03:/ $ ps -t 881 | grep input
-system    2557  881   1167360 76556 ffffffff 00000000 S InputDispatcher
-system    2558  881   1167360 76556 ffffffff 00000000 S InputReader
+    shell@CB03:/ $ ps | grep system_server
+    system    881   300   1167360 76556 ffffffff 00000000 S system_server
+
+    shell@CB03:/ $ ps -t 881 | grep input
+    system    2557  881   1167360 76556 ffffffff 00000000 S InputDispatcher
+    system    2558  881   1167360 76556 ffffffff 00000000 S InputReader
 
 
-6. android 系统输入事件流程总结(邓平凡)
+### android 系统输入事件流程总结(取自深入理解Android卷3)
 
 Android输入系统的工作原理概括来说，就是监控/dev/input/下的所有设备节点，当某个节点有数据可读时，将数据读出并进行一系列的翻译加工，然后在所有的窗口中寻找合适的事件接收者，并派发给它。
 
@@ -1091,40 +1155,43 @@ Android输入系统的工作原理概括来说，就是监控/dev/input/下的�
 其中用到了Inotify和Epool,线程相关知识 邓系列 https://blog.csdn.net/Innost/article/details/90633199
 
 
-7. 查看输入设备以及输入事件
+### 查看输入设备以及输入事件
 
-adb shell getevent -t
+    adb shell getevent -t
 
-设备列表
-add device 1: /dev/input/event4
-  name:     "msm8909-skue-snd-card Headset Jack"
-add device 2: /dev/input/event3
-  name:     "msm8909-skue-snd-card Button Jack"
-add device 3: /dev/input/event1
-  name:     "qpnp_pon"
-add device 4: /dev/input/event0
-  name:     "goodix-ts"
-could not get driver version for /dev/input/mice, Not a typewriter
-add device 5: /dev/input/event2
-  name:     "gpio-keys"
+    设备列表
+    add device 1: /dev/input/event4
+    name:     "msm8909-skue-snd-card Headset Jack"
+    add device 2: /dev/input/event3
+    name:     "msm8909-skue-snd-card Button Jack"
+    add device 3: /dev/input/event1
+    name:     "qpnp_pon"
+    add device 4: /dev/input/event0
+    name:     "goodix-ts"
+    could not get driver version for /dev/input/mice, Not a typewriter
+    add device 5: /dev/input/event2
+    name:     "gpio-keys"
 
 基本事件(下面是手头机器电源键按下抬起的记录)
 
-[ 3385509.651590] /dev/input/event1: 0001 0074 00000001
-[ 3385509.651590] /dev/input/event1: 0000 0000 00000000
-[ 3385509.861141] /dev/input/event1: 0001 0074 00000000
-[ 3385509.861141] /dev/input/event1: 0000 0000 00000000
+    [ 3385509.651590] /dev/input/event1: 0001 0074 00000001
+    [ 3385509.651590] /dev/input/event1: 0000 0000 00000000
+    [ 3385509.861141] /dev/input/event1: 0001 0074 00000000
+    [ 3385509.861141] /dev/input/event1: 0000 0000 00000000
 
 两种方式模拟按键
-1. 模拟指定输入设备的指定基本事件 
-adb shell sendevent /dev/input/event1 xx xx xx
 
-2. 更为高层的按键事件 
-adb shell input keyevent xx(xx为按键码)
-adb shell input tap 50 250(点击) 
-adb shell input swipe 50 250 250 250 500(滑动) 
+1.模拟指定输入设备的指定基本事件 
 
-## WMS(WindowManagerService)
+    adb shell sendevent /dev/input/event1 xx xx xx
+
+2.更为高层的按键事件 
+
+    adb shell input keyevent xx(xx为按键码)
+    adb shell input tap 50 250(点击) 
+    adb shell input swipe 50 250 250 250 500(滑动) 
+
+## 系统启动 WMS服务(WindowManagerService)
 
 1. 启动WMS
 
