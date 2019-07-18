@@ -63,38 +63,12 @@
     - [InputManagerService实例化过程](#inputmanagerservice实例化过程)
     - [IMS.start过程](#imsstart过程)
     - [Input事件来源](#input事件来源)
-    - [ims相关核心线程](#ims相关核心线程)
+    - [IMS相关核心线程](#ims相关核心线程)
     - [android 系统输入事件流程总结(取自深入理解Android卷3)](#android-系统输入事件流程总结取自深入理解android卷3)
     - [查看输入设备以及输入事件](#查看输入设备以及输入事件)
 - [系统启动 WMS服务(WindowManagerService)](#系统启动-wms服务windowmanagerservice)
-- [Window建立](#window建立)
-- [ams wms system_server一些知识点](#ams-wms-system_server一些知识点)
-- [activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal](#activitywindowviewrootimplwindowmanagerwindowmanagreimplwindowmanagerglobal)
-- [ViewRootImpl](#viewrootimpl)
-- [requestLayout 和 invalidate](#requestlayout-和-invalidate)
-- [控件绘制 View/ViewGroup Measure、Layout、Draw](#控件绘制-viewviewgroup-measurelayoutdraw)
-    - [onMeasure 流程分析](#onmeasure-流程分析)
-    - [onLayout 流程分析](#onlayout-流程分析)
-    - [draw 流程分析](#draw-流程分析)
-- [APP安装](#app安装)
-- [framework层源码调试跟踪执行过程的实现?](#framework层源码调试跟踪执行过程的实现)
-- [图形绘制相关服务](#图形绘制相关服务)
-- [SurfaceView 和 Canvas](#surfaceview-和-canvas)
-- [context获取各种服务](#context获取各种服务)
-- [Activity](#activity)
-    - [Activity的启动](#activity的启动)
-    - [Activity 成员分析](#activity-成员分析)
-- [Service](#service)
-- [ContentProvider](#contentprovider)
-- [BrocastReceiver](#brocastreceiver)
-- [Intent](#intent)
-- [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
-- [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
-- [Window Dialog PopupWindow Toast分析](#window-dialog-popupwindow-toast分析)
-- [从Activity中WindowManager谈起](#从activity中windowmanager谈起)
-- [Toast调用流程(跨进程、多次binder交互)](#toast调用流程跨进程多次binder交互)
-- [资源加载过程](#资源加载过程)
-- [Android 性能优化](#android-性能优化)
+    - [启动WMS](#启动wms)
+    - [WMS实例化(main方法)](#wms实例化main方法)
 
 <!-- /TOC -->
 
@@ -618,6 +592,38 @@ public ActivityManagerService(Context systemContext) {
 }
 ```
 
+UIHandler是AMS的内部类，是HandlerThread的子类，构造函数如下，调用UIThread相关方法
+```java
+public UiHandler() {
+    super(com.android.server.UiThread.get().getLooper(), null, true); // 最终创建单例的UIThread
+}
+```
+
+UIThread采用单例模式，对应的是system_server中的android.ui线程
+```java
+public final class UiThread extends ServiceThread {
+    private UiThread() {
+        super("android.ui", android.os.Process.THREAD_PRIORITY_FOREGROUND, false /*allowIo*/);
+    }
+
+    public static UiThread get() {
+        synchronized (UiThread.class) {
+            ensureThreadLocked();
+            return sInstance;
+        }
+    }
+
+     private static void ensureThreadLocked() {
+        if (sInstance == null) {
+            sInstance = new UiThread();
+            sInstance.start();
+            sInstance.getLooper().setTraceTag(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+            sHandler = new Handler(sInstance.getLooper());
+        }
+    }
+}
+```
+
 AMS的start方法
 
 ```java
@@ -1046,7 +1052,7 @@ public InputManagerService(Context context) {
 }
     
 ```
-    设置InputManagerService的handler关联"android.display"线程(DisplayThread);//这也说明(DisplayManagerService在startBootstrapServices时被启动)
+    设置InputManagerService的handler关联"android.display"线程(DisplayThread);//(DisplayManagerService在startBootstrapServices时被启动)
 
     nativeInit创建InputDispatcher和InputReader本地对象。
 
@@ -1096,7 +1102,7 @@ InputDispatcher线程从队列取事件，并进行事件传递，派发到合�
 
         收到消息返回调用receiveFinishedSignal进行处理
 ```
-目标APP的UI主线程(android.ui线程)looper循环，处理派发到窗口的事件,处理完毕后socket通信发送信号给InputDispatcher。 `socket通信最后如何触发主线程handler消息的?`
+目标APP的UI主线程looper循环，处理派发到窗口的事件,处理完毕后socket通信发送信号给InputDispatcher。 `socket通信最后如何触发主线程handler消息的?`
 
 ```
 -nativePollOnce
@@ -1132,7 +1138,7 @@ InputDispatcher线程从队列取事件，并进行事件传递，派发到合�
 资料：
 `https://blog.csdn.net/singwhatiwanna/article/details/50775201` 是对2过程的一个详细介绍，其中Thread.dumpStack是一个很好的分析工具。
 
-### ims相关核心线程
+### IMS相关核心线程
 
     shell@CB03:/ $ ps | grep system_server
     system    881   300   1167360 76556 ffffffff 00000000 S system_server
@@ -1193,7 +1199,7 @@ Android输入系统的工作原理概括来说，就是监控/dev/input/下的�
 
 ## 系统启动 WMS服务(WindowManagerService)
 
-1. 启动WMS
+### 启动WMS
 
 ```
 SystemServer->
@@ -1206,7 +1212,8 @@ SystemServer->
         wm.systemReady();
 ```
 
-2. WMS实例化(main方法)
+### WMS实例化(main方法)
+实例化调用的是static的main方法，内部通过handler发消息在DisplayThread中进行的具体实例化过程。
 
 ```java
     public static WindowManagerService main(final Context context,
@@ -1225,33 +1232,74 @@ SystemServer->
     }
 ```
 
- 利用DisplayThread.getHandler().runWithScissors来调用wms初始化，这里注意两点：初始化过程是在display线程执行，当前线程会等待执行结束(同步操作，runWithScissors特性)，再进行返回。
+ 利用DisplayThread.getHandler().runWithScissors来调用wms初始化，这里注意两点：初始化过程是在display线程执行，当前线程会等待执行结束(同步操作，runWithScissors特性)，再进行返回。其中DisplayThread.getHandler()方法会判断android.display是否存在，不存在则创建线程，这里的采用单例模式。
+ 
  `runWithScissors实现，源码学习一下`
  
- WMS实例化：其中调用initPolicy方法，该方法会利用runWithScissors在UIThread中执行mPolicy.init的过程,UiThread.getHandler().runWithScissors,阻塞操作,等待执行后返回本线程再继续走.
+ WindowManagerService继承IWindowManager.Stub(由IWindowManager.aidl生成的Server端)
 
- 3. 涉及线程
+ ```java
+public class WindowManagerService extends IWindowManager.Stub
+        implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs
+```
+
+ WMS构造函数会调用initPolicy方法，该方法会利用runWithScissors在UIThread中执行mPolicy.init的过程,UiThread.getHandler().runWithScissors,阻塞操作,等待执行后返回本线程再继续走.
+ 
+```java
+ private WindowManagerService(Context context, InputManagerService inputManager,
+        boolean haveInputMethods, boolean showBootMsgs, boolean onlyCore) {
+            ...
+            LocalServices.addService(WindowManagerPolicy.class, mPolicy);
+            ...
+            LocalServices.addService(WindowManagerInternal.class, new LocalService());
+            initPolicy();
+        }
+
+private void initPolicy() {
+    UiThread.getHandler().runWithScissors(new Runnable() {
+        @Override
+        public void run() {
+            WindowManagerPolicyThread.set(Thread.currentThread(), Looper.myLooper());
+
+            mPolicy.init(mContext, WindowManagerService.this, WindowManagerService.this);
+        }
+    }, 0);
+}
+```
+
+
+ 
+
+ ### 涉及线程
  system_server主线程, “android.display”线程, “android.ui”线程
- `这里的UI线程和app进程中的UI线程?UIThread的单例模式?跨进程?android.ui何时启动的`
 
- 4. 调用流图
+ "android.ui"是在AMS实例化的时候开启的。对应UIThread，UIThread.get或者getHandler会触发线程创建。
 
- SystemServer->
- WMS.main->
-        new WMS[android.display]->
-        initPolicy[android.display]->
-            mPolicy(PhoneWindowManager对象).init[android.ui]->
-            <-
-        <-
-WMS.displayReady
-WMS.systemReady
+ "android.display"是WMS实例化的时候开启的。对应DisplayThread,同样的其静态get或者getHandler会触发线程创建。
 
-5. wms中涉及的一些线程
-SystemServer主线程、display线程、android.ui线程。
-DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
-UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
-HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
+    DisplayThread extends ServiceThread(extends HandlerThread) : "android.display"
+    UIThread extends ServiceThread(extends HandlerThread) : "android.ui"
 
+HandlerThread设计的目的：其中的getLooper方法会阻塞，等到线程开启循环loop后才会返回，避免线程不同步，消息循环还没来得及开启时获取的looper为空。
+
+### 调用流图
+
+    SystemServer
+        WMS.main
+            new WMS // [android.display]
+            initPolicy // [android.display]
+                mPolicy(PhoneWindowManager对象).init //[android.ui]
+        WMS.displayReady
+        WMS.systemReady
+
+总体来看就是system_server会通过handler给display发消息，display会给ui发消息，两者都是阻塞的，等UIThread执行完mPolicy的初始化后返回DisplayThread，DisplayThread才算完成WMS的构造过程，再返回到system_server。
+
+
+### 扩展
+
+1. wms.systemReady
+
+2. wms.displayReady
 
 
 ## Window建立
@@ -1259,87 +1307,93 @@ HandlerThread设计的目的:getLooper方法会阻塞，等到线程开启循环
 1. 窗口的生成
 2. view的绘制
 
-WMS负责处理窗口相关，wms通过向android.display线程的handler发送不同消息，display线程进行对应的处理。
-下面列举几个:
+### 概述
 
-DO_TRAVERSAL
-ADD_STARTING //添加启动窗口
-REMOVE_STARTING //移除启动窗口
-FINISHED_STARTING //完成启动
+WMS负责处理窗口相关的工作，比如窗口的添加和删除等。通过前文系统启动-wms服务，可以知道wms的实例化是在android.display中，因此窗口相关的操作也都会经历这个线程。wms实例中有个名为mH的H类对象，是一个handler，可用于异步通信。
 
-处理行为见WMS.H的handleMessage方法
+下面列举一些消息类型，处理行为见WMS.H的handleMessage方法。
+
+    DO_TRAVERSAL
+    ADD_STARTING //添加启动窗口
+    REMOVE_STARTING //移除启动窗口
+    FINISHED_STARTING //完成启动
 
 
+
+### StartingWindow
 startingwindow的创建过程：
 
 背景:
+
 源进程通过startActivity开启新应用，首先通过binder调用system_server中ams的startactivity,
 ams通过as、ass等执行到ActivityStack.startActivityLocked方法:
 
 流程链:
-[ActivityStack.startActivityLocked]
-ActivityStack.startActivityLocked->
-    r.showStartingWindow(prev, showStartingIcon)->
 
-[ActivityRecord.showStartingWindow]
-    shown = service.mWindowManager.setAppStartingWindow->
+    [ActivityStack.startActivityLocked]
+    ActivityStack.startActivityLocked->
+        r.showStartingWindow(prev, showStartingIcon)->
 
-[WMS.setAppStartingWindow]
-    Message m = mH.obtainMessage(H.ADD_STARTING, wtoken);//ADD_STARTING消息
-    mH.sendMessageAtFrontOfQueue(m);//向display线程发送消息 
-    (由于WMS实例化是在display线程中，这里的mH初始化也是display线程中,无参构造函数，使用的是当前线程也就是display线程的looper。)
+    [ActivityRecord.showStartingWindow]
+        shown = service.mWindowManager.setAppStartingWindow->
 
-[WMS.H]
-    handleMessage
-        mPolicy.addStartingWindow
-    
-[PhoneWindowManager.addStartingWindow]
-    addStartingWindow->
-        final PhoneWindow win = new PhoneWindow(context);
-        wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE); //wm为WindowManagerImpl
-        view = win.getDecorView();
-        wm.addView(view, params);
+    [WMS.setAppStartingWindow]
+        Message m = mH.obtainMessage(H.ADD_STARTING, wtoken);//ADD_STARTING消息
+        mH.sendMessageAtFrontOfQueue(m);//向display线程发送消息 
+        (由于WMS实例化是在display线程中，这里的mH初始化也是display线程中,无参构造函数，使用的是当前线程也就是display线程的looper。)
 
-[WindowManagerImpl.addview]
-        mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
+    [WMS.H]
+        handleMessage
+            mPolicy.addStartingWindow
+        
+    [PhoneWindowManager.addStartingWindow]
+        addStartingWindow->
+            final PhoneWindow win = new PhoneWindow(context);
+            wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE); //wm为WindowManagerImpl
+            view = win.getDecorView();
+            wm.addView(view, params);
 
-[WindowManagerGlobal.addview]
-        root = new ViewRootImpl(view.getContext(), display);
-        root.setView(view, wparams, panelParentView);
-[ViewRootImpl.setView]
-         requestLayout()->
-            scheduleTraversals()->
-         mWindowSession.addToDisplay
-[Session.addToDisplay]
-         wms.addWindow
-[WMS.addWindow]
-    updateFocusedWindowLocked->
-        mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
-                            updateInputWindows);
-[WindowSurfacePlacer.performLayoutLockedInner]
-    mService.mPolicy.beginLayoutLw
-    mService.mPolicy.finishLayoutLw();
-    mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
+    [WindowManagerImpl.addview]
+            mGlobal.addView(view, params, mContext.getDisplay(), mParentWindow);
 
-[PhoneWindowManager.beginLayoutLw]
-    updateSystemUiVisibilityLw
+    [WindowManagerGlobal.addview]
+            root = new ViewRootImpl(view.getContext(), display);
+            root.setView(view, wparams, panelParentView);
+    [ViewRootImpl.setView]
+            requestLayout()->
+                scheduleTraversals()->
+            mWindowSession.addToDisplay
+    [Session.addToDisplay]
+            wms.addWindow
+    [WMS.addWindow]
+        updateFocusedWindowLocked->
+            mWindowPlacerLocked.performLayoutLockedInner(displayContent, true /*initial*/,
+                                updateInputWindows);
+    [WindowSurfacePlacer.performLayoutLockedInner]
+        mService.mPolicy.beginLayoutLw
+        mService.mPolicy.finishLayoutLw();
+        mService.mH.sendEmptyMessage(UPDATE_DOCKED_STACK_DIVIDER);
 
-Session中有SurfaceSession对象用于和surfaceflinger进程通信
+    [PhoneWindowManager.beginLayoutLw]
+        updateSystemUiVisibilityLw
 
-总结:
+    Session中有SurfaceSession对象用于和surfaceflinger进程通信
+
+### 总结
 Activity启动的时候，组件相关AMS处理,窗口相关WMS处理。
 需要展示starting窗口的话wms、PhoneWindowManager、ViewRootImpl、Session等共同参与、启动窗口。
 
 Activity在ActivityThread中创建之后：
-handleLaunchActivity->
-    performLaunchActivity->
-        Activity.attach-> //设置activity和window
-    handleResumeActivity->
-        performResumeActivity->
-            r.activity.makeVisible() //真正界面展示
+
+    handleLaunchActivity->
+        performLaunchActivity->
+            Activity.attach-> //设置activity和window
+        handleResumeActivity->
+            performResumeActivity->
+                r.activity.makeVisible() //真正界面展示
 
 
-makevisible方法，如果没有添加window则通过binder调用添加window，最后设置view可见
+makeVisible方法，如果没有添加window则通过binder调用添加window，最后设置view可见
 
 ```java
 void makeVisible() {
@@ -1353,43 +1407,45 @@ void makeVisible() {
 ```
 
 一些类:
-View 
-ViewGroup 
-ViewRootImpl 
-ViewManager
-DecorView
-PhoneWindow
-PhoneWindowManager
-WindowManagerGlobal
-WindowManagerImpl
+
+    View 
+    ViewGroup 
+    ViewRootImpl 
+    ViewManager
+    DecorView
+    PhoneWindow
+    PhoneWindowManager
+    WindowManagerGlobal
+    WindowManagerImpl
 
 WMS中对窗口类型的定义，数值越大，显示的时候越靠前
 
-窗口的主序
-TYPE_UNIVERSE_BACKGROUND	11000	
-TYPE_WALLPAPER	21000
-TYPE_PHONE	31000	
-TYPE_SEARCH_BAR	41000
-TYPE_RECENTS_OVERLAY	51000	
-TYPE_SYSTEM_DIALOG	51000
-TYPE_TOAST	61000	
-TYPE_PRIORITY_PHONE	71000
-TYPE_DREAM	81000	
-TYPE_SYSTEM_ALERT	91000
-TYPE_INPUT_METHOD	101000	
-TYPE_INPUT_METHOD_DIALOG	111000
-TYPE_KEYGUARD	121000	
-TYPE_KEYGUARD_DIALOG	131000
-TYPE_STATUS_BAR_SUB_PANEL	141000	
-应用窗口与未知类型的窗口	21000
+    窗口的主序
+    TYPE_UNIVERSE_BACKGROUND	11000	
+    TYPE_WALLPAPER	21000
+    TYPE_PHONE	31000	
+    TYPE_SEARCH_BAR	41000
+    TYPE_RECENTS_OVERLAY	51000	
+    TYPE_SYSTEM_DIALOG	51000
+    TYPE_TOAST	61000	
+    TYPE_PRIORITY_PHONE	71000
+    TYPE_DREAM	81000	
+    TYPE_SYSTEM_ALERT	91000
+    TYPE_INPUT_METHOD	101000	
+    TYPE_INPUT_METHOD_DIALOG	111000
+    TYPE_KEYGUARD	121000	
+    TYPE_KEYGUARD_DIALOG	131000
+    TYPE_STATUS_BAR_SUB_PANEL	141000	
+    应用窗口与未知类型的窗口	21000
 
 
 子窗口类型	子序
-TYPE_APPLICATION_PANEL	1
-TYPE_APPLICATION_ATTACHED_DIALOG	1
-TYPE_APPLICATION_MEDIA	-2
-TYPE_APPLICATION_MEDIA_OVERLAY	-1
-TYPE_APPLICATION_SUB_PANEL	2
+
+    TYPE_APPLICATION_PANEL	1
+    TYPE_APPLICATION_ATTACHED_DIALOG	1
+    TYPE_APPLICATION_MEDIA	-2
+    TYPE_APPLICATION_MEDIA_OVERLAY	-1
+    TYPE_APPLICATION_SUB_PANEL	2
 
 
 `WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
