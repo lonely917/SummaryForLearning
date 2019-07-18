@@ -55,7 +55,7 @@
     - [场景](#场景)
     - [扩展](#扩展-2)
 - [系统UI服务](#系统ui服务)
-    - [调用链](#调用链-1)
+    - [启动调用链](#启动调用链)
     - [startSystemUi](#startsystemui)
     - [SystemUIService](#systemuiservice)
 - [IMS(InputManagerService)](#imsinputmanagerservice)
@@ -744,11 +744,11 @@ Activity.startActivity
     ams.startActivity
         ams.startActivityAsUser
             mActivityStarter.startActivityMayWait
-                as.startActivityLocked
+                as.startActivityLocked //ActivityStarter
                     as.startActivityUnchecked
-                        ass.resumeFocusedStackTopActivityLocked
+                        ass.resumeFocusedStackTopActivityLocked//ActivityStackSupervisor
                             targetStack.resumeTopActivityUncheckedLocked
-                                astack.resumeTopActivityInnerLocked
+                                astack.resumeTopActivityInnerLocked//ActivityStack
                                     mStackSupervisor.startSpecificActivityLocked
                                         ass.realStartActivityLocked //进程已经存在
                                             app.thread.scheduleLaunchActivity //进入目标app进程
@@ -770,78 +770,125 @@ Activity.startActivity
 进程创建最终都是c++层fork方法，对场景3进行java层流程梳理：
 1. App进程执行startActivity或者startService
 2. aidl通信、SystemServer进程中AMS执行对应的startActivity或者startService
+
+`Activity创建实际的调用链会根据具体场景有所不同，比如是否启动一个newTask、之前是否已有同类Activity启动等，同样不同版本sdk代码细节或者名称可能会有差异，但整体思路是一样的，下面是根据24版本源码进行追踪得到的结果，调用路径之一`
 ```
-    [AMS]   startActivity->
-        [AMS]   startActivityAsUser->
-            [ActivityStarter]   mActivityStarter.startActivityMayWait->
-                [ActivityStarter]   mActivityStarter.startActivityLocked->
-                    [ActivityStarter]   mActivityStarter.startActivityUnchecked->
-                        [ActivityStack]    mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions)->
-                            [ActivityStack]    ensureActivitiesVisibleLocked->
-                                [ActivityStack]     makeVisibleAndRestartIfNeeded->
-                                    [ActivityStackSupervisor]   mStackSupervisor.resumeTopActivitiesLocked->
-                                        [ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked 进程创建/ realStartActivityLocked 已有进程直接启动activity
+    [AMS - startActivity]
+        startActivityAsUser->
+            mActivityStarter.startActivityMayWait->
+    
+    [ActivityStarter - startActivityMayWait]
+        startActivityLocked->
+            startActivityUnchecked->
+                mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions)->
+
+    [ActivityStack - startActivityLocked] 
+        ensureActivitiesVisibleLocked->
+            makeVisibleAndRestartIfNeeded->
+                mStackSupervisor.startSpecificActivityLocked
+
+    [ActivityStackSupervisor - startSpecificActivityLocked] 
+        [分支：进程创建或者直接启动Activity]
+            mService.startProcessLocked//进程创建
+            realStartActivityLocked //已有对应进程则直接启动activity
+
     如果目标进程已经存在，直接进行activity启动；否则创建进程，进程创建完毕后会继续执行没有启动的这个activity。
+    
+    [分支1：AMS - startProcessLocked]
+    
+    [分支2：ActivityStackSupervisor - realStartActivityLocked]
+
 ```
 
 上述realStartActivityLocked后续步骤，分system_server和新app进程两方面来看：
 
     1. system_server进程
         
-    [ActivityStackSupervisor] realStartActivityLocked->
-    [ActivityStackSupervisor]   app.thread.scheduleLaunchActivity->
+    [ActivityStackSupervisor] 
+        realStartActivityLocked->
+            app.thread.scheduleLaunchActivity->
+
     `aidl调用进入到ActivityThread的scheduleLaunchActivity`
 
     旧版本有如下aidl调用链：
-    从ApplicationThreadProxy发起(旧版本含有ApplicationThreadProxy这个文件)  
-    ApplicationThreadProxy.scheduleLaunchActivity->
-    transact->
-    ApplicationThreadNative.onTransact->
-    ActivityThread.scheduleLaunchActivity
+    从ApplicationThreadProxy发起(24中还含有ApplicationThreadProxy这个文件)
+    ApplicationThreadProxy在ApplicationThreadNative.java中
+    ApplicationThread是ApplicationThreadNative的一个子类，位于ActivityThread.java中
+    ATP发起调用通过mRemote这个binder接口进行操作
+    App进程中的ApplicationThread的onTransact会被调用(这个方法是父类ATN的)，onTransact中会根据参数调用指定的方法，于是就从system_server中ATP的操作映射到app进程中ApplicationThread的操作。
+
+    [ApplicationThreadProxy].
+        scheduleLaunchActivity->
+            mRemote.transact->
+    
+
+            
 
     2. app进程
+    
+    [ApplicationThread extends ApplicationThreadNative]
+        onTransact
+            scheduleLaunchActivity
+                sendMessage(H.LAUNCH_ACTIVITY, r)//从binder线程发送消息给app主线程
 
-        [ActivityThread] scheduleLaunchActivity->
-        [ActivityThread]  sendMessage(H.LAUNCH_ACTIVITY, r)-> 发送消息给app主线程
+    [ActivityThread] 
+        handlerMessage
+            handleLaunchActivity
 
-        [ActivityThread] handler处理消息最终handleLaunchActivity
+上述startProcessLocked 进程创建后续步骤:
 
-上述startSpecificActivityLocked 进程创建后续步骤:
-    system_server进程：
-    [ActivityStackSupervisor]   mStackSupervisor.startSpecificActivityLocked
-        [AMS]   startProcessLocked->
-                [AMS]  Process.start->
-                    [Process]   startViaZygote->
-                        [Process]   zygoteSendArgsAndGetResult->
-                            通过zygoteState.writer写数据，和zygote进程进行socket通信
+    1. system_server进程：
+        [AMS]   
+            startProcessLocked->
+                Process.start->
+                
+        [Process - start]
+             startViaZygote->
+                zygoteSendArgsAndGetResult->
+                    通过zygoteState.writer写数据，和zygote进程进行socket通信
 
-    zygote进程:
-    [ZygoteInit] runSelectLoop循环等待消息
-        [ZygoteInit] peers.get(i).runOnce()
-            [ZygoteConnection] runonce
-                [ZygoteConnection]  pid = Zygote.forkAndSpecialize
-                            [Zygote]   VM_HOOKS.preFork()
-                            [Zygote]   pid = nativeForkAndSpecialize
-                            [Zygote]   VM_HOOKS.postForkCommon()
+    2. zygote进程
+    [ZygoteInit] 
+        runSelectLoop\\循环等待消息
+            peers.get(i).runOnce()\\收到消息执行动作
+            
+    [ZygoteConnection - runOnce] 
+        pid = Zygote.forkAndSpecialize
+        pid==0?handleChildProc:handleParentProc
+    
+    [Zygote - forkAndSpecialize]
+        VM_HOOKS.preFork()
+        pid = nativeForkAndSpecialize //native方法创建进程
+        VM_HOOKS.postForkCommon()
 
-    接上文子进程(pid>0)执行handleChildProc
-    [ZygoteConnection] RuntimeInit.handleChildProc
-        [ZygoteConnection] RuntimeInit.zygoteInit
-            [RuntimeInit]   commonInit
-            [RuntimeInit]   nativeZygoteInit
-                [AndroidRuntime.cpp]gCurRuntime->onZygoteInit() //这里会开启binder线程
-            [RuntimeInit]   applicationInit
-                [RuntimeInit]   invokeStaticMain //抛出异常，指定方法名称main,异常捕获的时候会执行对应类的main方法
-    [ZygoteInit] MethodAndArgsCaller.run
-        [ZygoteInit] mMethod.invoke(null, new Object[] { mArgs });//执行ActivityThread main方法
+    接上文runOnce方法中pid=0时执行handleChildProc
+    
+    [ZygoteConnection - handleChildProc] 
+        RuntimeInit.zygoteInit
+
+    [RuntimeInit - zygoteInit]
+        commonInit
+        nativeZygoteInit
+            [AndroidRuntime.cpp]gCurRuntime->onZygoteInit() //这里会开启binder线程
+        applicationInit
+            invokeStaticMain //抛出异常，指定方法名称main,异常捕获的时候会执行对应类的main方法
+
+    生成的子进程进行一些初始化操作后，通过invokeStaticMain抛出异常，使得子进程跳出runSelectLoop循环，被外部catch捕获，捕获后执行对应类ActivityThread的的main方法
+
+    [ZygoteInit - catch MethodAndArgsCaller] 
+        caller.run
         
-    继续子进程，即目标app进程：
+    [MethodAndArgsCaller - run]
+        mMethod.invoke(null, new Object[] { mArgs });//执行ActivityThread main方法
+        
+    3.目标app进程(子进程)：
     [APP2 ActivityThread]
-    [ActivityThread] main->
-        [ActivityThread]  attach(false)->
-                        [AMS]   ams.attachApplication->......
+    [ActivityThread] 
+        main->
+            attach(false)->
+                ams.attachApplication->......
                         .....
-                            [ActivityStackSupervisor] realStartActivityLocked->后续同前文`realStartActivityLocked后续步骤`
+                    ass.realStartActivityLocked->后续同前文`realStartActivityLocked后续步骤`
 
 ## 系统启动过程中binder知识点
 
@@ -893,6 +940,7 @@ Binder调用本质没有改变，之前是手动写java层native和proxy代理�
 ## APP启动流程
 
 ### 场景
+
 场景1：
 Laucher启动
 
@@ -912,13 +960,14 @@ launcher -> app
 9. 目标Activity会被创建，最终onCreate被回调
 
 ### 扩展
+
 1. window的建立
 2. ui的绘制
 
 
 ## 系统UI服务
 
-### 调用链
+### 启动调用链
 
     ss.main->
     ss.run->
