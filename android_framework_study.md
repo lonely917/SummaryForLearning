@@ -69,6 +69,44 @@
 - [系统启动 WMS服务(WindowManagerService)](#系统启动-wms服务windowmanagerservice)
     - [启动WMS](#启动wms)
     - [WMS实例化(main方法)](#wms实例化main方法)
+    - [View的requestLayout 和 invalidate方法](#view的requestlayout-和-invalidate方法)
+- [控件绘制 View/ViewGroup Measure、Layout、Draw](#控件绘制-viewviewgroup-measurelayoutdraw)
+    - [onMeasure 流程分析](#onmeasure-流程分析)
+    - [onLayout 流程分析](#onlayout-流程分析)
+    - [draw 流程分析](#draw-流程分析)
+- [APP安装](#app安装)
+    - [说明](#说明)
+    - [应用程序安装器 PackageInstaller](#应用程序安装器-packageinstaller)
+    - [PMS安装app调用链(installPackageAsUser)](#pms安装app调用链installpackageasuser)
+- [framework层源码调试跟踪执行过程的实现?](#framework层源码调试跟踪执行过程的实现)
+- [图形绘制相关服务](#图形绘制相关服务)
+- [SurfaceView 和 Canvas](#surfaceview-和-canvas)
+- [context获取各种服务](#context获取各种服务)
+- [Activity](#activity)
+    - [Activity的启动场景](#activity的启动场景)
+    - [startActivity调用流程](#startactivity调用流程)
+    - [Activity 成员分析](#activity-成员分析)
+- [Service](#service)
+- [ContentProvider](#contentprovider)
+- [BrocastReceiver](#brocastreceiver)
+- [Intent](#intent)
+- [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
+- [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
+- [从Activity中WindowManager谈起](#从activity中windowmanager谈起)
+    - [1.getWindowManager](#1getwindowmanager)
+    - [2.getSystemService(Context.WINDOW_SERVICE)](#2getsystemservicecontextwindow_service)
+    - [3.getApplicationContext.getSystemService(Context.WINDOW_SERVICE)](#3getapplicationcontextgetsystemservicecontextwindow_service)
+    - [对比分析](#对比分析)
+    - [mWindowManager初始化](#mwindowmanager初始化)
+    - [关于Dialog、PopupWindow、Toast](#关于dialogpopupwindowtoast)
+- [Window Dialog PopupWindow Toast分析](#window-dialog-popupwindow-toast分析)
+- [Toast调用流程(跨进程、多次binder交互)](#toast调用流程跨进程多次binder交互)
+- [makeText](#maketext)
+    - [toast.show方法](#toastshow方法)
+    - [toast展示到窗口的过程(Toast.Tn.handleShow)](#toast展示到窗口的过程toasttnhandleshow)
+    - [补充说明:](#补充说明)
+- [资源加载过程](#资源加载过程)
+- [Android 性能优化](#android-性能优化)
 
 <!-- /TOC -->
 
@@ -509,7 +547,7 @@ system_server进程下有很多线程，下面列出一些：
     android.io
     android.display
     CpuTracker
-    ActivityManager(若干个)
+    ActivityManager(若干个?)
     binder_xxx(若干个)
     InputDispatcher
     InputReader
@@ -1309,7 +1347,7 @@ HandlerThread设计的目的：其中的getLooper方法会阻塞，等到线程�
 
 ### 概述
 
-WMS负责处理窗口相关的工作，比如窗口的添加和删除等。通过前文系统启动-wms服务，可以知道wms的实例化是在android.display中，因此窗口相关的操作也都会经历这个线程。wms实例中有个名为mH的H类对象，是一个handler，可用于异步通信。
+WMS负责处理窗口相关的工作，比如窗口的添加和删除等。通过前文“系统启动-wms服务”，可以知道wms的实例化是在android.display中，因此窗口相关的操作也都会经历这个线程。wms实例中有个名为mH的H类对象，是一个handler，可用于异步通信。
 
 下面列举一些消息类型，处理行为见WMS.H的handleMessage方法。
 
@@ -1451,182 +1489,255 @@ WMS中对窗口类型的定义，数值越大，显示的时候越靠前
 `WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
 
 
-## ams wms system_server一些知识点
+## AMS WMS SystemServer一些知识点
+
 AMS负责四大组件以及进程管理,各种record和stack。
 WMS负责窗口管理，会跟APP、SurfaceFlinger交互，实现UI呈现。
-SF负责UI绘制,SF在一个单独的进程，也是init开启的子进程，AMS和WMS都在system_server进程中，对应若干个工作线程。
+SF(SurfaceFlinger)负责UI绘制,SF在一个单独的进程，也是init开启的子进程，AMS和WMS都在system_server进程中，对应若干个工作线程。
 
-Activity的一些成员变量:
-mWindow - PhoneWindow
-mWindowManager - WindowManagerImpl
-mDecor - View  onResume之后展示的视图
+Activity的一些成员:
 
-ViewRootImpl:
+    mWindow - PhoneWindow
+    mWindowManager - WindowManagerImpl
+    mDecor - View  onResume之后展示的视图
+
+ViewRootImpl的一些成员:
+
     mWindowSession - IWindowSession (进程对应的wms中session的代理对象，和wms中Session通信)
     mWindow - IWindow.Stub (ViewRootImpl.W)
 
-WindowState:
+WindowState的一些成员:
+
     mSession - Session(binder服务端)
     mClient - IWindow(ViewRootImpl.W的代理对象，对应着ViewRootImpl的W类型对象)
     mSurfaceSession - 和SF通信 //api-28没有找到这个成员
 
-Session:
+Session的一些成员:
+
     mSurfaceSession - 和SF通信
 
-Binder服务端： 
-WMS/Session/ActivityRecord.Token(system_server进程)
-ViewRootImpl.W(app进程)
-ApplicationThread(app进程)
-SF(SF进程)
+Binder服务端举例： 
 
-一个activity对应一个窗口，一个窗口对应一个ViewRootImpl对象
-一个app进程有唯一的WindowManagerGlobal对象
-一个app进程对应相同的session
-Activity最终视图是decorview
-ViewRootImpl用于DecorView和wms的交互，每次wm.addview会创建一个VRI对象
+    WMS/Session/ActivityRecord.Token (system_server进程)
+    ViewRootImpl.W (app进程)
+    ApplicationThread (app进程)
+    SF (SF进程)
+
+一些知识点：
+
+    一个activity对应一个窗口，一个窗口对应一个ViewRootImpl对象
+    一个app进程有唯一的WindowManagerGlobal对象
+    一个app进程对应相同的session
+    Activity最终视图是decorview
+    ViewRootImpl用于DecorView和wms的交互，每次wm.addview会创建一个VRI对象
 
 
-WindowManager可以通过getSystemService(Context.WINDOW_SERVICE)来获取，实际是一个windowManagerImpl对象,可以认为是WMS的代理，但是方法不会完全对应上，不想我们之前看到的xxxProxy那种形式，client和server很好对应，因为这里Windowmanager继承自ViewManager，vm定义了一些操作，wm实现了这些操作，wm对操作的实现是通过windowManagerImpl、进一步通过WindowManagerGlobal来实现的。
+
 WindowManage的AddView调用链:
- wm.addView
-    windowManagerImpl.addView
-        windowManagerGlobal.addView
-            ViewRootImpl.setView
-                mWindowSession.addToDisplay  ----  binder调用到wms的Session服务端  session.addToDisplay -> wms.addWindow
+
+    wm.addView
+        windowManagerImpl.addView
+            windowManagerGlobal.addView
+                ViewRootImpl.setView
+                    mWindowSession.addToDisplay  ----  binder调用到wms的Session服务端  session.addToDisplay -> wms.addWindow
+
+WindowManager可以通过getSystemService(Context.WINDOW_SERVICE)来获取，实际是一个windowManagerImpl对象,可以认为是WMS的代理，但是方法不会完全对应上，不像我们之前看到的xxxProxy那种形式，client和server很好对应，因为这里Windowmanager继承自ViewManager，vm定义了一些操作，wm实现了这些操作，wm对操作的实现是通过windowManagerImpl、进一步通过WindowManagerGlobal来实现的，根据前面列出的调用链可以看出wm.addView最终对应到wms的addWindow。
+
+
 相关类梳理：
 
-ViewManager - WindowManager - WindowManagerImpl - WindowManagerGlobal
-ViewManager - ViewGroup
+    ViewManager - WindowManager - WindowManagerImpl - WindowManagerGlobal
+    ViewManager - ViewGroup
 
-ViewParent - ViewRootImpl - ViewRootImpl.W - IWindowSession.stub(Server端)
-ViewParent - ViewGroup
-WMS - IWindowManager.Stub(Server端)
-Session
+    ViewParent - ViewRootImpl - ViewRootImpl.W - IWindowSession.stub(Server端)
+    ViewParent - ViewGroup
+    WMS - IWindowManager.Stub(Server端)
+    Session
 
-IWindowManger.aidl
-IWindowSession.aidl
+    IWindowManger.aidl
+    IWindowSession.aidl
 
 参考 深入理解ViewRootImpl 
+
 https://blog.csdn.net/Innost/article/details/47660471
 https://wizardforcel.gitbooks.io/deepin-android-vol3/content/7.html
 https://silencedut.github.io/2016/08/10/Android%E8%A7%86%E5%9B%BE%E6%A1%86%E6%9E%B6Activity,Window,View,ViewRootImpl%E7%90%86%E8%A7%A3/
 
-## activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal
+## Activity创建以及界面展示的过程(和wms交互)
 
-ActivityThread.main
-    Looper.loop()
+本过程涉及到activity、window、viewrootimpl、windowmanager、windowmanagreImpl、windoWmanagerGlobal。
 
-    scheduleLaunchActivity
-        ActivityClientRecord r = new ActivityClientRecord();
-        sendMessage(H.LAUNCH_ACTIVITY, r);
-    handleLaunchActivity
-        performLaunchActivity
-            mInstrumentation.newActivity
-            makeApplication //内部创建application是一个单例模式，多数情况此前已经创建过application了
-            createBaseContextForActivity//创建实际的contexImpl
-                ContextImpl.createActivityContext
-            activity.attach
-                attachBaseContext(context)
-                mWindow = new PhoneWindow(this, window) //mWindow为Window  PhoneWindow
-                mWindow.setWindowManager((WindowManager)context.getSystemService(Context.WINDOW_SERVICE),mToken,xx) //注意SystemServiceRegistry初始化过程
-                mWindowManager = mWindow.getWindowManager()
+### App进程启动后，主线程进入消息循环
 
-            mInstrumentation.callActivityOnCreate
-                activity.performCreate
-                    activity.onCreate
-            mInstrumentation.callActivityOnRestoreInstanceState
-                activity.performRestoreInstanceState
-                    onRestoreInstanceState
-            performStart
-                activity.onStart
-        handleResumeActivity
-            performResumeActivity
-                activity.performResume()
-                    activity.onResume()
-             r.activity.makeVisible()
-                 wm.addView(mDecor, getWindow().getAttributes());// 这里的wm是windowmanager，前文有setWindowManager和getWindowManager
-                    windowManagerImpl.addView;
-                        windowManagerGlobal.addView;
-                             root = new ViewRootImpl(view.getContext(), display)//view就是传入的decorView
-                                    mWindowSession = WindowManagerGlobal.getWindowSession(); //
-                                         IWindowManager windowManager = getWindowManagerService(); //这里取名windowManager，但实际是一个IWindowManager类型，binder client不同于前文WindowManager的对象
-                                            sWindowManagerService = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
-                                            return sWindowManagerService
-                                         sWindowSession = windowManager.openSession //binder调用进入到WMS.openSession 返回Session对象 Session extends IWindowSession.Stub
-                                         return sWindowSession
-                                    mWindow = new W(this); //ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理。                                    
-                             root.setView(view)
-                                 requestLayout();
-                                    checkThread();
-                                    scheduleTraversals();//向主线程发消息执行performTraversals
-                                 mWindowSession.addToDisplay(mWindow)// binder调用;mWindowSession是WMS中Session的代理，这里mWindow是ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理，作为参数传到WMS中
-                                     
-                                [binder调用进入Session]
-                                    mService.addWindow //mService就是wms
-                                        wms.addWindow //addWindow具体过程参考## Window建立中wms.addWindow部分
+    ActivityThread.main
+        Looper.loop()
 
-                 mDecor.setVisibility(View.VISIBLE);
+### Activity生命周期开始
+```
+scheduleLaunchActivity
+    ActivityClientRecord r = new ActivityClientRecord();
+    sendMessage(H.LAUNCH_ACTIVITY, r);
+handleLaunchActivity
+    performLaunchActivity
+        mInstrumentation.newActivity
+        makeApplication //内部创建application是一个单例模式，多数情况此前已经创建过application了
+        createBaseContextForActivity//创建实际的contexImpl,也就是此Activity的mBase成员
+            ContextImpl.createActivityContext
+        activity.attach
+            attachBaseContext(context) //实际对Activity的mBase进行复制
+            mWindow = new PhoneWindow(this, window) //mWindow为Window  PhoneWindow类型
+            mWindow.setWindowManager((WindowManager)context.getSystemService(Context.WINDOW_SERVICE),mToken,xx) //注意SystemServiceRegistry初始化过程
+            mWindowManager = mWindow.getWindowManager()
 
-IWindowSession
-/frameworks/base/core/java/android/view/
-IWindowSession.aidl
-final class Session extends IWindowSession.Stub
+        mInstrumentation.callActivityOnCreate
+            activity.performCreate
+                activity.onCreate //这里onCreate被触发
+        activity.performStart();
+            activity.onStart // onStart回调
+        mInstrumentation.callActivityOnRestoreInstanceState
+            activity.performRestoreInstanceState
+                onRestoreInstanceState // onRestoreInstanceState回调
+            mInstrumentation.callActivityOnPostCreate //onPostCreate回调
+            activity.onPostCreate
+        r.paused = true //**
+        mActivities.put(r.token, r);//记录
+    handleResumeActivity
+        performResumeActivity
+            activity.performResume()
+                activity.onResume()
+            r.paused = false;//**
+            r.stopped = false;//**
+        decor.setVisibility(View.INVISIBLE);//这样做的目的?
+        wm.addView //会通过wm进行窗口添加，makeVisible中会再次判断来保证已经addView
+        r.activity.makeVisible() //最终确定视图添加到窗口并将decor设置visible
+```
+
+r.activity.makeVisible 过程
+
+```java
+void makeVisible() {
+    if (!mWindowAdded) {  
+        ViewManager wm = getWindowManager();
+        wm.addView(mDecor, getWindow().getAttributes());
+        mWindowAdded = true;
+    }
+    mDecor.setVisibility(View.VISIBLE);
+}
+```
+
+### WindowManager.addView
+前面提到下述代码
+
+```java
+// 这里的wm是windowmanager，前文有setWindowManager和getWindowManager
+wm.addView(mDecor, getWindow().getAttributes());
+```
+实际的wm实现类是WindowManagerImpl(可以分析setWindowManager的部分了解)，下面看addView的实现
+
+```
+windowManagerImpl.addView;
+    windowManagerGlobal.addView;
+            root = new ViewRootImpl(view.getContext(), display)//view就是传入的decorView
+                mWindowSession = WindowManagerGlobal.getWindowSession(); //
+                        IWindowManager windowManager = getWindowManagerService(); //这里取名windowManager，但实际是一个IWindowManager类型，binder client不同于前文WindowManager的对象
+                        sWindowManagerService = IWindowManager.Stub.asInterface(ServiceManager.getService("window"));
+                        return sWindowManagerService
+                        sWindowSession = windowManager.openSession //binder调用进入到WMS.openSession 返回Session对象 Session extends IWindowSession.Stub
+                        return sWindowSession
+                mWindow = new W(this); //ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理。                                    
+            root.setView(view)
+                requestLayout();
+                checkThread();
+                scheduleTraversals();//向主线程发消息执行performTraversals
+                mWindowSession.addToDisplay(mWindow)// binder调用;mWindowSession是WMS中Session的代理，这里mWindow是ViewRootImpl.W对象，可以认为是ViewRootImp的binder代理，作为参数传到WMS中
+                    
+            [binder调用进入Session]
+                mService.addWindow //mService就是wms
+                    wms.addWindow //addWindow具体过程参考## Window建立中wms.addWindow部分
+
+```
+总结如下：
+WindowManager的addView在app进程最终调用到RootImplView的setView操作
+
+    wm.addView
+        wmImpl.addView
+            wmGlobal.addView
+                viewRootImpl.setView
+
+ViewRootImpl的setView通过binder调用到SystemServer中的Session操作进一步最终到WMS.addWindow
+
+    viewRootImp.setView
+        mWindowSession.addToDisplay //发起binder调用
+    
+    Session.addToDiplay //binder服务端
+        wms.addWindow
+
+`ViewRootImpl中的requestLayout等其他操作具体分析见ViewRotImpl章节`
+
+### ViewRootImpl与WMS交互总结
+
+a：ViewRootImpl->IWindowSession->WMS.Session-WMS.       
+
+通过viewRootImpl的setview到wms.addWindow，其中会传入IWindow对象，即ViewRootImpl.W的代理，是ViewRootImpl.W服务的客户端
+
+b：WMS->IWindow->ViewRootImpl.W
+通过之前传过来的IWindow代理向ViewRootImpl.W这个binder进行调用。
 
 
-IWindowManager
-/frameworks/base/core/java/android/view/
-IWindowManager.aidl
+### 一些类型
 
-public class WindowManagerService extends IWindowManager.Stub
+IWindowSession：
+
+    /frameworks/base/core/java/android/view/
+    IWindowSession.aidl
+    final class Session extends IWindowSession.Stub
+
+
+IWindowManager：
+
+    /frameworks/base/core/java/android/view/
+    IWindowManager.aidl
+    public class WindowManagerService extends IWindowManager.Stub
 
 
 对比ActivityManagerService
 
-public final class ActivityManagerService extends ActivityManagerNative
-public abstract class ActivityManagerNative extends Binder implements IActivityManager
-class ActivityManagerProxy implements IActivityManager
-public interface IActivityManager extends IInterface
+    public final class ActivityManagerService extends ActivityManagerNative
+    public abstract class ActivityManagerNative extends Binder implements IActivityManager
+    class ActivityManagerProxy implements IActivityManager
+    public interface IActivityManager extends IInterface
 
-/frameworks/base/core/java/android/app/
-IActivityManager.java	
+IActivityManager:
+
+    /frameworks/base/core/java/android/app/
+    IActivityManager.java	
 
 对比发现，这里AMS是手动编写而WMS使用aidl文件生成相关类
-但是高版本中AMN被标记为过时的，并且移除AMP；同时移除了IActivityManager.java定义接口的文件，但是添加了IActivityMananger.aidl。
+但是高版本中AMN被标记为过时的，并且移除AMP；同时移除了IActivityManager.java定义接口的文件，但是添加了IActivityMananger.aidl，相当于对binder调用的上层写法进行了统一。
 
 
-高版本中如下设计：
-a：ViewRootImpl-IWindowSession-WMS.Session-WMS.       通过viewRootImpl的setview到wms.addWindow，其中会传入IWindow对象，即ViewRootImpl.W对象，是ViewRootImpl.W服务的客户端
-b：WMS-IWindow-ViewRootImpl
-
-```java
-    void makeVisible() {
-        if (!mWindowAdded) {
-            ViewManager wm = getWindowManager();
-            wm.addView(mDecor, getWindow().getAttributes());
-            mWindowAdded = true;
-        }
-        mDecor.setVisibility(View.VISIBLE);
-    }
-```
 
             
 ## ViewRootImpl
+前面谈到WindowManager实际的操作最终调用到ViewRootImpl的一些方法。本节对ViewRootImpl进行介绍。
 
-前面谈到WindowManager实际的操作最终调用到ViewRootImpl的一些方法。
-ViewRootImpl的setView分析:
+### ViewRootImpl的setView分析
+
 调用图前面分析过，截取部分作为概览如下
-root.setView(view)
-    requestLayout();// Schedule the first layout -before- adding to the window manager 邓大神说这里会产生巧妙地效果，我是没搞明白为啥这样做
-    checkThread();//检测是否为主线程，否则不能进行UI操作
-    scheduleTraversals();//向主线程发消息执行performTraversals
-    mWindowSession.addToDisplay(mWindow)// wms窗口添加到屏幕
+
+    root.setView(view)
+        requestLayout();// Schedule the first layout -before- adding to the window manager 邓大神说这里会产生巧妙地效果，我是没搞明白为啥这样做
+        checkThread();//检测是否为主线程，否则不能进行UI操作
+        scheduleTraversals();//向主线程发消息执行performTraversals
+        mWindowSession.addToDisplay(mWindow)// wms窗口添加到屏幕
 
 1. 其中requestLayout实际是发消息告诉主线程执行performTraversals方法：
+```java
 requestLayout
     checkThread() //非UI不能发起，因为这里requestLayout是一个public方法，很多地方都可能发起调用
     mLayoutRequested = true//标志是通过requestLayout发起的请求
     scheduleTraversals()//通过mChoreographer向主线程发送消息，传入了一个mTraversalRunnable对象，最终执行该对象的run方法调用doTraversal()->performTraversals()具体见4
-
+```
 2. 其中checkThread检测线程，非UI线程不可更新：
 
 ```java
@@ -1640,10 +1751,13 @@ void checkThread() {
 
 3. 其中addToDisplay通过binder进入到session对应方法:
 
+```java
 session.addToDisplay
     mService.addWindow
-        ..`如何添加到屏幕可以细细分析` 窗口尺寸问题 图形渲染进程交互等 `截取前文分析的片段 并没有彻底搞清`..
+```
+`如何添加到屏幕可以细细分析` 窗口尺寸问题 图形渲染进程交互等 `截取前文分析的片段 并没有彻底搞清`
 
+WMS的addWindow方法
 ```java
 [WMS.addWindow]
     updateFocusedWindowLocked->
@@ -1657,11 +1771,13 @@ session.addToDisplay
 [PhoneWindowManager.beginLayoutLw]
     updateSystemUiVisibilityLw
 
-Session中有SurfaceSession对象用于和surfaceflinger进程通信
+
 ```
+Session中有SurfaceSession对象用于和surfaceflinger进程通信
+
 
 4. 主线程执行performTraversals流程分析:
-
+```java
 performTraversals
     measureHierarchy(这个方法在performTraversals中两次被调用)
         performMeasure
@@ -1669,7 +1785,9 @@ performTraversals
         measureHierarchy
         host.layout
     performDraw
+```
 
+```java    
 measureHierarchy
     {
     childWidthMeasureSpec//计算
@@ -1684,6 +1802,7 @@ measureHierarchy
                     
     }
     return windowSizeMayChange //这个数值根据当前尺寸和测量后host的尺寸是否一致来判定true/false
+```
 
 注意这里的measureHierarchy过程中最多可能执行三次performMeasure，也就是上述{}内部这个流程可能进行三次，首先从一个较小的宽度进行尝试，如果两次都没能达到goodMeasure的目的，直接使用窗口宽度，进行第三次测量。
 
@@ -1695,6 +1814,7 @@ measureHierarchy
 // size to see if it will fit.
 ```
 
+```
 performLayout(lp, mWidth, mHeight)
     measureHierarchy // `为什么又要来一次?`
     host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight())//注意这里的host是DecorView-framelayout
@@ -1702,8 +1822,8 @@ performLayout(lp, mWidth, mHeight)
             framelayout.layoutChildren//
                 child.layout//所有child都会调用其layout方法
                     child.onLayout// 具体的view或者viewgroup会重写或者实现该方法
-                
-
+```
+```                
 performDraw()
     draw(fullRedrawNeeded)
         trackFPS //DEBUG_FPS标志设置的话会记录
@@ -1716,9 +1836,11 @@ performDraw()
                 view.updateDisplayListIfDirty
                     view.draw // draw的流程分析见`后续章节## draw的流程分析`
             nSyncAndDrawFrame
-   
-## requestLayout 和 invalidate
+ ```   
+ 
+### View的requestLayout 和 invalidate方法
 
+```java
 view.requestLayout
     viewparent.requestLayout        //viewparent实际是viewRootImpl，通过assignParent进行设置的
         viewRootImpl.requestLayout
@@ -1734,25 +1856,34 @@ view.invalidate()
                  viewRootImpl.invalidateChildInParent
                     viewRootImpl.invalidate/invalidateRectOnScreen
                          viewRootImpl.scheduleTraversals //最终都是到scheduleTraversals方法
+```
 
 前者会执行measure和layout再进行draw
 后者只是draw
 
 view.postInvalidate可以在非UI线程发起，最终UI线程执行view.invalidate方法。
-
+注意ViewRootImpl中也有requestLayout和invalidate，注意和view的区别。
 
 ## 控件绘制 View/ViewGroup Measure、Layout、Draw
 
 ### onMeasure 流程分析
 ViewGroup的onMeasure实现其测量，不同于单个子view只测量自身，viewgroup的子类都对onMeasure进行了重写。
 其基本思路如下
-对所有的child也就是子view进行如下流程
-    measureChildWithMargins(child, ....)
-        view.measure->view.onMeasure->view.setMeasuredDimension
-然后综合所有child的测量结果，得到其自身的测量结果
-    setMeasuredDimension
 
-以framelayout为例进行分析：
+1. 对所有的child也就是子view进行如下流程
+```
+measureChildWithMargins(child, ....)
+    view.measure->
+        view.onMeasure->
+            view.setMeasuredDimension
+```
+2. 然后综合所有child的测量结果，得到其自身的测量结果。
+```
+    setMeasuredDimension
+```
+
+以FrameLayout为例进行分析：
+
 1. 遍历children，对所有的child分别调用measureChildWithMargins
 2. 如果传入的widthMeasureSpec或者heightMeasureSpec不为exactly，则需要把带有match_parent的child记录一下，加入mMatchParentChildren
   对应如下场景
@@ -1761,7 +1892,7 @@ ViewGroup的onMeasure实现其测量，不同于单个子view只测量自身，v
     因此这种情况下第一轮measure只是确定framelayout的整体尺寸，随后要根据这个具体的尺寸再这些待定子view进一步measure并设置
 3. 根据需要对mMatchParentChildren中的child重新measure，此时framelayout的尺寸已经经过前面确定了，因此内部的这些match_parent的尺寸也可以确定了。
 
-以LinearLayout vertical为例分析
+以LinearLayout(vertical)为例分析
 
 vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeasureSpec)
 本质是调用child的measure并最终确定linearlayout的尺寸，然后setMeasuredDimension。
@@ -1772,13 +1903,15 @@ vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeas
 4. 最后根据宽度和高度以及传入的父类规格，生成新规格，进行setMeasuredDimension
 
 其中会有针对weight的处理，如果父类传入的是exactly，并且子view的useExcessSpace为true(lp.height == 0 && lp.weight > 0)，意味着子view使用剩余空间进行weight分布，第一次循环时会跳过该child不进行measure，因为剩余空间没有确定，待整体的高度确定后再处理weight类控件。
+
 上述场景：linearlayout高度设置matchparent或者固定数值，子view使用weight>0并且没有设置height，不满足上述条件的话第一轮也会measure，但是最终会根据剩余空间进行调整。
 
 
 ### onLayout 流程分析
-view的onLayout默认空实现；layout有自己的逻辑
-viewGroup的onLayout为抽象方法；//改了父类方法的类别?
-ViewGroup的layout方法为final类型，不可重写，其中会调用父类也就是view的layout方法。
+
+1. view的onLayout默认空实现；layout有自己的逻辑
+2. viewGroup的onLayout为抽象方法；//改了父类方法的类别?
+3. ViewGroup的layout方法为final类型，不可重写，其中会调用父类也就是view的layout方法。
 
 - frameLayout的onLayout过程(最早调用的是根布局，frameLayout的子类):
 
@@ -1824,9 +1957,54 @@ ViewGroup的layout方法为final类型，不可重写，其中会调用父类也
 其中 onDraw和dispatchDraw的实际行为都在实现类中重写了，view默认的是空方法。
 
 ## APP安装
-PMS(PackageManagerService)提供包管理服务
+
+### 说明
+PMS(PackageManagerService)提供包管理服务;
 PackageInstallerService提供APP安装服务
 
+data/system/目录，里面有两个文件：
+packages.list-手机上安装的所有应用列表；
+packages.xml-所有应用的设置应用
+
+查看system_server中PMS相关线程
+```
+shell@CB03:/ $ ps grep system_server
+USER     PID   PPID  VSIZE  RSS     WCHAN    PC        NAME
+system    881   300   1125064 65688 ffffffff 00000000 S system_server
+
+shell@CB03:/ $ ps -t 881 | grep Package
+system    1746  881   1125064 65836 ffffffff 00000000 S PackageManager
+system    2553  881   1125064 65836 ffffffff 00000000 S PackageInstalle
+```
+
+
+### 应用程序安装器 PackageInstaller
+app目录：/packages/apps/PackageInstaller/
+
+其中PackageInstallerActivity是安装应用的入口
+
+```java
+onCreate
+    initiateInstall
+        startInstallConfirm()
+            mInstallConfirm.setVisibility(View.VISIBLE);
+            mOk.setOnClickListener(this);
+                ok-startInstall()
+                    startActivity  InstallAppProgress
+```
+InstallAppProgress 启动
+```
+    onCreate
+        initView
+            installExistingPackage/installPackageWithVerificationAndEncryption - 经由binder调用最终进入到PMS-installPackageAsUser
+```
+
+installPackageAsUser后续开始了apk拷贝解析。
+
+`这里binder调用在安装的过程中，源activity处于什么状态？`
+
+### PMS安装app调用链(installPackageAsUser)
+```
 pms.installPackageAsUser->
     handler发送INIT_COPY消息处理->
         handle
@@ -1845,42 +2023,7 @@ pms.installPackageAsUser->
                                                     -scanPackageTracedLI //扫描
                                                     -updateSettingsLI    //更新信息
 
-
-
-data/system/目录，里面有两个文件
-packages.list-手机上安装的所有应用列表
-packages.xml-所有应用的设置应用
-
-查看system_server中PMS相关线程
 ```
-shell@CB03:/ $ ps grep system_server
-USER     PID   PPID  VSIZE  RSS     WCHAN    PC        NAME
-system    881   300   1125064 65688 ffffffff 00000000 S system_server
-
-shell@CB03:/ $ ps -t 881 | grep Package
-system    1746  881   1125064 65836 ffffffff 00000000 S PackageManager
-system    2553  881   1125064 65836 ffffffff 00000000 S PackageInstalle
-```
-
-
-应用程序安装器：
-/packages/apps/PackageInstaller/
-
-PackageInstallerActivity是安装应用的入口
-onCreate
-    initiateInstall
-         startInstallConfirm()
-            mInstallConfirm.setVisibility(View.VISIBLE);
-            mOk.setOnClickListener(this);
-                ok-startInstall()
-                    startActivity  InstallAppProgress
-InstallAppProgress
-    onCreate
-        initView
-            installExistingPackage/installPackageWithVerificationAndEncryption - 经由binder调用最终进入到PMS-installPackageAsUser
-后续开始了apk拷贝解析等。
-
-`这里binder调用在安装的过程中，源activity处于什么状态？`
 
 ## framework层源码调试跟踪执行过程的实现?
 
@@ -1901,7 +2044,7 @@ SystemServiceRegistry初始化过程
 
 注意对组件的认识可以从不同的角度，比如启动过程、内部组织、生命周期管理等。
 
-### Activity的启动
+### Activity的启动场景
 
 1. 名义上第一个APK的启动-Launcher的启动
 
@@ -1919,31 +2062,36 @@ SystemServiceRegistry初始化过程
 
 3. 应用程序内部startActivity/startActivityForResult进行显式或者隐式调用
 
-startActivity调用流程
+### startActivity调用流程
 
 - 发起端
+```java
 [Activity]startActivity
     [Activity]startActivityForResult
         [Activity]mParent.startActivityFromChild
             [Activity]mInstrumentation.execStartActivity
                 [Instrumentation] ActivityManager.getService().startActivitystartActivity
                     [IActivityManager] startActivity //这里binder调用到system_server进程中ams服务，ams对应的的binder线程进行处理
+```
+`高版本(8.0之后)使用IAcvitityManager.aidl机制替换了之前完全手写实现的方式`
 
-高版本使用IAcvitityManager.aidl机制替换了之前完全手写实现的方式
 
-
-- system_server中ams服务提供(binder线程池中某一线程提供client调用的服务-startActivity)
+- system_server中AMS服务端(binder线程池中某一线程提供client调用的服务-startActivity)
 具体可以参考章节`## Android中进程的创建`
-概述：
+
+```java
 ams.startActivity
     mActivityStarter.startActivityMayWait
         mTargetStack.startActivityLocked
             mStackSupervisor.startSpecificActivityLocked 进程创建/ realStartActivityLocked 已有进程直接启动activity
+```
 
 
+- 目标Activity的主线程 handler处理launcheActivity的消息
 
-- system_server主线程 handler处理launcheActivity的消息
-[ActivityThread] 
+```java
+[ActivityThread.java] 
+
 handleMessage
     handleLaunchActivity
         performLaunchActivity
@@ -1959,9 +2107,7 @@ handleMessage
         ....
         onResume // onResume触发
         ....
-
-
-
+```
 ### Activity 成员分析
 
 ## Service
@@ -1978,16 +2124,9 @@ handleMessage
 
 注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
 
-## Window Dialog PopupWindow Toast分析
-
-https://blog.csdn.net/yanbober/article/details/46361191
-
-都要调用wm.addView
-
-
 ## 从Activity中WindowManager谈起
 
-1. getWindowManager
+### 1.getWindowManager
 
 ```java
   public WindowManager getWindowManager() {
@@ -1995,7 +2134,7 @@ https://blog.csdn.net/yanbober/article/details/46361191
     }
 ```
 
-2. getSystemService(Context.WINDOW_SERVICE)
+### 2.getSystemService(Context.WINDOW_SERVICE)
 
 ```java
 public Object getSystemService(@ServiceName @NonNull String name) {
@@ -2014,7 +2153,7 @@ public Object getSystemService(@ServiceName @NonNull String name) {
 }
 ```
 
-3. getApplicationContext.getSystemService(Context.WINDOW_SERVICE)
+### 3.getApplicationContext.getSystemService(Context.WINDOW_SERVICE)
 
 
 getApplicationContext 等同于 getBaseContext.getApplicationContext；
@@ -2028,13 +2167,17 @@ public Object getSystemService(String name) {
 }
 ```
 
-4. 对比分析
+### 对比分析
+1. getWindowManager
+2. getSystemService(Context.WINDOW_SERVICE)
+3. getApplicationContext.getSystemService(Context.WINDOW_SERVICE)
 
-对比1和2，1直接返回mWindowManager成员变量，这个变量是ActivityThread中启动Activity的时候调用activity的attach时赋值的。
-2方法对window类型的服务进行了拦截，直接返回了本地变量mWindowManager，因此实际上对于获取wm服务两者得到的对象是一样的。
-2中除了WINDOW_SERVICE和SEARCH_SERVICE，会调用父类方法，父类中又会对LAYOUT_INFLATER_SERVICE一次过滤，除了这三种类型，最终都会调用contextImpl的getsystemservice方法，也就和3效果一样了。
-3方法是一个最根本的方法，甚至于在对mWindowManager赋值的时候也用到了这个方法。
+对比1和2，1直接返回mWindowManager成员变量，这个变量是ActivityThread中启动Activity的时候调用activity的attach时赋值的。</br>
+2方法对window类型的服务进行了拦截，直接返回了本地变量mWindowManager，因此实际上对于获取wm服务两者得到的对象是一样的。</br>
+2中除了WINDOW_SERVICE和SEARCH_SERVICE，会调用父类方法，父类中又会对LAYOUT_INFLATER_SERVICE一次过滤，除了这三种类型，最终都会调用contextImpl的getsystemservice方法，也就和3效果一样了。</br>
+3方法是一个最根本的方法，甚至于在对mWindowManager赋值的时候也用到了这个方法。</br>
 
+### mWindowManager初始化
 activity的attach方法(`mWindowManager初始化过程`)
 
 ```java
@@ -2082,6 +2225,7 @@ private WindowManagerImpl(Context context, Window parentWindow) {
 这个mWindowManager的mParentWindow是被赋值的，也就是我们最初的mWindow，是一个PhoneWindow对象。
 
 而3的方式获取的对象其mParentWindow为空，我们根据源码追踪:
+
 ```java
 //ContextImpl.java
 public Object getSystemService(String name) {
@@ -2110,7 +2254,8 @@ private WindowManagerImpl(Context context, Window parentWindow) {
 
 ```
 
-WindowManangerGlobal中addView的时候会判断window.parentWindow
+WindowManangerGlobal中addView的时候会判断window.parentWindow,不为空的话说明是子窗口
+
 ```java
     final WindowManager.LayoutParams wparams = (WindowManager.LayoutParams) params;
     if (parentWindow != null) {
@@ -2127,8 +2272,7 @@ WindowManangerGlobal中addView的时候会判断window.parentWindow
     }
 ```
 
-
-5. 关于Dialog、PopupWindow、Toast
+### 关于Dialog、PopupWindow、Toast
 
 都要传入一个context，前两者不可使用getApplicationContext，否则会报错。Toast可以使用。
 注意三者对应的窗口类型：TYPE_APPLICATION、TYPE_APPLICATION_PANEL、TYPE_TOAST。(wm.layoutparams.type参数)
@@ -2160,15 +2304,19 @@ public static final int TYPE_TOAST              = FIRST_SYSTEM_WINDOW+5;
 
 ```
 
+## Window Dialog PopupWindow Toast分析
 
+https://blog.csdn.net/yanbober/article/details/46361191
+
+都要调用wm.addView
 
 
 ## Toast调用流程(跨进程、多次binder交互)  
 
-Toast的实现流程:
-Toast.makeText.show
+Toast的实现流程:Toast.makeText.show
 
-makeText:
+## makeText
+
 ```java
 public static Toast makeText(Context context, CharSequence text, @Duration int duration) {
     Toast result = new Toast(context);  //实例化，其中会构建TN对象
@@ -2223,9 +2371,9 @@ private static class TN extends ITransientNotification.Stub{
 最后app进程中tn对应的binder线程会调用show和hide来展示和取消toast，通过向app主线程发送消息来实现。
 也就是说handleShow和handleHide会在App进程中的UI线程执行。
 
-那么什么时候发生上述所说的`tn对应的binder线程会调用show和hide`？分析如下：
+那么什么时候发生上述所说的`tn对应的binder线程会调用show和hide`？分析如下：toast.show最终通过binder调用触发。
 
-toast.show方法
+### toast.show方法
 
 ```java
   public void show() {
@@ -2245,8 +2393,7 @@ toast.show方法
         }
     }
 ```
-会调用目标服务(我们可以称之为ToastManagerService)的enqueueToast方法，将工作加入一个toast队列。
-enqueueToast的服务端代码位于：
+会调用目标服务(我们可以称之为ToastManagerService)的enqueueToast方法，将工作加入一个toast队列。binder服务端是ToastManagerServic中的IBinder对象 mService:
 
 ```java
 
@@ -2262,8 +2409,8 @@ enqueueToast的服务端代码位于：
 通过调用callback的show和hide进行binder调用，触发我们之前TN的show和hide方法。正常是先调用callback.show，设置超时任务，过duration时间段后调用callback.hide
 
 
-toast展示到窗口的过程：
 
+### toast展示到窗口的过程(Toast.Tn.handleShow)
 Toast.Tn.handleShow最终在主线程执行
 
 1. 根据需要进行handlehide
@@ -2274,10 +2421,11 @@ Toast.Tn.handleShow最终在主线程执行
 4. 设置params
 5. 利用wm的addview添加view到窗口
 
-补充说明:
-1. ToastManagerService何时注册(更为准确地描述,注册的是 INotificationManager.Stub的一个实例化binder服务对象)
-注册流程链：
+### 补充说明:
+1. `ToastManagerService何时注册`(更为准确地描述,注册的是 INotificationManager.Stub的一个实例化binder服务对象)
 
+ToastManagerService注册流程链：
+```
 SystemServer.main
     run
         mSystemServiceManager.startService(NotificationManagerService.class);
@@ -2286,26 +2434,26 @@ SystemServer.main
                     SM.addService //注册服务
         notification = INotificationManager.Stub.asInterface(
                     ServiceManager.getService(Context.NOTIFICATION_SERVICE));
-
+```
 2. `tms中的toastqueue对应的消费者线程在哪里?没找到`
 
 enqueToast方法分析:
 
-第一次调用成功将ToastRecord放入队列后，会立即执行showNextToastLocked;
-showNextToastLocked主要做两件事：
-    向app端发起callback.show的调用(app端会处理toast的展示)
-    scheduleTimeoutLocked,利用本线程的WorkerHandler发送一个消息，延时触发cancelToastLocked
-cancelToastLocked执行过程也主要两件事：
-     向app端发起callback.hide的调用(app端会处理toast的展示)、队列中移除记录
-     如果队列中还有任务，执行showNextToastLocked，`这里就形成了一个循环`
+    第一次调用成功将ToastRecord放入队列后，会立即执行showNextToastLocked;
+    showNextToastLocked主要做两件事：
+        向app端发起callback.show的调用(app端会处理toast的展示)
+        scheduleTimeoutLocked,利用本线程的WorkerHandler发送一个消息，延时触发cancelToastLocked
+    cancelToastLocked执行过程也主要两件事：
+        向app端发起callback.hide的调用(app端会处理toast的展示)、队列中移除记录
+        如果队列中还有任务，执行showNextToastLocked，`这里就形成了一个循环`
 
-`每次enqueueToast都会确定消费掉queue中的所有事件`
+    `每次enqueueToast都会确定消费掉queue中的所有事件`
      
 
 
-3. 为何使用这种模式?app->tms->app
+3. `为何使用这种模式?`app->tms->app
 
-完全可以省略掉于tms交互的环节，内部使用handler也可以做到。
+完全可以省略掉与tms交互的环节，内部使用handler也可以做到。
 具体原因没找到，一些猜测：
 Toast窗口级别问题，代码版本演进问题。
 可能早期toast这种系统级窗口需要系统进程来发起，那么通过tms来实现就可以理解了，但是24版本代码addview依然是在app发起的，可以在看下更早的版本实现。
