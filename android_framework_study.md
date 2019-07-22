@@ -85,10 +85,16 @@
 - [Activity](#activity)
     - [Activity的启动场景](#activity的启动场景)
     - [startActivity调用流程](#startactivity调用流程)
-    - [Activity 成员分析](#activity-成员分析)
+- [Activity 成员分析](#activity-成员分析)
+    - [ActivityTask](#activitytask)
+    - [ActivityStack](#activitystack)
 - [Service](#service)
+    - [context.startService](#contextstartservice)
+    - [context.bindService](#contextbindservice)
 - [ContentProvider](#contentprovider)
 - [BrocastReceiver](#brocastreceiver)
+    - [resigterReceiver和sendBroastCast](#resigterreceiver和sendbroastcast)
+    - [设计总结](#设计总结)
 - [Intent](#intent)
 - [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
 - [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
@@ -2108,13 +2114,225 @@ handleMessage
         onResume // onResume触发
         ....
 ```
-### Activity 成员分析
+## Activity 成员分析
+
+### ActivityTask
+
+### ActivityStack
+
+1. 思考一个问题：源Activity启动目标Activity的时候，源Activity会执行onPause回调，这个操作什么时候触发的？
+
+
+"targetStack.resumeTopActivityUncheckedLocked"过程进行分析：
+```java
+    resumeTopActivityUncheckedLocked(..)
+        resumeTopActivityInnerLocked(..)
+            startPausingLocked(userLeaving, false, true, dontWaitForPause)
+                prev.app.thread.schedulePauseActivity
+```
+2. 如果进程内Activity互相调用，也要走AMS这样的流程？
 
 ## Service
+这里的Service为四大组件之一
+
+### context.startService
+实际实现在ContextImpl类中
+
+```java
+
+@Override
+public ComponentName startService(Intent service) {
+    warnIfCallingFromSystemProcess();
+    return startServiceCommon(service, mUser);
+}
+
+```
+完整调用链
+
+```java
+[ContextImpl.java]
+startService
+    startServiceCommon
+        ActivityManagerNative.getDefault().startService
+```
+
+在API24中上述Binder调用流程如下
+
+AMP.startService-AMN.startService-AMS.startService;
+
+[ActivityManagerService.java]
+```java
+startService
+    mServices.startServiceLocked // mServices为ActiveServices
+```
+[ActiveServices.java]
+```java
+startServiceLocked
+    startServiceInnerLocked
+        bringUpServiceLocked
+            realStartServiceLocked //对应进程存在直接启动
+                app.thread.scheduleCreateService
+            mAm.startProcessLocked //不存在则先创建进程
+```
+
+在API24中上述Binder调用流程如下
+ATP.scheduleCreateService-ATN-ActivityThread.ApplicationThread.scheduleCreateService
+
+[ActivityThread.java/ApplicationThread为内部类]
+```java
+ApplicationThread.scheduleCreateService
+    sendMessage(H.CREATE_SERVICE, s)
+        mH.sendMessage(msg) // mH为ActivityThread主线程的handler
+
+ActivityThread.handleMessage
+    handleCreateService
+        ContextImpl.createAppContext //创建base
+        makeApplication //创建application 单例
+        service.attach //context application等关联
+        service.onCreate // onCreate被调用
+
+```
+### context.bindService
+
+实际实现在ContextImpl中
+
+```java
+@Override
+public boolean bindService(Intent service, ServiceConnection conn,
+        int flags) {
+    warnIfCallingFromSystemProcess();
+    return bindServiceCommon(service, conn, flags, mMainThread.getHandler(),
+            Process.myUserHandle());
+}
+```
+
+[ContextImpl.java]
+```java
+bindService
+    bindServiceCommon(service, conn, flags, mMainThread.getHandler(),
+                Process.myUserHandle()); // 传入conn为ServiceConnection对象
+        sd = mPackageInfo.getServiceDispatcher //由conn的binder服务端生成proxy客户端，后续会传给ams，用于回调
+        ActivityManagerNative.getDefault().bindService
+```
+[AMS.java]
+```java
+bindService
+    mServices.bindServiceLocked
+```
+[ActiveServices.java]
+```java
+bindServiceLocked
+    bringUpServiceLocked //BIND_AUTO_CREATE 标志会自动创建Service,这里同前面startService中过程
+    mAm.updateLruProcessLocked
+    mAm.updateOomAdjLocked
+    分支1：c.conn.connected //如果service已经启动，向发起进程发起binder调用 conn为原进程bindService的时候传进来的，这里相当于立刻publish了这个service
+    分支2：requestServiceBindingLocked
+        r.app.thread.scheduleBindService // 向目标Service进程发起Binder调用
+```
+```java
+[ActivityThread.java/ApplicationThread为内部类]
+
+ApplicationThread.scheduleBindService
+    sendMessage(H.BIND_SERVICE, s)
+        mH.sendMessage(msg) // mH为ActivityThread主线程的handler
+
+ActivityThread.handleMessage
+    handleBindService
+        s.onBind // onBind回调
+        ActivityManagerNative.getDefault().publishService
+            mServices.publishServiceLocked((ServiceRecord)token, intent, service);
+```
+
+[ActivityServices.java]
+```java
+publishServiceLocked
+     c.conn.connected //最终回调我们bindservice传入的ServiceConnection对象的onServiceDisconnected
+```
+
+关于这个IConnection的对象
+在bindservice的时候有这样一句：
+
+    IServiceConnection sd = mPackageInfo.forgetServiceDispatcher(
+                        getOuterContext(), conn);
+
+涉及 LoadedApk、ServiceDispatcher、ServiceDispatcher.InnerConnection等,
+最终sd.connected会触发主线程执行sc.onServiceDisconnected。
+
 
 ## ContentProvider
 
 ## BrocastReceiver
+
+### resigterReceiver和sendBroastCast
+类似的对ContextImpl的两个方法可以进行追踪和分析
+
+```java
+    @Override
+    public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter,
+            String broadcastPermission, Handler scheduler) {
+        return registerReceiverInternal(receiver, getUserId(),
+                filter, broadcastPermission, scheduler, getOuterContext());
+    }
+```
+
+```java
+@Override
+public void sendBroadcast(Intent intent) {
+    warnIfCallingFromSystemProcess();
+    String resolvedType = intent.resolveTypeIfNeeded(getContentResolver());
+    try {
+        intent.prepareToLeaveProcess(this);
+        ActivityManagerNative.getDefault().broadcastIntent(
+                mMainThread.getApplicationThread(), intent, resolvedType, null,
+                Activity.RESULT_OK, null, null, null, AppOpsManager.OP_NONE, null, false, false,
+                getUserId());
+    } catch (RemoteException e) {
+        throw e.rethrowFromSystemServer();
+    }
+}
+```
+最终都是通过Binder调用进入到SystemServer进程中执行AMS对应的操作，不再进行代码级别繁琐的追踪。
+
+resigterReceiver
+```java
+contextImpl.resigterReceiver
+    contextImpl.registerReceiverInternal
+        mPackageInfo.getReceiverDispatcher
+        ams.registerReceiver
+ams.registerReceiver
+    mRegisteredReceivers.put //相关存储
+    mReceiverResolver.addFilter//相关存储
+    queue.enqueueParallelBroadcastLocked
+    queue.scheduleBroadcastsLocked //针对新注册的receiver，会处理StickIntent广播
+```
+
+sendBroadcast
+```java
+contextImpl.resigterReceiver
+    ams.broadcastIntent
+
+ams.broadcastIntent
+    broadcastIntentLocked
+        broadcastQueueForIntent(..)
+        new BroadcastRecord(..)
+        queue.enqueueParallelBroadcastLocked//广播消息入队
+             mParallelBroadcasts.add(r)
+        queue.scheduleBroadcastsLocked() //处理广播
+
+queue.scheduleBroadcastsLocked
+    mHandler.sendMessage //BroadcastHandler
+
+BroadcastHandler.handleMessage
+    processNextBroadcast //实际会处理当前队列中所有的消息
+
+BroadCastQueue.processNextBroadcast
+        deliverToRegisteredReceiverLocked
+            performReceiveLocked
+                app.thread.scheduleRegisteredReceiver // app和app.thread都不为空，触发接收进程的onReceive回调
+                app为null执行receiver.performReceive //这个是当app为为null的时候触发的，上面那一句的代替项，没搞明白对应什么样的场景?
+
+```
+### 设计总结
 
 ## Intent
 
