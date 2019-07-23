@@ -69,50 +69,24 @@
 - [系统启动 WMS服务(WindowManagerService)](#系统启动-wms服务windowmanagerservice)
     - [启动WMS](#启动wms)
     - [WMS实例化(main方法)](#wms实例化main方法)
-    - [View的requestLayout 和 invalidate方法](#view的requestlayout-和-invalidate方法)
-- [控件绘制 View/ViewGroup Measure、Layout、Draw](#控件绘制-viewviewgroup-measurelayoutdraw)
-    - [onMeasure 流程分析](#onmeasure-流程分析)
-    - [onLayout 流程分析](#onlayout-流程分析)
-    - [draw 流程分析](#draw-流程分析)
-- [APP安装](#app安装)
-    - [说明](#说明)
-    - [应用程序安装器 PackageInstaller](#应用程序安装器-packageinstaller)
-    - [PMS安装app调用链(installPackageAsUser)](#pms安装app调用链installpackageasuser)
-- [framework层源码调试跟踪执行过程的实现?](#framework层源码调试跟踪执行过程的实现)
-- [图形绘制相关服务](#图形绘制相关服务)
-- [SurfaceView 和 Canvas](#surfaceview-和-canvas)
-- [context获取各种服务](#context获取各种服务)
-- [Activity](#activity)
-    - [Activity的启动场景](#activity的启动场景)
-    - [startActivity调用流程](#startactivity调用流程)
-- [Activity 成员分析](#activity-成员分析)
-    - [ActivityTask](#activitytask)
-    - [ActivityStack](#activitystack)
-- [Service](#service)
-    - [context.startService](#contextstartservice)
-    - [context.bindService](#contextbindservice)
-- [ContentProvider](#contentprovider)
-- [BrocastReceiver](#brocastreceiver)
-    - [resigterReceiver和sendBroastCast](#resigterreceiver和sendbroastcast)
-    - [设计总结](#设计总结)
-- [Intent](#intent)
-- [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
-- [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
-- [从Activity中WindowManager谈起](#从activity中windowmanager谈起)
-    - [1.getWindowManager](#1getwindowmanager)
-    - [2.getSystemService(Context.WINDOW_SERVICE)](#2getsystemservicecontextwindow_service)
-    - [3.getApplicationContext.getSystemService(Context.WINDOW_SERVICE)](#3getapplicationcontextgetsystemservicecontextwindow_service)
-    - [对比分析](#对比分析)
-    - [mWindowManager初始化](#mwindowmanager初始化)
-    - [关于Dialog、PopupWindow、Toast](#关于dialogpopupwindowtoast)
-- [Window Dialog PopupWindow Toast分析](#window-dialog-popupwindow-toast分析)
-- [Toast调用流程(跨进程、多次binder交互)](#toast调用流程跨进程多次binder交互)
-- [makeText](#maketext)
-    - [toast.show方法](#toastshow方法)
-    - [toast展示到窗口的过程(Toast.Tn.handleShow)](#toast展示到窗口的过程toasttnhandleshow)
-    - [补充说明:](#补充说明)
-- [资源加载过程](#资源加载过程)
-- [Android 性能优化](#android-性能优化)
+    - [涉及线程](#涉及线程)
+    - [调用流图](#调用流图)
+    - [扩展](#扩展-3)
+- [Window建立](#window建立)
+    - [概述](#概述)
+    - [StartingWindow](#startingwindow)
+    - [总结](#总结-1)
+- [AMS WMS SystemServer一些知识点](#ams-wms-systemserver一些知识点)
+- [Activity创建以及界面展示的过程(和wms交互)](#activity创建以及界面展示的过程和wms交互)
+    - [App进程启动后，主线程进入消息循环](#app进程启动后主线程进入消息循环)
+    - [Activity生命周期开始](#activity生命周期开始)
+    - [WindowManager.addView](#windowmanageraddview)
+    - [ViewRootImpl与WMS交互总结](#viewrootimpl与wms交互总结)
+    - [一些类型](#一些类型)
+- [ViewRootImpl](#viewrootimpl)
+    - [ViewRootImpl的setView分析](#viewrootimpl的setview分析)
+    - [Launch Mode](#launch-mode)
+    - [Intent的FLAG](#intent的flag)
 
 <!-- /TOC -->
 
@@ -897,6 +871,7 @@ Activity.startActivity
     1. system_server进程：
         [AMS]   
             startProcessLocked->
+                entryPoint = "android.app.ActivityThread"; //指定进程入口类
                 Process.start->
                 
         [Process - start]
@@ -906,8 +881,8 @@ Activity.startActivity
 
     2. zygote进程
     [ZygoteInit] 
-        runSelectLoop\\循环等待消息
-            peers.get(i).runOnce()\\收到消息执行动作
+        runSelectLoop//循环等待消息
+            peers.get(i).runOnce()//收到消息执行动作
             
     [ZygoteConnection - runOnce] 
         pid = Zygote.forkAndSpecialize
@@ -1257,40 +1232,41 @@ SystemServer->
 ```
 
 ### WMS实例化(main方法)
-实例化调用的是static的main方法，内部通过handler发消息在DisplayThread中进行的具体实例化过程。
+
+    实例化调用的是static的main方法，内部通过handler发消息在DisplayThread中进行的具体实例化过程。
 
 ```java
-    public static WindowManagerService main(final Context context,
-            final InputManagerService im,
-            final boolean haveInputMethods, final boolean showBootMsgs,
-            final boolean onlyCore) {
-        final WindowManagerService[] holder = new WindowManagerService[1];
-        DisplayThread.getHandler().runWithScissors(new Runnable() {
-            @Override
-            public void run() {
-                holder[0] = new WindowManagerService(context, im,
-                        haveInputMethods, showBootMsgs, onlyCore);
-            }
-        }, 0);
-        return holder[0];
-    }
+public static WindowManagerService main(final Context context,
+        final InputManagerService im,
+        final boolean haveInputMethods, final boolean showBootMsgs,
+        final boolean onlyCore) {
+    final WindowManagerService[] holder = new WindowManagerService[1];
+    DisplayThread.getHandler().runWithScissors(new Runnable() {
+        @Override
+        public void run() {
+            holder[0] = new WindowManagerService(context, im,
+                    haveInputMethods, showBootMsgs, onlyCore);
+        }
+    }, 0);
+    return holder[0];
+}
 ```
 
- 利用DisplayThread.getHandler().runWithScissors来调用wms初始化，这里注意两点：初始化过程是在display线程执行，当前线程会等待执行结束(同步操作，runWithScissors特性)，再进行返回。其中DisplayThread.getHandler()方法会判断android.display是否存在，不存在则创建线程，这里的采用单例模式。
- 
- `runWithScissors实现，源码学习一下`
- 
- WindowManagerService继承IWindowManager.Stub(由IWindowManager.aidl生成的Server端)
+利用DisplayThread.getHandler().runWithScissors来调用wms初始化，这里注意两点：初始化过程是在display线程执行，当前线程会等待执行结束(同步操作，runWithScissors特性)，再进行返回。其中DisplayThread.getHandler()方法会判断android.display是否存在，不存在则创建线程，这里的采用单例模式。
 
- ```java
+`runWithScissors实现，源码学习一下`
+
+WindowManagerService继承IWindowManager.Stub(由IWindowManager.aidl生成的Server端)
+
+```java
 public class WindowManagerService extends IWindowManager.Stub
         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs
 ```
 
- WMS构造函数会调用initPolicy方法，该方法会利用runWithScissors在UIThread中执行mPolicy.init的过程,UiThread.getHandler().runWithScissors,阻塞操作,等待执行后返回本线程再继续走.
- 
+WMS构造函数会调用initPolicy方法，该方法会利用runWithScissors在UIThread中执行mPolicy.init的过程,UiThread.getHandler().runWithScissors,阻塞操作,等待执行后返回本线程再继续走.
+    
 ```java
- private WindowManagerService(Context context, InputManagerService inputManager,
+private WindowManagerService(Context context, InputManagerService inputManager,
         boolean haveInputMethods, boolean showBootMsgs, boolean onlyCore) {
             ...
             LocalServices.addService(WindowManagerPolicy.class, mPolicy);
@@ -1311,10 +1287,8 @@ private void initPolicy() {
 }
 ```
 
+### 涉及线程
 
- 
-
- ### 涉及线程
  system_server主线程, “android.display”线程, “android.ui”线程
 
  "android.ui"是在AMS实例化的时候开启的。对应UIThread，UIThread.get或者getHandler会触发线程创建。
@@ -1464,35 +1438,13 @@ void makeVisible() {
 
 WMS中对窗口类型的定义，数值越大，显示的时候越靠前
 
-    窗口的主序
-    TYPE_UNIVERSE_BACKGROUND	11000	
-    TYPE_WALLPAPER	21000
-    TYPE_PHONE	31000	
-    TYPE_SEARCH_BAR	41000
-    TYPE_RECENTS_OVERLAY	51000	
-    TYPE_SYSTEM_DIALOG	51000
-    TYPE_TOAST	61000	
-    TYPE_PRIORITY_PHONE	71000
-    TYPE_DREAM	81000	
-    TYPE_SYSTEM_ALERT	91000
-    TYPE_INPUT_METHOD	101000	
-    TYPE_INPUT_METHOD_DIALOG	111000
-    TYPE_KEYGUARD	121000	
-    TYPE_KEYGUARD_DIALOG	131000
-    TYPE_STATUS_BAR_SUB_PANEL	141000	
-    应用窗口与未知类型的窗口	21000
+    应用窗口:FIRST_APPLICATION_WINDOW(1) - LAST_APPLICATION_WINDOW(99)
+    子窗口： FIRST_SUB_WINDOW(1000) - LAST_SUB_WINDOW(1999)
+    系统窗口:FIRST_SYSTEM_WINDOW(2000) - LAST_SYSTEM_WINDOW(2999)
+    应用窗口就是普通应用的窗口，会有不同状态，常见的TYPE_APPLICATION为2；子窗口用于对话框、popupwindow等；系统窗口比如Toast,statusbar，系统弹级窗。
 
 
-子窗口类型	子序
-
-    TYPE_APPLICATION_PANEL	1
-    TYPE_APPLICATION_ATTACHED_DIALOG	1
-    TYPE_APPLICATION_MEDIA	-2
-    TYPE_APPLICATION_MEDIA_OVERLAY	-1
-    TYPE_APPLICATION_SUB_PANEL	2
-
-
-`WindowManager.LayoutParams中有不同的窗口类型 和上面这个有什么关系？`
+`WindowManager.LayoutParams中有不同的窗口类型的定义`
 
 
 ## AMS WMS SystemServer一些知识点
@@ -1725,6 +1677,7 @@ IActivityManager:
 
             
 ## ViewRootImpl
+
 前面谈到WindowManager实际的操作最终调用到ViewRootImpl的一些方法。本节对ViewRootImpl进行介绍。
 
 ### ViewRootImpl的setView分析
@@ -2114,11 +2067,6 @@ handleMessage
         onResume // onResume触发
         ....
 ```
-## Activity 成员分析
-
-### ActivityTask
-
-### ActivityStack
 
 1. 思考一个问题：源Activity启动目标Activity的时候，源Activity会执行onPause回调，这个操作什么时候触发的？
 
@@ -2131,6 +2079,7 @@ handleMessage
                 prev.app.thread.schedulePauseActivity
 ```
 2. 如果进程内Activity互相调用，也要走AMS这样的流程？
+
 
 ## Service
 这里的Service为四大组件之一
@@ -2308,16 +2257,17 @@ ams.registerReceiver
 
 sendBroadcast
 ```java
-contextImpl.resigterReceiver
+contextImpl.broadcastIntent
     ams.broadcastIntent
 
 ams.broadcastIntent
     broadcastIntentLocked
-        broadcastQueueForIntent(..)
-        new BroadcastRecord(..)
-        queue.enqueueParallelBroadcastLocked//广播消息入队
+        collectReceiverComponents //计算broadcast对应的receivers
+        broadcastQueueForIntent(..) //获取广播任务处理队列
+        new BroadcastRecord(..) //生成广播任务，里面含有对应的receiver列表
+        queue.enqueueParallelBroadcastLocked//广播处理任务入队
              mParallelBroadcasts.add(r)
-        queue.scheduleBroadcastsLocked() //处理广播
+        queue.scheduleBroadcastsLocked() //处理任务队列中的项目
 
 queue.scheduleBroadcastsLocked
     mHandler.sendMessage //BroadcastHandler
@@ -2333,14 +2283,7 @@ BroadCastQueue.processNextBroadcast
 
 ```
 ### 设计总结
-
-## Intent
-
-## PackageInfo & LoadedApk & Context中的base以及ContextImpl中的
-
-## getWidth getMeasuredWidth getLayoutParams.witdth 比较
-
-注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
+广播跨进程通信的一种方式。有点订阅和发布的模式。Activity发起注册行为，ams进行相关处理，将注册者和对应类型广播信号关联并记录，待某一广播消息被发送的时候，ams处理广播消息发送，会根据广播类型找到所有的注册者，然后在目标进程触发回调方法。
 
 ## 从Activity中WindowManager谈起
 
@@ -2677,8 +2620,60 @@ Toast窗口级别问题，代码版本演进问题。
 可能早期toast这种系统级窗口需要系统进程来发起，那么通过tms来实现就可以理解了，但是24版本代码addview依然是在app发起的，可以在看下更早的版本实现。
 
 不过snackbar就是app进程内使用handler来操作的。`snackbar应属于应用窗口?`
+## Dialog 源码分析
 
 ## 资源加载过程
 
+## AMS Activity管理
+### ActivityRecord/TaskRecord/ActivityStack
+
+    ActivityRecord/TaskRecord/ActivityStack
+    ProcessRecord
+    PendingIntentRecord
+
+dumpsys activity可以进行辅助分析
+
+### Activity 启动模式
+
+### 资料
+
+    http://liuwangshu.cn/framework/ams/2-activitytask.html
+    http://gityuan.com/2017/06/11/activity_record/
+    http://gityuan.com/2016/05/14/dumpsys-command/
+```
+### Launch Mode
+Launch Mode都不会陌生，用于设定Activity的启动方式，无论是哪种启动方式，所启动的Activity都会位于Activity栈的栈顶。有以下四种：
+
+standerd：默认模式，每次启动Activity都会创建一个新的Activity实例。
+singleTop：如果要启动的Activity已经在栈顶，则不会重新创建Activity，同时该Activity的onNewIntent方法会被调用。如果要启动的Activity不在栈顶，则会重新创建该Activity的实例。
+singleTask：如果要启动的Activity已经存在于它想要归属的栈中，那么不会创建该Activity实例，将栈中位于该Activity上的所有的Activity出栈，同时该Activity的onNewIntent方法会被调用。如果要启动的Activity不存在于它想要归属的栈中，并且该栈存在，则会重新创建该Activity的实例。如果要启动的Activity想要归属的栈不存在，则首先要创建一个新栈，然后创建该Activity实例并压入到新栈中。
+singleInstance：和singleTask基本类似，不同的是启动Activity时，首先要创建在一个新栈，然后创建该Activity实例并压入新栈中，新栈中只会存在这一个Activity实例。
+
+### Intent的FLAG
+Intent中定义了很多了FLAG，其中有几个FLAG也可以设定Activity的启动方式，如果Launch Mode设定和FLAG设定的Activity的启动方式有冲突，则以FLAG设定的为准。
+
+FLAG_ACTIVITY_SINGLE_TOP：和Launch Mode中的singleTop效果是一样的。
+FLAG_ACTIVITY_NEW_TASK：和Launch Mode中的singleTask效果是一样的。
+FLAG_ACTIVITY_CLEAR_TOP：Launch Mode中没有与此对应的模式，如果要启动的Activity已经存在于栈中，则将所有位于它上面的Activity出栈。singleTask默认具有此标记位的效果。
+除了这三个FLAG，还有一些FLAG对我们分析栈管理有些帮助。
+
+FLAG_ACTIVITY_NO_HISTORY：Activity一旦退出，就不会存在于栈中。同样的，也可以在AndroidManifest.xml中设置“android:noHistory”。
+FLAG_ACTIVITY_MULTIPLE_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效果，系统会启动一个新的栈来容纳新启动的Activity.
+FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS：Activity不会被放入到“最近启动的Activity”列表中。
+FLAG_ACTIVITY_BROUGHT_TO_FRONT：这个标志位通常不是由应用程序中的代码设置的，而是Launch Mode为singleTask时，由系统自动加上的。
+FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY：这个标志位通常不是由应用程序中的代码设置的，而是从历史记录中启动的（长按Home键调出）。
+FLAG_ACTIVITY_CLEAR_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效果，用于清除与启动的Activity相关栈的所有其他Activity。
+
+```
+## WMS window窗口管理
+### WindowToken /WindowState /WindowManagerPolicy
+
+## Intent
+
+## PackageInfo & LoadedApk & Context中的base以及ContextImpl中的
+
+## getWidth getMeasuredWidth getLayoutParams.witdth 比较
+
+注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
 
 ## Android 性能优化
