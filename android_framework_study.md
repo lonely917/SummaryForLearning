@@ -85,8 +85,55 @@
     - [一些类型](#一些类型)
 - [ViewRootImpl](#viewrootimpl)
     - [ViewRootImpl的setView分析](#viewrootimpl的setview分析)
-    - [Launch Mode](#launch-mode)
-    - [Intent的FLAG](#intent的flag)
+    - [View的requestLayout 和 invalidate方法](#view的requestlayout-和-invalidate方法)
+- [控件绘制 View/ViewGroup Measure、Layout、Draw](#控件绘制-viewviewgroup-measurelayoutdraw)
+    - [onMeasure 流程分析](#onmeasure-流程分析)
+    - [onLayout 流程分析](#onlayout-流程分析)
+    - [draw 流程分析](#draw-流程分析)
+- [APP安装](#app安装)
+    - [说明](#说明)
+    - [应用程序安装器 PackageInstaller](#应用程序安装器-packageinstaller)
+    - [PMS安装app调用链(installPackageAsUser)](#pms安装app调用链installpackageasuser)
+    - [PMS服务启动](#pms服务启动)
+- [framework层源码调试跟踪执行过程的实现?](#framework层源码调试跟踪执行过程的实现)
+- [图形绘制相关服务](#图形绘制相关服务)
+- [SurfaceView 和 Canvas](#surfaceview-和-canvas)
+- [context获取各种服务](#context获取各种服务)
+- [Activity](#activity)
+    - [Activity的启动场景](#activity的启动场景)
+    - [startActivity调用流程](#startactivity调用流程)
+- [Service](#service)
+    - [context.startService](#contextstartservice)
+    - [context.bindService](#contextbindservice)
+- [ContentProvider](#contentprovider)
+- [BrocastReceiver](#brocastreceiver)
+    - [resigterReceiver和sendBroastCast](#resigterreceiver和sendbroastcast)
+    - [设计总结](#设计总结)
+- [从Activity中WindowManager谈起](#从activity中windowmanager谈起)
+    - [1.getWindowManager](#1getwindowmanager)
+    - [2.getSystemService(Context.WINDOW_SERVICE)](#2getsystemservicecontextwindow_service)
+    - [3.getApplicationContext.getSystemService(Context.WINDOW_SERVICE)](#3getapplicationcontextgetsystemservicecontextwindow_service)
+    - [对比分析](#对比分析)
+    - [mWindowManager初始化](#mwindowmanager初始化)
+    - [关于Dialog、PopupWindow、Toast](#关于dialogpopupwindowtoast)
+- [Window Dialog PopupWindow Toast分析](#window-dialog-popupwindow-toast分析)
+- [Toast调用流程(跨进程、多次binder交互)](#toast调用流程跨进程多次binder交互)
+- [makeText](#maketext)
+    - [toast.show方法](#toastshow方法)
+    - [toast展示到窗口的过程(Toast.Tn.handleShow)](#toast展示到窗口的过程toasttnhandleshow)
+    - [补充说明:](#补充说明)
+- [Dialog 源码分析](#dialog-源码分析)
+- [资源加载过程](#资源加载过程)
+- [AMS Activity管理](#ams-activity管理)
+    - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
+    - [Activity 启动模式](#activity-启动模式)
+    - [资料](#资料)
+- [WMS window窗口管理](#wms-window窗口管理)
+    - [WindowToken /WindowState /WindowManagerPolicy](#windowtoken-windowstate-windowmanagerpolicy)
+- [Intent](#intent)
+- [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
+- [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
+- [Android 性能优化](#android-性能优化)
 
 <!-- /TOC -->
 
@@ -465,7 +512,7 @@ startBootstrapServices();
         //注意下述startservice都是SystemServiceManager的对象的方法，不同于ServiceManger(我们使用ServiceManger的addservice和findservice来进行aidl相关的服务注册和查询)
 
         //开启installer服务，这个是SystemService子类，非AIDL调用的那种服务，比如SMS、AMS、PMS等。
-        Installer installer = mSystemServiceManager.startService(Installer.class);
+        Installer installer = mSystemServiceManager.startService(Installer.class); //会执行cmd"ping"命令
         ...
         //开启ActivityManagerService.Lifecycle服务，也是SystemService子类
         mActivityManagerService = mSystemServiceManager.startService(
@@ -1531,6 +1578,7 @@ https://silencedut.github.io/2016/08/10/Android%E8%A7%86%E5%9B%BE%E6%A1%86%E6%9E
         Looper.loop()
 
 ### Activity生命周期开始
+
 ```
 scheduleLaunchActivity
     ActivityClientRecord r = new ActivityClientRecord();
@@ -1673,9 +1721,6 @@ IActivityManager:
 对比发现，这里AMS是手动编写而WMS使用aidl文件生成相关类
 但是高版本中AMN被标记为过时的，并且移除AMP；同时移除了IActivityManager.java定义接口的文件，但是添加了IActivityMananger.aidl，相当于对binder调用的上层写法进行了统一。
 
-
-
-            
 ## ViewRootImpl
 
 前面谈到WindowManager实际的操作最终调用到ViewRootImpl的一些方法。本节对ViewRootImpl进行介绍。
@@ -1763,40 +1808,41 @@ measureHierarchy
     return windowSizeMayChange //这个数值根据当前尺寸和测量后host的尺寸是否一致来判定true/false
 ```
 
-注意这里的measureHierarchy过程中最多可能执行三次performMeasure，也就是上述{}内部这个流程可能进行三次，首先从一个较小的宽度进行尝试，如果两次都没能达到goodMeasure的目的，直接使用窗口宽度，进行第三次测量。
+    注意这里的measureHierarchy过程中最多可能执行三次performMeasure，也就是上述{}内部这个流程可能进行三次，首先从一个较小的宽度进行尝试，如果两次都没能达到goodMeasure的目的，直接使用窗口宽度，进行第三次测量。
 
-源码中的解释:
-```java
-// On large screens, we don't want to allow dialogs to just
-// stretch to fill the entire width of the screen to display
-// one line of text.  First try doing the layout at a smaller
-// size to see if it will fit.
-```
+    源码中的解释:
+    ```java
+    // On large screens, we don't want to allow dialogs to just
+    // stretch to fill the entire width of the screen to display
+    // one line of text.  First try doing the layout at a smaller
+    // size to see if it will fit.
+    ```
 
-```
-performLayout(lp, mWidth, mHeight)
-    measureHierarchy // `为什么又要来一次?`
-    host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight())//注意这里的host是DecorView-framelayout
-        onLayout //布局内部的子view 分析见`后续章节## onLayout的流程分析`
-            framelayout.layoutChildren//
-                child.layout//所有child都会调用其layout方法
-                    child.onLayout// 具体的view或者viewgroup会重写或者实现该方法
-```
-```                
-performDraw()
-    draw(fullRedrawNeeded)
-        trackFPS //DEBUG_FPS标志设置的话会记录
-        scrollToRectOrFocus
-        dirty区域计算
-        mAttachInfo.mTreeObserver.dispatchOnDraw();
-            OnDrawListener.onDraw
-        mAttachInfo.mHardwareRenderer.draw
-            updateRootDisplayList
-                view.updateDisplayListIfDirty
-                    view.draw // draw的流程分析见`后续章节## draw的流程分析`
-            nSyncAndDrawFrame
- ```   
- 
+    ```
+    performLayout(lp, mWidth, mHeight)
+        measureHierarchy // `为什么又要来一次?`
+        host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight())//注意这里的host是DecorView-framelayout
+            onLayout //布局内部的子view 分析见`后续章节## onLayout的流程分析`
+                framelayout.layoutChildren//
+                    child.layout//所有child都会调用其layout方法
+                        child.onLayout// 具体的view或者viewgroup会重写或者实现该方法
+    ```
+    ```                
+    performDraw()
+        draw(fullRedrawNeeded)
+            trackFPS //DEBUG_FPS标志设置的话会记录
+            scrollToRectOrFocus
+            dirty区域计算
+            mAttachInfo.mTreeObserver.dispatchOnDraw();
+                OnDrawListener.onDraw
+            mAttachInfo.mHardwareRenderer.draw
+                updateRootDisplayList
+                    view.updateDisplayListIfDirty
+                        view.draw // draw的流程分析见`后续章节## draw的流程分析`
+                nSyncAndDrawFrame
+    ```   
+
+
 ### View的requestLayout 和 invalidate方法
 
 ```java
@@ -1939,15 +1985,16 @@ system    2553  881   1125064 65836 ffffffff 00000000 S PackageInstalle
 
 ### 应用程序安装器 PackageInstaller
 app目录：/packages/apps/PackageInstaller/
+(源码查看http://aosp.opersys.com)
 
-其中PackageInstallerActivity是安装应用的入口
+其中PackageInstallerActivity是安装应用的入口(8.0之后变为InstallStart，会进行一些转换工作，最后还会路由到PackageInstallerActivity)
 
 ```java
 onCreate
     initiateInstall
-        startInstallConfirm()
+        startInstallConfirm() //展示安装界面，一般会有权限列表等信息，确定取消按钮
             mInstallConfirm.setVisibility(View.VISIBLE);
-            mOk.setOnClickListener(this);
+            mOk.setOnClickListener(this); //确定按钮响应
                 ok-startInstall()
                     startActivity  InstallAppProgress
 ```
@@ -1967,11 +2014,12 @@ installPackageAsUser后续开始了apk拷贝解析。
 pms.installPackageAsUser->
     handler发送INIT_COPY消息处理->
         handle
-            handler发送MCS_BOUND消息处理->
+            connectToService //没有绑定则绑定DefaultContainerService服务，位于com.android.defcontainer进程，用于文件拷贝工作
+            handler发送MCS_BOUND消息处理//已绑定则发送消息(消息发送也可能来自绑定服务成功后的回调onServiceConnected中发送)
                 handle
-                    params.startCopy()
+                    params.startCopy() //InstallParams
                         handleStartCopy()
-                            installArgs.copyApk()  //apk复制到目录 /data/app/
+                            installArgs.copyApk()  //apk复制到目录 /data/app/  这里会binder调用DefaultContainerService完成拷贝
                         handleReturnCode()
                             pms.processPendingInstall(mArgs, mRet) //解析apk
                               pms.installPackageTracedLI
@@ -1983,6 +2031,15 @@ pms.installPackageAsUser->
                                                     -updateSettingsLI    //更新信息
 
 ```
+
+### PMS服务启动
+
+    system_server.startBootstrapServices()
+        Installer installer = mSystemServiceManager.startService(Installer.class)
+        PackageManagerService.main(...installer...)
+            new PackageManagerService(..installer..)
+            ServiceManager.addService("package", m)
+
 
 ## framework层源码调试跟踪执行过程的实现?
 
@@ -2283,6 +2340,7 @@ BroadCastQueue.processNextBroadcast
 
 ```
 ### 设计总结
+
 广播跨进程通信的一种方式。有点订阅和发布的模式。Activity发起注册行为，ams进行相关处理，将注册者和对应类型广播信号关联并记录，待某一广播消息被发送的时候，ams处理广播消息发送，会根据广播类型找到所有的注册者，然后在目标进程触发回调方法。
 
 ## 从Activity中WindowManager谈起
