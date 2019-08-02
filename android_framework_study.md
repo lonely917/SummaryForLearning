@@ -134,6 +134,9 @@
 - [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
 - [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
 - [Android 性能优化](#android-性能优化)
+- [Binder传输数据大小限制](#binder传输数据大小限制)
+- [调试方法、内存、绘制、网络等](#调试方法内存绘制网络等)
+- [API版本  Build.VERSION_CODES](#api版本--buildversion_codes)
 
 <!-- /TOC -->
 
@@ -2734,4 +2737,10 @@ FLAG_ACTIVITY_CLEAR_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效�
 
 注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
 
-## Android 性能优化
+## Android 性能优化 
+
+## Binder传输数据大小限制
+
+## 调试方法、内存、绘制、网络等
+
+## API版本  Build.VERSION_CODES

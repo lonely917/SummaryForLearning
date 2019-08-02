@@ -177,3 +177,38 @@ protected void onDraw(Canvas canvas) {
 ```
 
 ## drawText & drawBitmap
+
+
+## android中像素、英寸、dpi、dip、DisplayMetrics
+
+## android中字体大小的含义
+
+## string.xml使用格式化参数
+
+```xml
+    <string name="image_size">尺寸：%1$d x %2$d</string>
+    <string name="image_size2" formatted="false">尺寸：%d x %d</string>
+    <string name="image_size3">尺寸：%%d x %%d</string>
+```
+
+## 控件源码
+
+## 布局源码
+
+## setWillNotDraw
+
+## onDraw重绘优化
+
+## 6.0之后view的forground设置
+
+## centerInside和centerCrop等模式
+
+## 傻瓜式修正尺寸-resolveSize
+
+## onAttachedToWindow
+
+## 触摸反馈
+
+1. 触摸按下
+2. listview item按下后viewgroup滑动的实现
+3. listview item长摁拖动排序的实现
