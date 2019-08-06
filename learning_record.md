@@ -1,24 +1,24 @@
-#ÖªÊ¶ÏîÑ§Ï°
-##½çÃæ¿ò¼ÜdemoÉè¼Æ
-tabÒ³Ö§³Ö»¬¶¯ÇĞ»»
-tabÒ³ÄÚÖÃÏÂÀ­Ë¢ĞÂ(listview »òÕß gridview£¬ ´«ÊäÍ¼Æ¬»òÕßÎÄ×Ö)
+#çŸ¥è¯†é¡¹å­¦ä¹ 
+##ç•Œé¢æ¡†æ¶demoè®¾è®¡
+tabé¡µæ”¯æŒæ»‘åŠ¨åˆ‡æ¢
+tabé¡µå†…ç½®ä¸‹æ‹‰åˆ·æ–°(listview æˆ–è€… gridviewï¼Œ ä¼ è¾“å›¾ç‰‡æˆ–è€…æ–‡å­—)
 
-##git Ê¹ÓÃ
-ÏÂÔØºÏÊÊ°æ±¾£¬°²×°¡£
-ÅäÖÃ£¬ĞèÒªgit config È¥ÉèÖÃÓÃ»§ÃûÃÜÂë¡£
-Éú³É±¾µØsshkey¡£
-È»ºóÔÚgithubÉÏÌí¼Ókey¡£
-ÕâÑù¾Í¿ÉÒÔºÍÔ¶¶Ë½»»¥ÁË¡£
-(ÓĞÊ±ºòclone »òÕß fetch»á³öÏÖ ¶Ë¿Ú22»ò443²»ÏìÓ¦£¬ĞèÒªÉèÖÃ´úÀí)
+##git ä½¿ç”¨
+ä¸‹è½½åˆé€‚ç‰ˆæœ¬ï¼Œå®‰è£…ã€‚
+é…ç½®ï¼Œéœ€è¦git config å»è®¾ç½®ç”¨æˆ·åå¯†ç ã€‚
+ç”Ÿæˆæœ¬åœ°sshkeyã€‚
+ç„¶ååœ¨githubä¸Šæ·»åŠ keyã€‚
+è¿™æ ·å°±å¯ä»¥å’Œè¿œç«¯äº¤äº’äº†ã€‚
+(æœ‰æ—¶å€™clone æˆ–è€… fetchä¼šå‡ºç° ç«¯å£22æˆ–443ä¸å“åº”ï¼Œéœ€è¦è®¾ç½®ä»£ç†)
 
-##git clone Á¬½ÓÒì³£½â¾ö°ì·¨
-###×´Ì¬
+##git clone è¿æ¥å¼‚å¸¸è§£å†³åŠæ³•
+###çŠ¶æ€
 Failed connect to github.com:443
-ssh 22¶Ë¿Ú https¶Ë¿Ú443
-ÕâÀïÁ¬½ÓÊ§°Ü¿ÉÄÜÊÇÓÉÓÚËùÔÚÍøÂçµÄÏĞÖÃ£¬Ñ§Ğ£»òÕß¹«Ë¾µÄÉèÖÃ£¬²»ÔÊĞíÁ¬½Ó22»òÕß443¶Ë¿Ú
-ÎÒÃÇ¿ÉÒÔÍ¨¹ıÉèÖÃ´úÀíµÄ·½Ê½À´´ïµ½Á¬½ÓÄ¿µÄ
-ÎÒÔÚ¹«Ë¾Ê¹ÓÃ¡°$ git config --global http.proxy http://web-proxy.oa.com:8080¡±¼´¿É¡£
-²Î¿¼ http://stackoverflow.com/questions/18356502/github-failed-to-connect-to-github-443-windows-failed-to-connect-to-github
+ssh 22ç«¯å£ httpsç«¯å£443
+è¿™é‡Œè¿æ¥å¤±è´¥å¯èƒ½æ˜¯ç”±äºæ‰€åœ¨ç½‘ç»œçš„é—²ç½®ï¼Œå­¦æ ¡æˆ–è€…å…¬å¸çš„è®¾ç½®ï¼Œä¸å…è®¸è¿æ¥22æˆ–è€…443ç«¯å£
+æˆ‘ä»¬å¯ä»¥é€šè¿‡è®¾ç½®ä»£ç†çš„æ–¹å¼æ¥è¾¾åˆ°è¿æ¥ç›®çš„
+æˆ‘åœ¨å…¬å¸ä½¿ç”¨â€œ$ git config --global http.proxy http://web-proxy.oa.com:8080â€å³å¯ã€‚
+å‚è€ƒ http://stackoverflow.com/questions/18356502/github-failed-to-connect-to-github-443-windows-failed-to-connect-to-github
 
 Updated the http.proxy key in git config by following command
 git config --global http.proxy http[s]://userName:password@proxyaddress:port
@@ -26,30 +26,30 @@ Error - could not resolve proxy some@proxyaddress:port. It turned out my passwor
 Encode @ in your password to %40 because git splits the proxy setting by @
 git config --global http.proxy http[s]://userName:password(encoded)@proxyaddress:port
 
-##git ½¨Á¢±¾µØ¿âÔ¶³Ì¿â²¢¹ØÁª
-Á½ÖÖ·½·¨£º
-@1Ö±½Ógit bash È¥cloneÔ¶³Ì¿âÏÂÀ´£¬×Ô¶¯ÏÂÔØµ½±¾µØ²¢¹ØÁª¡£
-@2½¨Á¢±¾µØ¿â£¬ÀûÓÃgit add È¥¹ØÁªÔ¶³Ì¿â¡£
-Ê¾Àı
-±¾µØgit init
-Ô¶³Ì½¨Á¢Ô¶³Ì¿â
-È»ºóremote add 
-remote add [Ô´Ãû³Æ(×Ô¶¨Òå)] [Ô´µØÖ·]
+##git å»ºç«‹æœ¬åœ°åº“è¿œç¨‹åº“å¹¶å…³è”
+ä¸¤ç§æ–¹æ³•ï¼š
+@1ç›´æ¥git bash å»cloneè¿œç¨‹åº“ä¸‹æ¥ï¼Œè‡ªåŠ¨ä¸‹è½½åˆ°æœ¬åœ°å¹¶å…³è”ã€‚
+@2å»ºç«‹æœ¬åœ°åº“ï¼Œåˆ©ç”¨git add å»å…³è”è¿œç¨‹åº“ã€‚
+ç¤ºä¾‹
+æœ¬åœ°git init
+è¿œç¨‹å»ºç«‹è¿œç¨‹åº“
+ç„¶åremote add 
+remote add [æºåç§°(è‡ªå®šä¹‰)] [æºåœ°å€]
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git remote add origin https://github.com/lonely917/SummaryForLearning.git
 
-²é¿´Ô´
+æŸ¥çœ‹æº
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git remote
 origin
 
-²é¿´Ô´ÏêÏ¸ĞÅÏ¢
+æŸ¥çœ‹æºè¯¦ç»†ä¿¡æ¯
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git remote -v
 origin  https://github.com/lonely917/SummaryForLearning.git (fetch)
 origin  https://github.com/lonely917/SummaryForLearning.git (push)
 
-²âÊÔgit show ºÍ git status ÒÔ¼° git log(»¹Ã»ÓĞÌá½»)
+æµ‹è¯•git show å’Œ git status ä»¥åŠ git log(è¿˜æ²¡æœ‰æäº¤)
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git show
 fatal: bad default revision 'HEAD'
@@ -66,19 +66,19 @@ Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git log
 fatal: bad default revision 'HEAD'
 
-ĞÂ½¨ÎÄ¼şreadme.md
-git add Ìí¼Óµ½°æ±¾¿â
+æ–°å»ºæ–‡ä»¶readme.md
+git add æ·»åŠ åˆ°ç‰ˆæœ¬åº“
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git add -A
 
-git commit Ìá½»
+git commit æäº¤
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
-$ git commit -m "Ìí¼Ó readme.md"
-[master (root-commit) 50c177b] Ìí¼Ó readme.md
+$ git commit -m "æ·»åŠ  readme.md"
+[master (root-commit) 50c177b] æ·»åŠ  readme.md
  1 file changed, 1 insertion(+)
  create mode 100644 readme.md
 
-ÍÆËÍµ½Ô¶³Ì¿â²¢¹ØÁª(Æğ³õÔ¶³Ì¿â»¹ÊÇ¿Õ)
+æ¨é€åˆ°è¿œç¨‹åº“å¹¶å…³è”(èµ·åˆè¿œç¨‹åº“è¿˜æ˜¯ç©º)
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git remote
 origin
@@ -92,16 +92,16 @@ Writing objects: 100% (3/3), 255 bytes | 0 bytes/s, done.
 Total 3 (delta 0), reused 0 (delta 0)
 To https://github.com/lonely917/SummaryForLearning.git
  * [new branch]      master -> master
-(-u ÊÇ¹ØÁª±¾µØmasterºÍÔ¶³Ìmaster£¬ÒÔºó¾Í¿ÉÒÔ¼ò»¯)
-ÍÆËÍĞ¡½á
-Ğ¡½á
+(-u æ˜¯å…³è”æœ¬åœ°masterå’Œè¿œç¨‹masterï¼Œä»¥åå°±å¯ä»¥ç®€åŒ–)
+æ¨é€å°ç»“
+å°ç»“
 
-Òª¹ØÁªÒ»¸öÔ¶³Ì¿â£¬Ê¹ÓÃÃüÁîgit remote add origin git@server-name:path/repo-name.git£»
-¹ØÁªºó£¬Ê¹ÓÃÃüÁîgit push -u origin masterµÚÒ»´ÎÍÆËÍmaster·ÖÖ§µÄËùÓĞÄÚÈİ£»
-´Ëºó£¬Ã¿´Î±¾µØÌá½»ºó£¬Ö»ÒªÓĞ±ØÒª£¬¾Í¿ÉÒÔÊ¹ÓÃÃüÁîgit push origin masterÍÆËÍ×îĞÂĞŞ¸Ä£»
+è¦å…³è”ä¸€ä¸ªè¿œç¨‹åº“ï¼Œä½¿ç”¨å‘½ä»¤git remote add origin git@server-name:path/repo-name.gitï¼›
+å…³è”åï¼Œä½¿ç”¨å‘½ä»¤git push -u origin masterç¬¬ä¸€æ¬¡æ¨é€masteråˆ†æ”¯çš„æ‰€æœ‰å†…å®¹ï¼›
+æ­¤åï¼Œæ¯æ¬¡æœ¬åœ°æäº¤åï¼Œåªè¦æœ‰å¿…è¦ï¼Œå°±å¯ä»¥ä½¿ç”¨å‘½ä»¤git push origin masteræ¨é€æœ€æ–°ä¿®æ”¹ï¼›
 
-¿ËÂ¡Ô¶³Ì¿â
-ÔÚÁíÍâÒ»¸öÄ¿Â¼ÏÂ½øÈëgit bash£¬ÀûÓÃgit clone¿ËÂ¡µº±¾µØ
+å…‹éš†è¿œç¨‹åº“
+åœ¨å¦å¤–ä¸€ä¸ªç›®å½•ä¸‹è¿›å…¥git bashï¼Œåˆ©ç”¨git cloneå…‹éš†å²›æœ¬åœ°
 Administrator@WENBURGYAN-PC0 /D/pro/test
 $ git clone https://github.com/lonely917/SummaryForLearning.git
 Cloning into 'SummaryForLearning'...
@@ -110,7 +110,7 @@ remote: Total 3 (delta 0), reused 3 (delta 0), pack-reused 0
 Unpacking objects: 100% (3/3), done.
 Checking connectivity... done.
 
-¿ËÂ¡Íê³Éºó½øÈë¿âÄ¿Â¼²é¿´
+å…‹éš†å®Œæˆåè¿›å…¥åº“ç›®å½•æŸ¥çœ‹
 Administrator@WENBURGYAN-PC0 /D/pro/test
 $ ls
 Android-PullToRefresh  SummaryForLearning  ZrcListView
@@ -127,16 +127,16 @@ $ git remote -v
 origin  https://github.com/lonely917/SummaryForLearning.git (fetch)
 origin  https://github.com/lonely917/SummaryForLearning.git (push)
 
-ÎÒÃÇÔÚÔ­ÏÈÄ¿Â¼ÏÂadd Ò»¸öÎÄ¼ş ÍÆËÍµ½Ô¶³Ì£¬È»ºóÔÙ´ËÄ¿Â¼ÏÂfetch£¬Ïàµ±ÓÚÎÒÃÇÔÚ¶àµØ°ì¹«£¬Í¬²½ÎÄ¼ş
+æˆ‘ä»¬åœ¨åŸå…ˆç›®å½•ä¸‹add ä¸€ä¸ªæ–‡ä»¶ æ¨é€åˆ°è¿œç¨‹ï¼Œç„¶åå†æ­¤ç›®å½•ä¸‹fetchï¼Œç›¸å½“äºæˆ‘ä»¬åœ¨å¤šåœ°åŠå…¬ï¼ŒåŒæ­¥æ–‡ä»¶
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git add .
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
-$ git commit -m "learning_summary ±¾µØÌá½»"
-[master 1d04963] learning_summary ±¾µØÌá½»
+$ git commit -m "learning_summary æœ¬åœ°æäº¤"
+[master 1d04963] learning_summary æœ¬åœ°æäº¤
  1 file changed, 130 insertions(+)
  create mode 100644 learning_record.md
 
-ÍÆËÍ
+æ¨é€
 Administrator@WENBURGYAN-PC0 /D/learning/learning_summary (master)
 $ git push origin master
 Username for 'https://github.com': lonely917
@@ -149,8 +149,8 @@ Total 3 (delta 0), reused 0 (delta 0)
 To https://github.com/lonely917/SummaryForLearning.git
    50c177b..1d04963  master -> master
 
-ÔÚÁíÒ»¸öÄ¿Â¼(¹¤×÷Çø)½øĞĞfetchºÍºÏ²¢
-Ê×ÏÈ½øĞĞfetch²Ù×÷£¬ÏÂÔØµ½±¾µØ(Ã»ÓĞºÏ²¢)
+åœ¨å¦ä¸€ä¸ªç›®å½•(å·¥ä½œåŒº)è¿›è¡Œfetchå’Œåˆå¹¶
+é¦–å…ˆè¿›è¡Œfetchæ“ä½œï¼Œä¸‹è½½åˆ°æœ¬åœ°(æ²¡æœ‰åˆå¹¶)
 Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
 $ git fetch origin
 remote: Counting objects: 3, done.
@@ -161,7 +161,7 @@ From https://github.com/lonely917/SummaryForLearning
    50c177b..1d04963  master     -> origin/master
 
 
-¿ÉÒÔÍ¨¹ıÃüÁî²é¿´±¾µØºÍÔ¶¶ËµÄ²î±ğ
+å¯ä»¥é€šè¿‡å‘½ä»¤æŸ¥çœ‹æœ¬åœ°å’Œè¿œç«¯çš„å·®åˆ«
 Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
 $ git diff master origin/master
 diff --git a/learning_record.md b/learning_record.md
@@ -170,7 +170,7 @@ index 0000000..3fae107
 --- /dev/null
 +++ b/learning_record.md
 
-merge²Ù×÷
+mergeæ“ä½œ
 Administrator@WENBURGYAN-PC0 /D/pro/test/SummaryForLearning (master)
 $ git merge origin/master
 Updating 50c177b..1d04963
@@ -179,51 +179,51 @@ Fast-forward
  1 file changed, 130 insertions(+)
  create mode 100644 learning_record.md
 
-##git fetch merge ºÍgit pull
+##git fetch merge å’Œgit pull
 http://www.oschina.net/translate/git-fetch-and-merge
 
-##gitĞ¡½á
-²Ö¿â½¨Á¢£¬±¾µØ¿â£¬Ô¶³Ì¿â¹ØÁª£¬push£¬fetch&merge£¬pull
-·ÖÖ§branch ·ÖÖ§merge push pull »Ø¹ö pullrequest
+##gitå°ç»“
+ä»“åº“å»ºç«‹ï¼Œæœ¬åœ°åº“ï¼Œè¿œç¨‹åº“å…³è”ï¼Œpushï¼Œfetch&mergeï¼Œpull
+åˆ†æ”¯branch åˆ†æ”¯merge push pull å›æ»š pullrequest
 
 ##android permission & uses permission
 http://blog.csdn.net/lilu_leo/article/details/6940941
 
-##svnÖĞÎÄÂÒÂë 
-×¢ÒâÒªÊ¹ÓÃsvn×Ô´øµÄdiff¹¤¾ß£¬·ñÔòÂÒÂë
+##svnä¸­æ–‡ä¹±ç  
+æ³¨æ„è¦ä½¿ç”¨svnè‡ªå¸¦çš„diffå·¥å…·ï¼Œå¦åˆ™ä¹±ç 
 
-##ÀûÓÃadbÖ±½Ó°²×°³ÌĞò
+##åˆ©ç”¨adbç›´æ¥å®‰è£…ç¨‹åº
 
-##ActivityµÄÉúÃüÖÜÆÚºÍÆô¶¯Ä£Ê½
-newtask·½Ê½ºÍsingleinstanceÆô¶¯µÄ»°£¬startactivityforresult»áÖ±½Ó·µ»Ø£¬ÔÚonactivityresultÖĞ¡£
+##Activityçš„ç”Ÿå‘½å‘¨æœŸå’Œå¯åŠ¨æ¨¡å¼
+newtaskæ–¹å¼å’Œsingleinstanceå¯åŠ¨çš„è¯ï¼Œstartactivityforresultä¼šç›´æ¥è¿”å›ï¼Œåœ¨onactivityresultä¸­ã€‚
 
-#eclipse iniÅäÖÃÎÄ¼ş
-³õÊ¼»¯¶Ñ´óĞ¡ºÍ×î´ó¶Ñ´óĞ¡ÉèÖÃ
-³õÊ¼»¯Ì«´ó¿ÉÄÜÎŞ·¨Æô¶¯
+#eclipse inié…ç½®æ–‡ä»¶
+åˆå§‹åŒ–å †å¤§å°å’Œæœ€å¤§å †å¤§å°è®¾ç½®
+åˆå§‹åŒ–å¤ªå¤§å¯èƒ½æ— æ³•å¯åŠ¨
 
 ##svn delete
 
-##¿ìËÙÆô¶¯cmd´°¿Ú
-1. ÔÚwin7ÏÂ£¬Ò»°ã´ó¼Ò´ò¿ªÃüÁîÌáÊ¾·ûÊÇ²»ÊÇÏ°¹ßÁË¡°win+r¡±
-2. ÔÚ×ÀÃæÉÏÏÈ°´×¡shift¼ü£¬È»ºóÓÒ¼ü£¬»á³öÏÖÒ»¸öÑ¡Ïî¡°ÔÚ´Ë´¦´ò¿ªÃüÁî´°¿Ú¡±ÔÚÆäËûÅÌÀï
+##å¿«é€Ÿå¯åŠ¨cmdçª—å£
+1. åœ¨win7ä¸‹ï¼Œä¸€èˆ¬å¤§å®¶æ‰“å¼€å‘½ä»¤æç¤ºç¬¦æ˜¯ä¸æ˜¯ä¹ æƒ¯äº†â€œwin+râ€
+2. åœ¨æ¡Œé¢ä¸Šå…ˆæŒ‰ä½shifté”®ï¼Œç„¶åå³é”®ï¼Œä¼šå‡ºç°ä¸€ä¸ªé€‰é¡¹â€œåœ¨æ­¤å¤„æ‰“å¼€å‘½ä»¤çª—å£â€åœ¨å…¶ä»–ç›˜é‡Œ
 
-##¹Ø¼ü´Ê
-¶¯Ì¬¼ÓÔØ
-·´Éä
-²å¼ş
-ÏûÏ¢Í¨ĞÅ
-»º´æ
-ÈíÒıÓÃ
-Î»Í¼´¦Àí
-·´×¢²á
+##å…³é”®è¯
+åŠ¨æ€åŠ è½½
+åå°„
+æ’ä»¶
+æ¶ˆæ¯é€šä¿¡
+ç¼“å­˜
+è½¯å¼•ç”¨
+ä½å›¾å¤„ç†
+åæ³¨å†Œ
 
-Ç¿ÈõÒıÓÃ
-webviewÂ©¶´
-activityÆô¶¯Ä£Ê½launch mode
+å¼ºå¼±å¼•ç”¨
+webviewæ¼æ´
+activityå¯åŠ¨æ¨¡å¼launch mode
 
 
 
-##webview¼ÓÔØswf
+##webviewåŠ è½½swf
 String url ="file:///android_asset/hoge.swf";
 
 WebView wv=(WebView) findViewById(R.id.WebView01);
@@ -235,22 +235,22 @@ wv.loadUrl(url);
 
 ##markdown nodeppt
 
-##intentµÄbundle
+##intentçš„bundle
 data.getExtras().toString()
-×¢Òâ£¬ÕâÀïÃæµÄbundleµÄmap£¬ÔÚ¶ÁĞ´µÄÊ±ºò»á´¥·¢Ò»´ÎĞòÁĞ»¯Êı¾İÌî³äµÄ¹ı³Ì£¬Òò´ËÔÚonActivityResultµÄdataÀïÃæ£¬µ÷ÊÔµÄÊ±ºò¿ÉÄÜ·¢ÏÖÀïÃæbundleµÄmapÊÇ¿ÕµÄ£¬ÔÚµ÷ÓÃhasExtra»ògetStringExtraµÄÊ±ºòÈ·¿ÉÒÔµÃµ½Êı¾İ£¬Ïàµ±ÓÚÊ×´Îµ÷ÓÃ³ö·¢mapµÄÌî³ä¹ı³Ì¡£
+æ³¨æ„ï¼Œè¿™é‡Œé¢çš„bundleçš„mapï¼Œåœ¨è¯»å†™çš„æ—¶å€™ä¼šè§¦å‘ä¸€æ¬¡åºåˆ—åŒ–æ•°æ®å¡«å……çš„è¿‡ç¨‹ï¼Œå› æ­¤åœ¨onActivityResultçš„dataé‡Œé¢ï¼Œè°ƒè¯•çš„æ—¶å€™å¯èƒ½å‘ç°é‡Œé¢bundleçš„mapæ˜¯ç©ºçš„ï¼Œåœ¨è°ƒç”¨hasExtraæˆ–getStringExtraçš„æ—¶å€™ç¡®å¯ä»¥å¾—åˆ°æ•°æ®ï¼Œç›¸å½“äºé¦–æ¬¡è°ƒç”¨å‡ºå‘mapçš„å¡«å……è¿‡ç¨‹ã€‚
 
-## edittextÊµÏÖ¶àĞĞ×Ô¶¯»»ĞĞ
+## edittextå®ç°å¤šè¡Œè‡ªåŠ¨æ¢è¡Œ
 ```xml
 <EditText
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@null"
     android:gravity="left|top"
-    android:hint="ÊäÈë±¸×¢ĞÅÏ¢"
+    android:hint="è¾“å…¥å¤‡æ³¨ä¿¡æ¯"
     android:inputType="textMultiLine"
     android:singleLine="false"
     android:maxLength="200"
-    android:maxLines="5" //×î¶à¿É¼ûĞĞÊı
+    android:maxLines="5" //æœ€å¤šå¯è§è¡Œæ•°
     android:scrollHorizontally="false"
     android:textSize="15sp" />
 ```

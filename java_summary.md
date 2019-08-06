@@ -1,3 +1,37 @@
+<!-- TOC -->
+
+- [Java知识手册](#java知识手册)
+    - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
+    - [多态](#多态)
+    - [java静态方法能否覆盖来实现多态](#java静态方法能否覆盖来实现多态)
+    - [java重写注意事项(返回值与重载无关，但是重写要注意)](#java重写注意事项返回值与重载无关但是重写要注意)
+    - [java静态变量初始化以及静态代码块执行](#java静态变量初始化以及静态代码块执行)
+    - [java中构造函数调用和自身变量赋值顺序](#java中构造函数调用和自身变量赋值顺序)
+    - [接口和抽象类](#接口和抽象类)
+    - [transient变量不可序列化](#transient变量不可序列化)
+    - [序列化和克隆是标志接口](#序列化和克隆是标志接口)
+    - [java线程使用](#java线程使用)
+    - [thread.join](#threadjoin)
+    - [java 文件操作](#java-文件操作)
+    - [java threadlocal](#java-threadlocal)
+    - [Arrays.sort](#arrayssort)
+    - [Collections.sort](#collectionssort)
+    - [一些标志接口](#一些标志接口)
+    - [Arraylist的clone是shallow copy](#arraylist的clone是shallow-copy)
+    - [iterator和listiterator](#iterator和listiterator)
+    - [identityhashmap](#identityhashmap)
+    - [collection之前的各种容器](#collection之前的各种容器)
+    - [容器和集合是如何扩容的](#容器和集合是如何扩容的)
+    - [Properties](#properties)
+    - [BitSet](#bitset)
+    - [集合遍历和排序](#集合遍历和排序)
+    - [Collection&Map相关接口、抽象类、实现类](#collectionmap相关接口抽象类实现类)
+        - [接口](#接口)
+        - [抽象类](#抽象类)
+        - [实现类](#实现类)
+    - [深入研究技术点](#深入研究技术点)
+
+<!-- /TOC -->
 # Java知识手册
 
 ## String、StringBuilder、StringBuffer
@@ -129,20 +163,27 @@ Clonable Serializable等接口
 http://blog.csdn.net/stoneok07/article/details/7262676
 
 ## collection之前的各种容器
-vector实现一个动态的数组，和Arraylist类似，不同之处在于vector是线程安全的，方法都是同步的，synchronized；其次vector有很多旧方法legacy methods，而这些旧接口不属于collections framework(arraylist是集合框架下的一个具体实类)。
+java2提出JCF-集合框架(java collection framework)，查看源码会看到Collection和Map接口是在1.2之后加入的。那么由他们引申来的XXList、XXMap在1.2之前是没有的。
 
-stack是vector的子类，一个后进先出的vector，只提供一个默认构造函数，除了vector的方法外，添加了一些特有方法，pop、push、peek等。
-peek是查看栈顶元素但不弹出，pop则是返回栈顶元素，并弹出。
+1.0中相关的集合或者列表功能的类(即对数据结构中的线性表、栈、树、图、哈希表等的一些实现或者基础支持)
 
-Dictionary是一个抽象类，类似于map接口的功能。过时的。
+    Vector
+    Stack
+    HashTable->Dictionary
+
+1. Vector实现一个动态的数组，和Arraylist类似，不同之处在于vector是线程安全的，方法都是同步的，synchronized；其次vector有很多旧方法legacy methods，而这些旧接口不属于collections framework(arraylist是集合框架下的一个具体实类)。
+
+2. Stack是vector的子类，一个后进先出的vector，只提供一个默认构造函数，除了vector的方法外，添加了一些特有方法，pop、push、peek等。peek是查看栈顶元素但不弹出，pop则是返回栈顶元素，并弹出。
+
+3. Dictionary是一个抽象类，类似于map接口的功能。目前被标记为过时的。
 
     The Dictionary class is obsolete. You should implement the Map interface to obtain key/value storage functionality.
 
-hashtable是Dictionary的具体实现类，早期java.util的一部分。java2提出集合框架后，进行整合，源码可以看到它继承dictionary并实现map接口。
+4. Hashtable是Dictionary的具体实现类，早期java.util的一部分。java2提出集合框架后，进行整合，1.2源码可以看到它继承Dictionary并实现了map接口。
 
     Hashtable was part of the original java.util and is a concrete implementation of a Dictionary.
 
-有时候接口或者抽象类去实现或者继承，不一定真的需要进行关联，而是为了进行概念和逻辑上的一个统一，比如后期的延伸需要与前期版本进行兼容，实际上两者可能并不需要继承或实现关系。
+总结：有时候接口或者抽象类去实现或者继承，不一定真的需要进行关联，而是为了进行概念和逻辑上的一个统一，比如后期的延伸需要与前期版本进行兼容，实际上两者可能并不需要继承或实现关系。
 
     However, Java 2 re-engineered Hashtable so that it also implements the Map interface. Thus, Hashtable is now integrated into the collections framework. It is similar to HashMap, but is synchronized.
 
@@ -151,64 +192,72 @@ hashtable是Dictionary的具体实现类，早期java.util的一部分。java2�
 
 ## 容器和集合是如何扩容的
 
-hashtable会有一个装载因子，比如容量达到一定界限(比例)会进行扩容，map类型也是如此；
+1. hashtable会有一个装载因子，比如容量达到一定界限(比例)会进行扩容，map类型也是如此；
 
-vector有一个增加值，满了之后重新申请空间，原空间加上增加值是新的空间的大小(增加值不为0的情况下，直接变为原来的两倍)，得到的新值再和实际所需空间比较，还不够，则用实际所需空间作为新的空间大小去申请。会和一个max比较，是否oom。
+2. vector有一个增加值，满了之后重新申请空间，原空间加上增加值是新的空间的大小(增加值不为0的情况下，直接变为原来的两倍)，得到的新值再和实际所需空间比较，还不够，则用实际所需空间作为新的空间大小去申请。会和一个max比较，是否oom。
 
-对于collection集合实现类比如arraylist，则是默认加上自身空间的一半，也就是1.5倍扩容，不够的话使用实际所需空间去申请。会和一个max比较，是否oom。
+3. 对于collection集合实现类比如arraylist，则是默认加上自身空间的一半，也就是1.5倍扩容，不够的话使用实际所需空间去申请。会和一个max比较，是否oom。
 
 
+## Properties
 Properties是hashtable的一个子类，额外添加一些方法，比如从文件读取以及写入文件。
 
     Properties is a subclass of Hashtable. It is used to maintain lists of values in which the key is a String and the value is also a String.
 
-BitSet
-位运算对应集合运算，and or xor  求交 求和 求两个差集的和。
+## BitSet
+BitSet的提出since1.0,后来进行了重新设计。
+位运算对应集合运算，and、or、xor ->  求交、求和、求两个差集的和。
 
     This is a legacy class but it has been completely re-engineered in Java 2, version 1.4.
 
-## collection的操作方法collections
-各种静态方法---
-遍历集合 iterator
-集合排序 comparator
+## 集合遍历和排序
 
-    Iterator enables you to cycle through a collection, obtaining or removing elements. ListIterator extends Iterator to allow bidirectional traversal of a list and the modification of elements.注意后者还能遍历的时候去修改集合元素。
+1. 遍历集合 iterator
+2. 集合排序 comparator
 
-## collection 逻辑关系图
+    Iterator enables you to cycle through a collection, obtaining or removing elements. ListIterator extends Iterator to allow bidirectional traversal of a list and the modification of elements.注意后者还能双向遍历，并且可以修改集合元素。
+
+## Collection&Map相关接口、抽象类、实现类
+
+### 接口
 ```
-##接口
-collection 
-	list 有序的collection
-	set  不重复的collection
-		sortedset有序的set
-Map(unique keys to values)[ map.entry]
-	sortedmap（keys 升序的map）
+1. collection 
+	list //有序的collection
+	set  //不重复的collection
+		sortedset//有序的set
+2. Map //(unique keys to values)[ map.entry]
+	sortedmap//keys 升序的map
 
-Enumeration 遗留接口，提供方法遍历集合元素，被iterator取代。
+3. Iterator //遍历Collection。注意Map本身不提供Iterator遍历，但是可以获取集合视图进而使用Iterator
+```
+`早期使用Enumeration对Vector、Hashtable进行遍历，1.2之后被Iterator取代`
 
-##抽象类
+### 抽象类
+```java
 AbstractCollection  实现大多数的collection接口方法
 	AbstractList 继承自abstractcollection并实现多数List接口
 		AbstractSequentialList 继承自abstractlist提供顺序访问而非随机访问
 	AbstractSet 继承自AbstractCollection  并实现多数set接口
 AbstractMap 实现多数map接口
-
+```
+### 实现类
+```
 linkedlist是AbstractSequentialList 的实现类，抽象类的实现类。
 
 Arraylist 是 AbstractList.的实现类(Implements a dynamic array by extending AbstractList.)
 
 HashSet是AbstractSet 的实现类，使用的hashmap，组合。
-	linkedhashset 有序的hashset，插入顺序。
+	linkedhashset是有序的hashset，插入顺序。
 TreeSet 是 AbstractSet 的实现类，使用树结构存储。
 
 HashMap是AbstractMap的实现类，使用哈希存储。
-	linkedhashmap，保持插入顺序。
+	linkedhashmap，保持插入顺序的HashMap子类。
 
-treemap是AbstractMap实现类，使用树存储。
+Treemap是AbstractMap实现类，使用树存储(java中使用的是红黑树)
 
 IdentityHashMap 是AbstractMap实现类，不同于hashmap的是判等方式，使用引用值是否相等进行判断。
-
 ```
+
 
 ## 深入研究技术点
 1. 源码中sort实现，双基准快排、tim-sort等
