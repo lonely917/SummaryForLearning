@@ -1,7 +1,9 @@
 ## View绘制
 
 ## Paint
+
 ## Canvas
+
 ## Path
 
 ## drawColor
@@ -123,6 +125,7 @@ protected void onDraw(Canvas canvas) {
         canvas.drawRoundRect(left, top, right, bottom, 30, 30, paint);
     }
 }
+```
 
 ## drawArc
 画弧形和扇形
@@ -181,6 +184,13 @@ protected void onDraw(Canvas canvas) {
 
 ## android中像素、英寸、dpi、dip、DisplayMetrics
 
+```java
+public static float dpToPixel(float dp) {
+    DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+    return dp * metrics.density;
+}
+```
+
 ## android中字体大小的含义
 
 ## string.xml使用格式化参数
@@ -209,6 +219,9 @@ protected void onDraw(Canvas canvas) {
 
 ## 触摸反馈
 
+## ViewStub
+
+## 扩展
 1. 触摸按下
 2. listview item按下后viewgroup滑动的实现
 3. listview item长摁拖动排序的实现
