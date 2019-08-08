@@ -31,6 +31,7 @@
         - [实现类](#实现类)
     - [List各种遍历方式效率比较](#list各种遍历方式效率比较)
     - [HashMap和HashTable的扩容](#hashmap和hashtable的扩容)
+    - [Map小结](#map小结)
     - [JCF & Arrays](#jcf--arrays)
     - [内存泄漏场景](#内存泄漏场景)
     - [内部类、静态内部类、匿名类、静态匿名类对象](#内部类静态内部类匿名类静态匿名类对象)
@@ -272,6 +273,25 @@ foreach支持的实现机理
 ## HashMap和HashTable的扩容
 
 注意HashMap的key到index的映射方法是假定长度为2的x次幂的情况下，所以默认的初始长度是一个2的次方项(16),而且每次的扩容是double，指定初始容量的构造函数中实际会对这个初始值进行处理，得到一个近似的2的次方项。对比地，HashTable没有这种限制，默认初始长度11，扩容利用2*x+1进行计算。扩容会对已有内容进行重新计算，所以扩容实际上是一个比较耗时的操作，于是合适的初始化长度就比较重要，在内存消耗和扩容时间消耗之间进行折衷处理。
+
+## Map小结
+
+Java为数据结构中的映射(字典)定义了一个接口java.util.Map;它有四个实现类,分别是HashMap、Hashtable、LinkedHashMap和TreeMap。HashTable在java1.0中就出现，继承Dictionary抽象类，java1.2提出集合框架后进行了整合，实现Map接口。
+
+Map主要用于存储健值对，根据键得到值，因此不允许键重复(重复即覆盖已有键值),但允许值重复(不同的key可以有相同的value，很好理解)。
+
+Hashmap 是一个最常用的Map接口实现类,用于存储很多的键值对儿，它根据键的hashcode相关值进行key的位置定位,因此根据键key可以直接获取键值对儿位置并获取对应的value，具有O(1)访问速度，遍历时，取得数据的顺序是完全随机的,不一定是插入键值对儿的顺序。 HashMap最多只允许一条记录的键为Null;允许多条记录的值为 Null;前面两句比较绕口，就是说hashmap允许空值的出现，key不能重复，自然只能有一个空值，而value本身可能重复，自然可能有多条记录头未null。
+
+HashMap不支持线程的同步，即任一时刻可以有多个线程同时写HashMap，但可能会导致数据的不一致。如果需要同步，可以用 Collections的synchronizedMap方法使HashMap具有同步的能力，或者使用`ConcurrentHashMap`。
+
+Hashtable与 HashMap类似,它继承自Dictionary抽象类，1.2之后也实现了Map接口。与HashMap不同点:它不允许记录的键或者值为空;它支持线程的同步，即任一时刻只会有一个线程能写Hashtable,因此也导致了Hashtable在写入时会比较慢。
+
+LinkedHashMap 是HashMap的一个子类，保存了记录的插入顺序，在用Iterator遍历LinkedHashMap时，先得到的记录肯定是先插入的。在遍历的时候会比HashMap慢，不过有种情况例外，当HashMap容量很大，实际数据较少时，遍历起来可能会比 LinkedHashMap慢，因为`LinkedHashMap的遍历速度只和实际数据有关，和容量无关`，而HashMap的遍历速度和他的容量有关。注意实现机理。
+
+TreeMap实现SortedMap接口，能够把它保存的记录根据键排序,默认是按键值的升序排序，也可以指定排序的比较器，当用Iterator 遍历TreeMap时，得到的记录是排过序的。
+
+一般情况下，我们用的最多的是HashMap,在Map中插入、删除和定位元素，HashMap 是最好的选择。但如果您要按自然顺序或自定义顺序遍历键，那么TreeMap会更好。如果需要输出的顺序和输入的相同,那么用LinkedHashMap 可以实现,它还可以按读取顺序来排列.
+
 
 ## JCF & Arrays
 
