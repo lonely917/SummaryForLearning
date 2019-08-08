@@ -1,12 +1,14 @@
 ## View绘制
 
-## Paint
+### Paint
 
-## Canvas
+### Canvas
 
-## Path
+### Path
 
-## drawColor
+## Canvas的drawXX系列
+
+### drawColor
 绘制一个纯色画布
 ```java
 protected void onDraw(Canvas canvas) {
@@ -14,7 +16,7 @@ protected void onDraw(Canvas canvas) {
     canvas.drawColor(Color.YELLOW);
 }
 ```
-## drawCircle
+### drawCircle
 绘制一个实心圆和一个空心圆
 ```java
 protected void onDraw(Canvas canvas) {
@@ -32,7 +34,7 @@ protected void onDraw(Canvas canvas) {
     canvas.drawCircle(300,300,80, paint);
 }
 ```
-## drawRect
+### drawRect
 绘制一个居中的实心矩形
 ```java
 protected void onDraw(Canvas canvas) {
@@ -50,7 +52,7 @@ protected void onDraw(Canvas canvas) {
 }
 ```
 
-## drawPoint
+### drawPoint
 绘制一个方形和一个圆形的点
 ```java
 protected void onDraw(Canvas canvas) {
@@ -68,7 +70,7 @@ protected void onDraw(Canvas canvas) {
 }
 ```
 
-## drawOval
+### drawOval
 绘制椭圆
 
 ```java
@@ -86,7 +88,7 @@ protected void onDraw(Canvas canvas) {
     }
 }
 ```
-## drawLine/drawLines
+### drawLine/drawLines
 drawlines绘制一系列点，不是按顺序将所有点连接起来，是一对儿点确定一条线，依次绘制各条线。
 
 ```java
@@ -102,7 +104,7 @@ protected void onDraw(Canvas canvas) {
 }
 ```
 
-## drawRoundRect
+### drawRoundRect
 native_drawRoundRect的实现?圆角实现原理，radius_x和radius_y如何作用?
 
 ```java
@@ -127,7 +129,7 @@ protected void onDraw(Canvas canvas) {
 }
 ```
 
-## drawArc
+### drawArc
 画弧形和扇形
 ```java
 protected void onDraw(Canvas canvas) {
@@ -156,7 +158,7 @@ protected void onDraw(Canvas canvas) {
 
 ```
 
-## drawPath
+### drawPath
 画心形
 1. path有addXX以及XXto的方法。
 2. addXX添加封闭图形(除了addArc比较特殊，style为stoke的时候是一个弧线)
@@ -179,8 +181,92 @@ protected void onDraw(Canvas canvas) {
 
 ```
 
-## drawText & drawBitmap
+### drawText & drawBitmap
 
+
+## View绘制顺序
+
+view的绘制逻辑在draw(Canvas canvas)方法中
+
+```java
+
+/*
+    * Draw traversal performs several drawing steps which must be executed
+    * in the appropriate order:
+    *
+    *      1. Draw the background
+    *      2. If necessary, save the canvas' layers to prepare for fading
+    *      3. Draw view's content
+    *      4. Draw children
+    *      5. If necessary, draw the fading edges and restore layers
+    *      6. Draw decorations (scrollbars for instance)
+    */
+
+```
+其中1、3、4、6是主要环节，2、5根据需要决定是否执行
+1. 首先绘制背景 //drawBackground(canvas) private方法不能重写
+2. canvas保存准备进行fading的实现 // if necessary
+3. 绘制自身内容 //onDraw(canvas)
+4. 绘制内部的子项  //dispatchDraw(canvas)
+5. fading实现以及canvas的恢复 // if necessary 对应2
+6. 绘制点缀，一些点缀比如前景、蒙版、滚动条 //onDrawForeground(canvas)
+
+当然draw方法也可以重写，自定义，可以在super后添加一些特效，完全重写draw方法比较复杂了，因为这个逻辑框架是既定设计好的，最好只在内部一些流程上进行重写。
+
+## setWillNotDraw-是否执行完整绘制流程
+
+```java
+/**
+* If this view doesn't do any drawing on its own, set this flag to
+* allow further optimizations. By default, this flag is not set on
+* View, but could be set on some View subclasses such as ViewGroup.
+*
+* Typically, if you override {@link #onDraw(android.graphics.Canvas)}
+* you should clear this flag.
+*
+* @param willNotDraw whether or not this View draw on its own
+*/
+public void setWillNotDraw(boolean willNotDraw) {
+    setFlags(willNotDraw ? WILL_NOT_DRAW : 0, DRAW_MASK);
+}
+```
+## onDraw重绘优化
+`下述文字取自hencoder系列[https://hencoder.com/ui-1-5/]:`
+有的时候，一段绘制代码写在不同的绘制方法中效果是一样的，这时你可以选一个自己喜欢或者习惯的绘制方法来重写。但有一个例外：如果绘制代码既可以写在 onDraw() 里，也可以写在其他绘制方法里，那么优先写在 onDraw() ，因为 Android 有相关的优化，可以在不需要重绘的时候自动跳过  onDraw() 的重复执行，以提升开发效率。享受这种优化的只有 onDraw() 一个方法。
+
+## view的forground属性
+6.0之后添加的属性，方便地实现蒙版效果。对应执行过程在onDrawForeground中触发。
+
+## 如何查看某一个控件的所有属性
+
+比如查看View的所有属性，去系统资源文件"data/res/values/attrs.xml".
+
+View构造函数中有如下：
+```java
+final TypedArray a = context.obtainStyledAttributes(
+        attrs, com.android.internal.R.styleable.View, defStyleAttr, defStyleRes);
+```
+com.android.internal.R.styleable.View对应attrs.xml中的如下内容段
+
+```xml
+<declare-styleable name="View">
+    <attr name="id" format="reference" />
+    <attr name="tag" format="string" />
+    ....
+    
+    <!-- Defines the drawable to draw over the content. This can be used as an overlay.
+        The foreground drawable participates in the padding of the content if the gravity
+        is set to fill. -->
+    <attr name="foreground" format="reference|color" />
+    ...
+</declare-styleable>
+```
+## 属性动画
+
+1. ViewPropertyAnimator(只对view的一些属性进行变换，有局限性)
+2. ObjectAnimator(可以是任意的属性，需要设置gettter/setter其中setter添加invalidate操作，根据需要结合setEvaluator进行数值的转换)
+3. PropertyValuesHolder配合ObjectAnimator进行多属性配置
+4. AnimatorSet对ObjectAnimator进行组合和编排。
 
 ## android中像素、英寸、dpi、dip、DisplayMetrics
 
@@ -204,12 +290,6 @@ public static float dpToPixel(float dp) {
 ## 控件源码
 
 ## 布局源码
-
-## setWillNotDraw
-
-## onDraw重绘优化
-
-## 6.0之后view的forground设置
 
 ## centerInside和centerCrop等模式
 
