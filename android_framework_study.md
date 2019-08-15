@@ -126,6 +126,7 @@
 - [资源加载过程](#资源加载过程)
 - [AMS Activity管理](#ams-activity管理)
     - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
+    - [dumps activity](#dumps-activity)
     - [Activity 启动模式](#activity-启动模式)
     - [资料](#资料)
 - [WMS window窗口管理](#wms-window窗口管理)
@@ -2688,11 +2689,25 @@ Toast窗口级别问题，代码版本演进问题。
 ## AMS Activity管理
 ### ActivityRecord/TaskRecord/ActivityStack
 
-    ActivityRecord/TaskRecord/ActivityStack
+    ActivityRecord/TaskRecord/ActivityStack/ActivityStackSupervisor.ActivityDisplay/ActivityStackSupervisor
     ProcessRecord
     PendingIntentRecord
 
-dumpsys activity可以进行辅助分析
+1. ActivityStackSupervisor对应一个mActivityDisplays列表，是其内部类ActivityDisplay对象的一个列表，对应不同id的显示屏，一般情况下只有一个。
+
+2. ActivityDisplay有一个mStacks列表，是ActivityStack对象的一个列表，一般会有一个桌面相关的Stack，launcher、systemui.recent等应用对应的taskrecord会放在里面；如果有启动的其他用户应用，会有一个Stack存放这些应用对应的taskrecord。也就是一个homestack一个appstack。
+
+3. ActivityStack内部含有一个TaskRecord列表，描述属于该stack的一系列应用集合。
+
+4. TaskRecord内部含有一个ActivityRecord列表，描述该应用下相关的activity列表。
+
+5. ActivityRecord对应描述一个Activity的情况。含有ProcessRecord描述所属进程。
+
+### dumps activity
+1. adb shell dumpsys activity(系统activity相关完整dump信息，2、3、4只是其中一部分)
+2. dumpsys activity recents(列出recent app,是一个TaskRecord的列表)
+3. dumpsys activity activities(列出Display-ActivityStack列表-TaskRecord列表-ActivityRecord列表-ActivityRecord详情，以及当前活动情况)
+4. dumpsys activity processes(进程相关信息)
 
 ### Activity 启动模式
 

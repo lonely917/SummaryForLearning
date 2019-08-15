@@ -1,4 +1,44 @@
-## View绘制
+<!-- TOC -->
+
+- [View绘制关键类](#view绘制关键类)
+    - [Paint](#paint)
+    - [Canvas](#canvas)
+    - [Path](#path)
+- [Canvas的drawXX系列](#canvas的drawxx系列)
+    - [drawColor](#drawcolor)
+    - [drawCircle](#drawcircle)
+    - [drawRect](#drawrect)
+    - [drawPoint](#drawpoint)
+    - [drawOval](#drawoval)
+    - [drawLine/drawLines](#drawlinedrawlines)
+    - [drawRoundRect](#drawroundrect)
+    - [drawArc](#drawarc)
+    - [drawPath](#drawpath)
+    - [drawText & drawBitmap](#drawtext--drawbitmap)
+- [View绘制的一些辅助](#view绘制的一些辅助)
+    - [shader使用](#shader使用)
+    - [canvas变换](#canvas变换)
+- [View绘制顺序](#view绘制顺序)
+    - [draw绘制逻辑](#draw绘制逻辑)
+    - [setWillNotDraw-是否执行完整绘制流程](#setwillnotdraw-是否执行完整绘制流程)
+    - [onDraw重绘优化](#ondraw重绘优化)
+    - [view的forground属性](#view的forground属性)
+- [如何查看某一个控件的所有属性](#如何查看某一个控件的所有属性)
+- [属性动画](#属性动画)
+- [android中像素、英寸、dpi、dip、DisplayMetrics](#android中像素英寸dpidipdisplaymetrics)
+- [android中字体大小的含义](#android中字体大小的含义)
+- [string.xml使用格式化参数](#stringxml使用格式化参数)
+- [控件源码](#控件源码)
+- [布局源码](#布局源码)
+- [centerInside和centerCrop等模式](#centerinside和centercrop等模式)
+- [傻瓜式修正尺寸-resolveSize](#傻瓜式修正尺寸-resolvesize)
+- [onAttachedToWindow](#onattachedtowindow)
+- [触摸反馈](#触摸反馈)
+- [ViewStub](#viewstub)
+- [扩展](#扩展)
+
+<!-- /TOC -->
+## View绘制关键类
 
 ### Paint
 
@@ -183,9 +223,15 @@ protected void onDraw(Canvas canvas) {
 
 ### drawText & drawBitmap
 
+## View绘制的一些辅助
+
+### shader使用
+
+### canvas变换
 
 ## View绘制顺序
 
+### draw绘制逻辑
 view的绘制逻辑在draw(Canvas canvas)方法中
 
 ```java
@@ -213,7 +259,7 @@ view的绘制逻辑在draw(Canvas canvas)方法中
 
 当然draw方法也可以重写，自定义，可以在super后添加一些特效，完全重写draw方法比较复杂了，因为这个逻辑框架是既定设计好的，最好只在内部一些流程上进行重写。
 
-## setWillNotDraw-是否执行完整绘制流程
+### setWillNotDraw-是否执行完整绘制流程
 
 ```java
 /**
@@ -230,11 +276,11 @@ public void setWillNotDraw(boolean willNotDraw) {
     setFlags(willNotDraw ? WILL_NOT_DRAW : 0, DRAW_MASK);
 }
 ```
-## onDraw重绘优化
+### onDraw重绘优化
 `下述文字取自hencoder系列[https://hencoder.com/ui-1-5/]:`
 有的时候，一段绘制代码写在不同的绘制方法中效果是一样的，这时你可以选一个自己喜欢或者习惯的绘制方法来重写。但有一个例外：如果绘制代码既可以写在 onDraw() 里，也可以写在其他绘制方法里，那么优先写在 onDraw() ，因为 Android 有相关的优化，可以在不需要重绘的时候自动跳过  onDraw() 的重复执行，以提升开发效率。享受这种优化的只有 onDraw() 一个方法。
 
-## view的forground属性
+### view的forground属性
 6.0之后添加的属性，方便地实现蒙版效果。对应执行过程在onDrawForeground中触发。
 
 ## 如何查看某一个控件的所有属性
