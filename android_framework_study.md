@@ -127,10 +127,13 @@
 - [AMS Activity管理](#ams-activity管理)
     - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
     - [dumps activity](#dumps-activity)
-    - [Activity 启动模式](#activity-启动模式)
+    - [Activity launch mode](#activity-launch-mode)
+    - [Activity Intent Flag](#activity-intent-flag)
     - [资料](#资料)
 - [WMS window窗口管理](#wms-window窗口管理)
     - [WindowToken /WindowState /WindowManagerPolicy](#windowtoken-windowstate-windowmanagerpolicy)
+    - [Activity-AMS-Window-WMS](#activity-ams-window-wms)
+    - [好的资料](#好的资料)
 - [Intent](#intent)
 - [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
 - [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
@@ -1512,7 +1515,7 @@ Activity的一些成员:
 
 ViewRootImpl的一些成员:
 
-    mWindowSession - IWindowSession (进程对应的wms中session的代理对象，和wms中Session通信)
+    mWindowSession - IWindowSession (进程对应的wms中Session的代理对象，和wms中Session通信)
     mWindow - IWindow.Stub (ViewRootImpl.W)
 
 WindowState的一些成员:
@@ -1520,6 +1523,7 @@ WindowState的一些成员:
     mSession - Session(binder服务端)
     mClient - IWindow(ViewRootImpl.W的代理对象，对应着ViewRootImpl的W类型对象)
     mSurfaceSession - 和SF通信 //api-28没有找到这个成员
+    mToken - WindowToken(有个IBider类型成员变量token，是真正的token，其服务端是AMS中的ActivityRecord.Token extends IApplicationToken.Stub)
 
 Session的一些成员:
 
@@ -1580,6 +1584,11 @@ https://silencedut.github.io/2016/08/10/Android%E8%A7%86%E5%9B%BE%E6%A1%86%E6%9E
 
     ActivityThread.main
         Looper.loop()
+
+前景回顾：
+1. 进程中的binder线程会处理远程binder调用、可能是跨进程调用。
+2. binder线程通过主线程的handler向主线程发送消息。
+3. 主线程收到消息，处理队列中的消息，比如启动Activity。
 
 ### Activity生命周期开始
 
@@ -2695,7 +2704,7 @@ Toast窗口级别问题，代码版本演进问题。
 
 1. ActivityStackSupervisor对应一个mActivityDisplays列表，是其内部类ActivityDisplay对象的一个列表，对应不同id的显示屏，一般情况下只有一个。
 
-2. ActivityDisplay有一个mStacks列表，是ActivityStack对象的一个列表，一般会有一个桌面相关的Stack，launcher、systemui.recent等应用对应的taskrecord会放在里面；如果有启动的其他用户应用，会有一个Stack存放这些应用对应的taskrecord。也就是一个homestack一个appstack。
+2. ActivityDisplay有一个mStacks列表，是ActivityStack对象的一个列表(all of the stacks on the display)。一般会有一个桌面相关的Stack，launcher、systemui.recent等应用对应的taskrecord会放在里面；如果有启动的其他用户应用，会另有一个Stack存放这些应用分别对应的taskrecord。也就是说有一个homestack一个appstack。Android最早期的设计并不是这样，最初只是用一个mainStack保存所有的ActivityRecord(每个ActivityRecord会标志自身所属的TaskRecord)，而没有直接通过TaskRecord去组织。
 
 3. ActivityStack内部含有一个TaskRecord列表，描述属于该stack的一系列应用集合。
 
@@ -2703,46 +2712,60 @@ Toast窗口级别问题，代码版本演进问题。
 
 5. ActivityRecord对应描述一个Activity的情况。含有ProcessRecord描述所属进程。
 
+这里分析的不错`http://gityuan.com/2017/06/11/activity_record/`
 ### dumps activity
 1. adb shell dumpsys activity(系统activity相关完整dump信息，2、3、4只是其中一部分)
 2. dumpsys activity recents(列出recent app,是一个TaskRecord的列表)
 3. dumpsys activity activities(列出Display-ActivityStack列表-TaskRecord列表-ActivityRecord列表-ActivityRecord详情，以及当前活动情况)
 4. dumpsys activity processes(进程相关信息)
 
-### Activity 启动模式
+### Activity launch mode
+1. standard - 默认，每次启动一个新的Activity实例
+2. singleTop - 字面理解，TaskRecord任务栈顶部只能有一个实例，因此如果顶部有会复用(触发onNewIntent)，否则创建新的。
+3. singleTask - 字面理解，TaskRecord任务栈只能出现这个实例一次，因此有的话会复用，并移除其上方成员，否则创建新的。
+4. singleInstance - singleTask的加强版，任务栈只能有一个实例，可以理解为对应所述的任务栈size为1，只有一个activity实例。
+
+`思考下都对应什么样的应用场景`
+
+### Activity Intent Flag
+    //详细的介绍参考Intent.java中的注释，可以彼此组合产生不同的效果
+    
+    FLAG_ACTIVITY_SINGLE_TOP//类似singleTop启动模式
+    FLAG_ACTIVITY_NEW_TASK //启动一个新的任务栈 ，如果已有activity所属的任务栈，移到前台
+    FLAG_ACTIVITY_MULTIPLE_TASK //配合FLAG_ACTIVITY_NEW_TASK使用，不会检索是否已有task，直接创建新的
+    FLAG_ACTIVITY_CLEAR_TOP//会复用已有task中的activity，并移除它上面的实例，这里onNewIntent被调用或者是先finish载recreat，具体使用哪种场景看源码说明
+    FLAG_ACTIVITY_CLEAR_TASK//配合FLAG_ACTIVITY_NEW_TASK使用，是的如果已有对应任务栈，先清空对应任务栈再启动activity
+    FLAG_ACTIVITY_NO_HISTORY//Activity一旦退出，就不会存在于栈中。
+    FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS//Activity不会放入最近启动列表中
+
+
 
 ### 资料
 
     http://liuwangshu.cn/framework/ams/2-activitytask.html
     http://gityuan.com/2017/06/11/activity_record/
     http://gityuan.com/2016/05/14/dumpsys-command/
-```
-### Launch Mode
-Launch Mode都不会陌生，用于设定Activity的启动方式，无论是哪种启动方式，所启动的Activity都会位于Activity栈的栈顶。有以下四种：
 
-standerd：默认模式，每次启动Activity都会创建一个新的Activity实例。
-singleTop：如果要启动的Activity已经在栈顶，则不会重新创建Activity，同时该Activity的onNewIntent方法会被调用。如果要启动的Activity不在栈顶，则会重新创建该Activity的实例。
-singleTask：如果要启动的Activity已经存在于它想要归属的栈中，那么不会创建该Activity实例，将栈中位于该Activity上的所有的Activity出栈，同时该Activity的onNewIntent方法会被调用。如果要启动的Activity不存在于它想要归属的栈中，并且该栈存在，则会重新创建该Activity的实例。如果要启动的Activity想要归属的栈不存在，则首先要创建一个新栈，然后创建该Activity实例并压入到新栈中。
-singleInstance：和singleTask基本类似，不同的是启动Activity时，首先要创建在一个新栈，然后创建该Activity实例并压入新栈中，新栈中只会存在这一个Activity实例。
-
-### Intent的FLAG
-Intent中定义了很多了FLAG，其中有几个FLAG也可以设定Activity的启动方式，如果Launch Mode设定和FLAG设定的Activity的启动方式有冲突，则以FLAG设定的为准。
-
-FLAG_ACTIVITY_SINGLE_TOP：和Launch Mode中的singleTop效果是一样的。
-FLAG_ACTIVITY_NEW_TASK：和Launch Mode中的singleTask效果是一样的。
-FLAG_ACTIVITY_CLEAR_TOP：Launch Mode中没有与此对应的模式，如果要启动的Activity已经存在于栈中，则将所有位于它上面的Activity出栈。singleTask默认具有此标记位的效果。
-除了这三个FLAG，还有一些FLAG对我们分析栈管理有些帮助。
-
-FLAG_ACTIVITY_NO_HISTORY：Activity一旦退出，就不会存在于栈中。同样的，也可以在AndroidManifest.xml中设置“android:noHistory”。
-FLAG_ACTIVITY_MULTIPLE_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效果，系统会启动一个新的栈来容纳新启动的Activity.
-FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS：Activity不会被放入到“最近启动的Activity”列表中。
-FLAG_ACTIVITY_BROUGHT_TO_FRONT：这个标志位通常不是由应用程序中的代码设置的，而是Launch Mode为singleTask时，由系统自动加上的。
-FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY：这个标志位通常不是由应用程序中的代码设置的，而是从历史记录中启动的（长按Home键调出）。
-FLAG_ACTIVITY_CLEAR_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效果，用于清除与启动的Activity相关栈的所有其他Activity。
-
-```
 ## WMS window窗口管理
 ### WindowToken /WindowState /WindowManagerPolicy
+WindowState描述窗口状态，其中的binder代理类
+
+    mClient - IWindow类型,对应服务端是app中Viewrootimpl.W(extends  IWindow.Stub)
+    mToken - WindowToken类型
+    WindowToken对象有个IBider类型成员变量token，是真正的token，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
+
+WindowToken作为窗口令牌，将window和activity组件对应
+
+    token IBinder类型，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
+
+因此WMS通过WindowToken可以和AMS(SystemServer)进行交互，通过IWindow类型的client可以和APP界面ViewRootImpl交互。
+
+### Activity-AMS-Window-WMS
+
+
+### 好的资料
+1. http://gityuan.com/2017/04/16/activity-with-window/
+2. http://gityuan.com/2017/01/22/start-activity-wms/
 
 ## Intent
 
@@ -2751,6 +2774,7 @@ FLAG_ACTIVITY_CLEAR_TASK：需要和FLAG_ACTIVITY_NEW_TASK一同使用才有效�
 ## getWidth getMeasuredWidth getLayoutParams.witdth 比较
 
 注意三者获取时机、三者的含义/差异/单位、layout布局文件中的dp px加载的时候如何进行转化的
+
 
 ## Android 性能优化 
 
