@@ -283,6 +283,18 @@ cd 进入源码目录开始配置、编译
     
     /etc/init.d/iptables start
 
+CentOS7防火墙相关指令
+   
+    firewall-cmd --zone=public --add-port=8389/tcp --permanent #开放指定端口
+    firewall-cmd --reload #重启防火墙
+
+    firewall-cmd --state #查看默认防火墙状态（关闭后显示notrunning，开启后显示running）
+    systemctl stop firewalld.service #停止firewall
+    systemctl start firewalld.service #启动firewall
+    firewall-cmd --list-ports #查看已经开放的窗口
+    
+    systemctl disable firewalld.service #禁止firewall开机启动
+
 
 
 ## 总结
