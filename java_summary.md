@@ -85,10 +85,12 @@
     - [java interface](#java-interface)
     - [一些混淆场景](#一些混淆场景)
     - [关于一些规范的间接](#关于一些规范的间接)
+    - [fast-fail & happens before](#fast-fail--happens-before)
     - [readObject、readResolve以及序列化、不可变类](#readobjectreadresolve以及序列化不可变类)
     - [CountDownLatch-可变类但被限制状态空间](#countdownlatch-可变类但被限制状态空间)
     - [Android Handler与内存泄漏](#android-handler与内存泄漏)
     - [深入研究技术点](#深入研究技术点)
+    - [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
 
 <!-- /TOC -->
 # Java知识手册
@@ -718,7 +720,7 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.8.2
 
 `很多细节可能对我们的实际应用关系不大，我们掌握常用的概念即可进行编码工作，我们也应尽量避免易混淆场景，除非真的需要如此。另外我们应结合源码去验证、学习这些概念，去判定哪些知识点是常用的、实用的，而不是孤立地记住他们，更深一步我们可以去了解语言的这些规范是如何实现的，结合jvm的相关知识，最后我们如果能去思考语言设计通用性的一些理念，那就妙不可言了。`
 
-
+## fast-fail & happens before
 ## readObject、readResolve以及序列化、不可变类
 
 ## CountDownLatch-可变类但被限制状态空间
@@ -730,3 +732,30 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.8.2
 1. 源码中sort实现，双基准快排、tim-sort等
 2. 集合迭代器的实现，iterator和foreach比较
 3. java中树结构
+
+## Java知识图谱-wenburgyan
+1. 基本概念(基本数据类型、操作符)
+2. 面向对象(继承、封装、抽象、接口)
+3. JCF-集合类源码分析
+4. 设计模式(jdk源码实例)
+5. 泛型
+6. 序列化
+7. 注解
+8. 多线程、同步、并发、锁
+9. JMM-java memory model 内存模型、见JLS17.4详细讲解(重排序、happens-before)
+10. JVM相关(垃圾回收机制、类加载过程、内存结构)
+
+
+- 算法类
+- 数据结构类
+- 语言语法类
+- 面向对象相关
+- java内存模型&垃圾回收机制
+- java序列化
+- java反射
+- java线程相关
+- java并发编程
+- java网络相关
+- java源码探究
+- 设计模式相关
+- java8学习
