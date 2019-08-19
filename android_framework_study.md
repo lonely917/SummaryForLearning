@@ -81,7 +81,7 @@
     - [App进程启动后，主线程进入消息循环](#app进程启动后主线程进入消息循环)
     - [Activity生命周期开始](#activity生命周期开始)
     - [WindowManager.addView](#windowmanageraddview)
-    - [ViewRootImpl与WMS交互总结](#viewrootimpl与wms交互总结)
+    - [ViewRootImpl与WMS双向交互总结](#viewrootimpl与wms双向交互总结)
     - [一些类型](#一些类型)
 - [ViewRootImpl](#viewrootimpl)
     - [ViewRootImpl的setView分析](#viewrootimpl的setview分析)
@@ -90,6 +90,16 @@
     - [onMeasure 流程分析](#onmeasure-流程分析)
     - [onLayout 流程分析](#onlayout-流程分析)
     - [draw 流程分析](#draw-流程分析)
+- [AMS Activity管理](#ams-activity管理)
+    - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
+    - [dumps activity](#dumps-activity)
+    - [Activity launch mode](#activity-launch-mode)
+    - [Activity Intent Flag](#activity-intent-flag)
+    - [资料](#资料)
+- [WMS window窗口管理](#wms-window窗口管理)
+    - [WindowToken /WindowState /WindowManagerPolicy](#windowtoken-windowstate-windowmanagerpolicy)
+    - [Activity-AMS-Window-WMS](#activity-ams-window-wms)
+    - [好的资料](#好的资料)
 - [APP安装](#app安装)
     - [说明](#说明)
     - [应用程序安装器 PackageInstaller](#应用程序安装器-packageinstaller)
@@ -124,16 +134,6 @@
     - [补充说明:](#补充说明)
 - [Dialog 源码分析](#dialog-源码分析)
 - [资源加载过程](#资源加载过程)
-- [AMS Activity管理](#ams-activity管理)
-    - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
-    - [dumps activity](#dumps-activity)
-    - [Activity launch mode](#activity-launch-mode)
-    - [Activity Intent Flag](#activity-intent-flag)
-    - [资料](#资料)
-- [WMS window窗口管理](#wms-window窗口管理)
-    - [WindowToken /WindowState /WindowManagerPolicy](#windowtoken-windowstate-windowmanagerpolicy)
-    - [Activity-AMS-Window-WMS](#activity-ams-window-wms)
-    - [好的资料](#好的资料)
 - [Intent](#intent)
 - [PackageInfo & LoadedApk & Context中的base以及ContextImpl中的](#packageinfo--loadedapk--context中的base以及contextimpl中的)
 - [getWidth getMeasuredWidth getLayoutParams.witdth 比较](#getwidth-getmeasuredwidth-getlayoutparamswitdth-比较)
@@ -1503,38 +1503,44 @@ WMS中对窗口类型的定义，数值越大，显示的时候越靠前
 
 ## AMS WMS SystemServer一些知识点
 
-AMS负责四大组件以及进程管理,各种record和stack。
+AMS负责四大组件以及进程管理,各种record和stack(ActivityStack/TaskRecord/ActivityRecord)。
 WMS负责窗口管理，会跟APP、SurfaceFlinger交互，实现UI呈现。
 SF(SurfaceFlinger)负责UI绘制,SF在一个单独的进程，也是init开启的子进程，AMS和WMS都在system_server进程中，对应若干个工作线程。
 
 Activity的一些成员:
 
-    mWindow - PhoneWindow
-    mWindowManager - WindowManagerImpl
-    mDecor - View  onResume之后展示的视图
+    mWindow - PhoneWindow //Window变量，实际类型是PhoneWindow
+    mWindowManager - WindowManagerImpl //与wms交互
+    mDecor - View  //DecorView是一个FrameLayout,这个mDecor是onResume之后展示的视图
+    mToken - IBinder //binder服务代理端，服务端位于systemserver进程中，AMS在创建ActivityRecord的时候会有个ActivityRecord.token，可以当作binder交互过程中activity的一个标识
 
 ViewRootImpl的一些成员:
 
-    mWindowSession - IWindowSession (进程对应的wms中Session的代理对象，和wms中Session通信)
-    mWindow - IWindow.Stub (ViewRootImpl.W)
+    mWindowSession - IWindowSession (是wms中Session服务的代理对象，用于和wms通信)
+    mWindow - IWindow.Stub (ViewRootImpl.W extends IWindow.Stub,是一个app进程的服务端，其代理客户端位于wms线程中)
 
 WindowState的一些成员:
 
     mSession - Session(binder服务端)
     mClient - IWindow(ViewRootImpl.W的代理对象，对应着ViewRootImpl的W类型对象)
-    mSurfaceSession - 和SF通信 //api-28没有找到这个成员
     mToken - WindowToken(有个IBider类型成员变量token，是真正的token，其服务端是AMS中的ActivityRecord.Token extends IApplicationToken.Stub)
 
-Session的一些成员:
+Session的一些成员(本身就是一个服务端):
 
-    mSurfaceSession - 和SF通信
+    mSurfaceSession - 和SF进程通信
 
 Binder服务端举例： 
 
-    WMS/Session/ActivityRecord.Token (system_server进程)
+    WMS/Session/AMS/ActivityRecord.Token (system_server进程)
     ViewRootImpl.W (app进程)
     ApplicationThread (app进程)
     SF (SF进程)
+
+对应服务的代理端举例：
+    
+    IWindowManager/IWindowSession/IActivityManager/IApplicationToken
+    IWindow
+    IApplicationThread
 
 一些知识点：
 
@@ -1676,7 +1682,7 @@ windowManagerImpl.addView;
 
 ```
 总结如下：
-WindowManager的addView在app进程最终调用到RootImplView的setView操作
+WindowManager的addView在app进程最终调用到ViewRootImplView的setView操作
 
     wm.addView
         wmImpl.addView
@@ -1693,7 +1699,7 @@ ViewRootImpl的setView通过binder调用到SystemServer中的Session操作进一
 
 `ViewRootImpl中的requestLayout等其他操作具体分析见ViewRotImpl章节`
 
-### ViewRootImpl与WMS交互总结
+### ViewRootImpl与WMS双向交互总结
 
 a：ViewRootImpl->IWindowSession->WMS.Session-WMS.       
 
@@ -1973,6 +1979,78 @@ vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeas
 6. onDrawForeground //draw decorations (foreground, scrollbars)
 
 其中 onDraw和dispatchDraw的实际行为都在实现类中重写了，view默认的是空方法。
+
+## AMS Activity管理
+### ActivityRecord/TaskRecord/ActivityStack
+
+    ActivityRecord/TaskRecord/ActivityStack/ActivityStackSupervisor.ActivityDisplay/ActivityStackSupervisor
+    ProcessRecord
+    PendingIntentRecord
+
+1. ActivityStackSupervisor对应一个mActivityDisplays列表，是其内部类ActivityDisplay对象的一个列表，对应不同id的显示屏，一般情况下只有一个。
+
+2. ActivityDisplay有一个mStacks列表，是ActivityStack对象的一个列表(all of the stacks on the display)。一般会有一个桌面相关的Stack，launcher、systemui.recent等应用对应的taskrecord会放在里面；如果有启动的其他用户应用，会另有一个Stack存放这些应用分别对应的taskrecord。也就是说有一个homestack一个appstack。Android最早期的设计并不是这样，最初只是用一个mainStack保存所有的ActivityRecord(每个ActivityRecord会标志自身所属的TaskRecord)，而没有直接通过TaskRecord去组织。
+
+3. ActivityStack内部含有一个TaskRecord列表，描述属于该stack的一系列应用集合。
+
+4. TaskRecord内部含有一个ActivityRecord列表，描述该应用下相关的activity列表。
+
+5. ActivityRecord对应描述一个Activity的情况。含有ProcessRecord描述所属进程。
+
+这里分析的不错`http://gityuan.com/2017/06/11/activity_record/`
+### dumps activity
+1. adb shell dumpsys activity(系统activity相关完整dump信息，2、3、4只是其中一部分)
+2. dumpsys activity recents(列出recent app,是一个TaskRecord的列表)
+3. dumpsys activity activities(列出Display-ActivityStack列表-TaskRecord列表-ActivityRecord列表-ActivityRecord详情，以及当前活动情况)
+4. dumpsys activity processes(进程相关信息)
+
+### Activity launch mode
+1. standard - 默认，每次启动一个新的Activity实例
+2. singleTop - 字面理解，TaskRecord任务栈顶部只能有一个实例，因此如果顶部有会复用(触发onNewIntent)，否则创建新的。
+3. singleTask - 字面理解，TaskRecord任务栈只能出现这个实例一次，因此有的话会复用，并移除其上方成员，否则创建新的。
+4. singleInstance - singleTask的加强版，任务栈只能有一个实例，可以理解为对应所述的任务栈size为1，只有一个activity实例。
+
+`思考下都对应什么样的应用场景`
+
+### Activity Intent Flag
+    //详细的介绍参考Intent.java中的注释，可以彼此组合产生不同的效果
+    
+    FLAG_ACTIVITY_SINGLE_TOP//类似singleTop启动模式
+    FLAG_ACTIVITY_NEW_TASK //启动一个新的任务栈 ，如果已有activity所属的任务栈，移到前台
+    FLAG_ACTIVITY_MULTIPLE_TASK //配合FLAG_ACTIVITY_NEW_TASK使用，不会检索是否已有task，直接创建新的
+    FLAG_ACTIVITY_CLEAR_TOP//会复用已有task中的activity，并移除它上面的实例，这里onNewIntent被调用或者是先finish载recreat，具体使用哪种场景看源码说明
+    FLAG_ACTIVITY_CLEAR_TASK//配合FLAG_ACTIVITY_NEW_TASK使用，是的如果已有对应任务栈，先清空对应任务栈再启动activity
+    FLAG_ACTIVITY_NO_HISTORY//Activity一旦退出，就不会存在于栈中。
+    FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS//Activity不会放入最近启动列表中
+
+
+
+### 资料
+
+    http://liuwangshu.cn/framework/ams/2-activitytask.html
+    http://gityuan.com/2017/06/11/activity_record/
+    http://gityuan.com/2016/05/14/dumpsys-command/
+
+## WMS window窗口管理
+### WindowToken /WindowState /WindowManagerPolicy
+WindowState描述窗口状态，其中的涉及的binder代理类成员如下：
+
+    mClient - IWindow类型,对应服务端是app中Viewrootimpl.W(extends  IWindow.Stub)
+    mToken - WindowToken类型
+    WindowToken对象有个IBider类型成员变量token，是真正的token，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
+
+WindowToken作为窗口令牌，将window和activity组件对应
+
+    token-IBinder类型，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
+
+因此WMS通过WindowToken可以和AMS(SystemServer)进行交互，通过IWindow类型的client可以和APP界面ViewRootImpl交互。
+
+### Activity-AMS-Window-WMS
+
+
+### 好的资料
+1. http://gityuan.com/2017/04/16/activity-with-window/
+2. http://gityuan.com/2017/01/22/start-activity-wms/
 
 ## APP安装
 
@@ -2694,78 +2772,6 @@ Toast窗口级别问题，代码版本演进问题。
 ## Dialog 源码分析
 
 ## 资源加载过程
-
-## AMS Activity管理
-### ActivityRecord/TaskRecord/ActivityStack
-
-    ActivityRecord/TaskRecord/ActivityStack/ActivityStackSupervisor.ActivityDisplay/ActivityStackSupervisor
-    ProcessRecord
-    PendingIntentRecord
-
-1. ActivityStackSupervisor对应一个mActivityDisplays列表，是其内部类ActivityDisplay对象的一个列表，对应不同id的显示屏，一般情况下只有一个。
-
-2. ActivityDisplay有一个mStacks列表，是ActivityStack对象的一个列表(all of the stacks on the display)。一般会有一个桌面相关的Stack，launcher、systemui.recent等应用对应的taskrecord会放在里面；如果有启动的其他用户应用，会另有一个Stack存放这些应用分别对应的taskrecord。也就是说有一个homestack一个appstack。Android最早期的设计并不是这样，最初只是用一个mainStack保存所有的ActivityRecord(每个ActivityRecord会标志自身所属的TaskRecord)，而没有直接通过TaskRecord去组织。
-
-3. ActivityStack内部含有一个TaskRecord列表，描述属于该stack的一系列应用集合。
-
-4. TaskRecord内部含有一个ActivityRecord列表，描述该应用下相关的activity列表。
-
-5. ActivityRecord对应描述一个Activity的情况。含有ProcessRecord描述所属进程。
-
-这里分析的不错`http://gityuan.com/2017/06/11/activity_record/`
-### dumps activity
-1. adb shell dumpsys activity(系统activity相关完整dump信息，2、3、4只是其中一部分)
-2. dumpsys activity recents(列出recent app,是一个TaskRecord的列表)
-3. dumpsys activity activities(列出Display-ActivityStack列表-TaskRecord列表-ActivityRecord列表-ActivityRecord详情，以及当前活动情况)
-4. dumpsys activity processes(进程相关信息)
-
-### Activity launch mode
-1. standard - 默认，每次启动一个新的Activity实例
-2. singleTop - 字面理解，TaskRecord任务栈顶部只能有一个实例，因此如果顶部有会复用(触发onNewIntent)，否则创建新的。
-3. singleTask - 字面理解，TaskRecord任务栈只能出现这个实例一次，因此有的话会复用，并移除其上方成员，否则创建新的。
-4. singleInstance - singleTask的加强版，任务栈只能有一个实例，可以理解为对应所述的任务栈size为1，只有一个activity实例。
-
-`思考下都对应什么样的应用场景`
-
-### Activity Intent Flag
-    //详细的介绍参考Intent.java中的注释，可以彼此组合产生不同的效果
-    
-    FLAG_ACTIVITY_SINGLE_TOP//类似singleTop启动模式
-    FLAG_ACTIVITY_NEW_TASK //启动一个新的任务栈 ，如果已有activity所属的任务栈，移到前台
-    FLAG_ACTIVITY_MULTIPLE_TASK //配合FLAG_ACTIVITY_NEW_TASK使用，不会检索是否已有task，直接创建新的
-    FLAG_ACTIVITY_CLEAR_TOP//会复用已有task中的activity，并移除它上面的实例，这里onNewIntent被调用或者是先finish载recreat，具体使用哪种场景看源码说明
-    FLAG_ACTIVITY_CLEAR_TASK//配合FLAG_ACTIVITY_NEW_TASK使用，是的如果已有对应任务栈，先清空对应任务栈再启动activity
-    FLAG_ACTIVITY_NO_HISTORY//Activity一旦退出，就不会存在于栈中。
-    FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS//Activity不会放入最近启动列表中
-
-
-
-### 资料
-
-    http://liuwangshu.cn/framework/ams/2-activitytask.html
-    http://gityuan.com/2017/06/11/activity_record/
-    http://gityuan.com/2016/05/14/dumpsys-command/
-
-## WMS window窗口管理
-### WindowToken /WindowState /WindowManagerPolicy
-WindowState描述窗口状态，其中的binder代理类
-
-    mClient - IWindow类型,对应服务端是app中Viewrootimpl.W(extends  IWindow.Stub)
-    mToken - WindowToken类型
-    WindowToken对象有个IBider类型成员变量token，是真正的token，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
-
-WindowToken作为窗口令牌，将window和activity组件对应
-
-    token IBinder类型，其服务端是AMS中的ActivityRecord.Token (extends IApplicationToken.Stub)
-
-因此WMS通过WindowToken可以和AMS(SystemServer)进行交互，通过IWindow类型的client可以和APP界面ViewRootImpl交互。
-
-### Activity-AMS-Window-WMS
-
-
-### 好的资料
-1. http://gityuan.com/2017/04/16/activity-with-window/
-2. http://gityuan.com/2017/01/22/start-activity-wms/
 
 ## Intent
 
