@@ -5,19 +5,13 @@
     - [多态](#多态)
     - [java静态方法能否覆盖来实现多态](#java静态方法能否覆盖来实现多态)
     - [java重写注意事项(返回值与重载无关，但是重写要注意)](#java重写注意事项返回值与重载无关但是重写要注意)
-    - [java静态变量初始化以及静态代码块执行](#java静态变量初始化以及静态代码块执行)
     - [java中构造函数调用和自身变量赋值顺序](#java中构造函数调用和自身变量赋值顺序)
+    - [java静态变量初始化以及静态代码块执行](#java静态变量初始化以及静态代码块执行)
+    - [普通对象生成时初始化顺序](#普通对象生成时初始化顺序)
     - [接口和抽象类](#接口和抽象类)
-    - [transient变量不可序列化](#transient变量不可序列化)
-    - [序列化和克隆是标志接口](#序列化和克隆是标志接口)
-    - [java线程使用](#java线程使用)
-    - [thread.join](#threadjoin)
-    - [java 文件操作](#java-文件操作)
-    - [java threadlocal](#java-threadlocal)
+- [Java集合内容](#java集合内容)
     - [Arrays.sort](#arrayssort)
     - [Collections.sort](#collectionssort)
-    - [一些标志接口](#一些标志接口)
-    - [Arraylist的clone是shallow copy](#arraylist的clone是shallow-copy)
     - [iterator和listiterator](#iterator和listiterator)
     - [identityhashmap](#identityhashmap)
     - [collection之前的各种容器](#collection之前的各种容器)
@@ -45,11 +39,10 @@
         - [线程安全](#线程安全)
         - [面向接口编程思想](#面向接口编程思想)
     - [Java基本数据类型](#java基本数据类型)
-    - [Java参数传递](#java参数传递)
     - [JCF & Arrays](#jcf--arrays)
     - [比较类集和数组](#比较类集和数组)
     - [toarray & aslist方法](#toarray--aslist方法)
-    - [String StringBuffer StringBuilder](#string-stringbuffer-stringbuilder)
+    - [String&StringBuffer&StringBuilder](#stringstringbufferstringbuilder)
     - [java hashcode()](#java-hashcode)
     - [hashcode再次研究 搜索 “高效地hashmap”](#hashcode再次研究-搜索-高效地hashmap)
     - [hash算法散列实现，各种方法](#hash算法散列实现各种方法)
@@ -62,12 +55,7 @@
         - [红黑树VS二叉排序树](#红黑树vs二叉排序树)
         - [红黑树](#红黑树)
     - [TreeMap、TreeSet 对比 HashMap、HashSet的优缺点？](#treemaptreeset-对比-hashmaphashset的优缺点)
-    - [常见处理函数](#常见处理函数)
-        - [字符串处理](#字符串处理)
-        - [输入输出](#输入输出)
-        - [文件操作](#文件操作)
-    - [内存泄漏场景](#内存泄漏场景)
-    - [内部类、静态内部类、匿名类、静态匿名类对象](#内部类静态内部类匿名类静态匿名类对象)
+- [面向对象相关知识](#面向对象相关知识)
     - [内部类以及静态内部类](#内部类以及静态内部类)
     - [final关键字](#final关键字)
     - [抽象类](#抽象类-1)
@@ -78,13 +66,23 @@
     - [参数传递的实现?](#参数传递的实现)
     - [java内存模型(memory model)](#java内存模型memory-model)
     - [不可变类的分析](#不可变类的分析)
-    - [BigInteger类分析不可变类](#biginteger类分析不可变类)
-    - [jdk源码中的设计模式](#jdk源码中的设计模式)
+    - [BigInteger类分析之不可变类](#biginteger类分析之不可变类)
     - [包与成员可见性问题](#包与成员可见性问题)
     - [理解protected](#理解protected)
     - [java interface](#java-interface)
     - [一些混淆场景](#一些混淆场景)
     - [关于一些规范的间接](#关于一些规范的间接)
+    - [jdk源码中的设计模式](#jdk源码中的设计模式)
+    - [文件操作](#文件操作)
+    - [内存泄漏场景](#内存泄漏场景)
+    - [transient变量不可序列化](#transient变量不可序列化)
+    - [序列化和克隆是标志接口](#序列化和克隆是标志接口)
+    - [Cloneable接口](#cloneable接口)
+    - [Arraylist的clone是shallow copy](#arraylist的clone是shallow-copy)
+    - [java线程使用](#java线程使用)
+    - [thread.join](#threadjoin)
+    - [java 文件操作](#java-文件操作)
+    - [java threadlocal](#java-threadlocal)
     - [fast-fail & happens before](#fast-fail--happens-before)
     - [readObject、readResolve以及序列化、不可变类](#readobjectreadresolve以及序列化不可变类)
     - [CountDownLatch-可变类但被限制状态空间](#countdownlatch-可变类但被限制状态空间)
@@ -96,9 +94,9 @@
 # Java知识手册
 
 ## String、StringBuilder、StringBuffer
-- String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
-- StringBuffer线程安全效率也就会低一些。 
-- 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
+1. String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
+2. StringBuffer线程安全效率也就会低一些。 
+3. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
 
 
 ## 多态
@@ -107,42 +105,68 @@
 没有必要非要将多态和动态去关联，了解实现机制以及表现方法即可，命名只是为了统一推广和交流方便。
 
 ## java静态方法能否覆盖来实现多态
-子类试图覆盖父类静态方法，静态方法的调用不依赖于对象，所以不会表现出多态，类似变量的屏蔽，父类子类依然分别调用自己的函数
+子类试图覆盖父类静态方法，静态方法的调用不依赖于对象，所以不会表现出多态，类似变量的屏蔽，父类引用和子类引用依然分别调用自己的函数。
 
 ## java重写注意事项(返回值与重载无关，但是重写要注意)
 java中方法重写需注意事项
-1. 发生方法重写的两个方法的方法名、参数列表必须完全一致(子类重写父类的方法) ，返回值必须是父类方法返回值的子类、协变返回类型。
+1. 发生方法重写的两个方法的方法名、参数列表必须完全一致(子类重写父类的方法) ，返回值必须和父类相同或者是父类方法返回值的子类(协变返回类型)。
 2. 子类抛出的异常不能超过父类相应方法抛出的异常(子类异常不能大于父类异常) 
 3. 子类方法的访问级别不能低于父类相应方法的访问级别(子类访问级别不能低于父类访问级别)
 4. 上述重写都是针对实例方法而不是类方法，静态方法属于类而不是对象，没有多态性。
+5. 子类不能使用相同签名的静态方法屏蔽父类实例方法，也不能使用同签名的实例方法屏蔽父类静态方法，会提示错误。
+6. 重写要求是同签名的实例方法(可继承的方法不可能是private的)，返回值方面要求相同或者协变返回类型。
+7. 静态方法的屏蔽也如6一样对签名和返回值有要求，返回值不合格，屏蔽或者重写就不正确，直接报错。
 
-一些场景测试：父子类分别有同名实例方法和静态方法；方法签名同(方法名和参数列表)当时返回值不同的情况；
+一些场景测试：父子类分别有同名实例方法和静态方法；方法签名同(方法名和参数列表)但是返回值不同的情况；
 
-注意:我们这里是在总结规律，规律的定则是虚拟机实现决定的，或者说是由java语言规范/jvm虚拟机规范来决定。
-
-## java静态变量初始化以及静态代码块执行
-二者发生在类加载过程中，比如第一次new()一个对象实例或者反射加载类
-(参考http://www.cnblogs.com/ivanfu/archive/2012/02/12/2347817.html)
-jvm类运行装载-连接-初始化。
-含有public static void main的 执行时，主类也要初始化，然后调用静态main方法。
-
-普通对象第一次生成时：
-
-        父类静态代码块、
-        子类静态代码块、
-        父类非静态代码块以及变量初始化、//按照出现的先后顺序
-        父类构造函数、
-        子类非静态代码块以及变量初始化。
-
-再次new的时候，静态部分不再执行。
+注意:我们这里是在总结规律，规律的根源则是虚拟机实现决定的，或者说是由java语言规范/jvm虚拟机规范来决定。
 
 ## java中构造函数调用和自身变量赋值顺序
 没有this调用的情况下(this调用其他的重载构造函数)：
-- 如果没有super(必须在第一句)，则添加super父类调用(父类过程同样)
-- 进行自己的变量赋值(代码中的声明和初始化语句)
-- 然后执行构造函数代码。
+1. 如果没有super(必须在第一句)，则添加super父类调用(父类过程同样)
+2. 进行自己的变量赋值(代码中的声明和初始化语句)
+3. 然后执行构造函数代码。
 
-有this调用的情况下在this调用中进行如是操作，返回后执行其余代码。
+## java静态变量初始化以及静态代码块执行
+1. 二者发生在类加载过程中，比如第一次new()一个对象实例或者反射加载类。
+
+(参考http://www.cnblogs.com/ivanfu/archive/2012/02/12/2347817.html)
+jvm类运行装载-连接-初始化。
+
+2. 含有"public static void main"的程序运行时，主类也要初始化，然后才调用静态main方法。
+
+## 普通对象生成时初始化顺序
+1. 首次生成
+```
+从加载和调用角度如下：
+    父类静态代码块(类加载时首先加载父类，加载时执行静态代码块)
+    子类静态代码块
+    子类构造函数(第一句没有super又不是this调用重载构造函数则会自动加上super首先执行父类构造函数)
+        父类构造函数
+            父类非静态代码块以及变量初始化、//按照出现的先后顺序
+            父类构造函数体内容
+        子类非静态代码块以及变量初始化。
+        子类构造函数体内容
+简化版：
+    父类静态代码块
+    子类静态代码块
+    父类非静态代码块以及变量初始化、//按照出现的先后顺序
+    父类构造函数体内容
+    子类非静态代码块以及变量初始化。
+    子类构造函数体内容
+
+```
+2. 再次生成
+```
+直接使用简化版描述：
+    父类非静态代码块以及变量初始化、//按照出现的先后顺序
+    父类构造函数体内容
+    子类非静态代码块以及变量初始化。
+    子类构造函数体内容
+
+```
+
+3. 构造函数中涉及到this调用其他重载构造函数的，在this调用中进行如是操作，返回后执行其余代码。如果有this也必定是在方法第一句，this和super不能同时出现。
 
 `可以对比c++ 构造函数以及参数化列表相关情况`
 
@@ -156,28 +180,7 @@ jvm类运行装载-连接-初始化。
 7. 子类继承抽象类没有实现全部抽象方法，还要声明抽象类。
 8. 实现接口是拥有一项功能(也可用于划分类别，比如标志接口的理解：具有某一类功能的类集合，实际上接口里没有任何抽象方法待实现，接口就是用于标记类型、划分类型)，继承抽象类则是是某一类。
 
-## transient变量不可序列化
-
-## 序列化和克隆是标志接口
-
-## java线程使用
-1. 启动一个线程可以去写一个runnable的实现类然后构造一个thread，对thread传入一个runnable接口类。
-2. 也可以new一个thread，覆盖它的run方法。
-
-二者效果是一样的，源代码级别来看，thread的默认的run方法(不被覆写的话)是调用target(target不为空的话)的run方法，target就是我们传入的runnable接口类。
-
-## thread.join
-thread的join通过native的wait帮助检测线程是否结束
-
-## java 文件操作
-## java threadlocal
-关于并发同步，我们想到synchronized关键字，同样threadlocal可用于创建线程变量副本，但我觉得似乎与同步不太相关，毕竟各自有一个副本。
-
-threadlocal的get和set方法是使用的关键，如果没有重写 initialValue的方法，则get之前必须set，否则报null异常。
-内部实现原理就是每个Thread实例本身有一个局部变量threadlocals(threadlocalmap类对象)，通过这个map可以根据thread找到对应的threadlocal。
-那么这个线程变量实际就是我们和线程绑定的一个局部变量，那他和我们自己定义的局部变量又有什么不同的，除了这个作用更加专一，线程相关，但是副本的功能局部变量或者实例变量也能做到。
-
-
+# Java集合内容
 ## Arrays.sort
 
 1. primitive->quicksort
@@ -196,21 +199,6 @@ threadlocal的get和set方法是使用的关键，如果没有重写 initialValu
 最终调用Arrays的sort（object）方法；
 
 也可以传入比较器；
-
-
-
-## 一些标志接口 
-
-Cloneable Serializable等接口
-
-Cloneble这个接口会被用来作为一个能否调用Object的native的clone方法的判断，只有实现此接口的类才能调用clone方法，否则会抛出不支持此操作的异常。这是一个native的方法，浅拷贝，因此可能需要子类重写这个方法，在super.clone之后再进行一些操作。数组被认为默认实现了cloneable接口，Object自身没有实现这个接口。Object中这个clone方法是protected访问级别的，子类实现Cloneable接口并重写此方法应将访问级别改为Public
-
-
-
-## Arraylist的clone是shallow copy
-
-源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
-
 
 
 ## iterator和listiterator
@@ -444,12 +432,13 @@ HashTable
     byte, 8 bit
     short, 16 bit
     int, 32 bit
-    long, 64 bit.
+    long, 64 bit
+    float,32bit
+    double,64bit
+    char, 16bit
+    boolean，不明确，跟实现有关。
 
 Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
-
-## Java参数传递
-值传递，关于对象当参数类似c++中指针参数，没有c++中的参数引用传递(即别名)的概念，java中也有引用的概念(实际类似指针)，但和引用传递时两码事。
 
 ## JCF & Arrays
 Arrays提供了对基本数据类型和对象对类型数组的一些操作，比如排序、查找、拷贝等工作。
@@ -478,16 +467,14 @@ singletonList和singletonMap分别生成单元素的List和Map。
 Object[] toArray()和Object[] toArray(T[]a)接口定义进行了实现细节的约束说明，应当进行深度拷贝，不传参的调用直接生成新的数组返回，传参的调用根据参数数组大小决定是否生成新数组。具体以ArrayList为例，其toArray实现的时候使用了Arrays.copyOf方法，最终会使用System.arrayCopy方法进行一组对象的拷贝。
 
 
-
-
-## String StringBuffer StringBuilder
+## String&StringBuffer&StringBuilder
 http://blog.csdn.net/zlts000/article/details/44677933
 http://blog.csdn.net/rmn190/article/details/1492013
 
 
 StringBuffer-线程安全-长度可变 append和insert操作
 StringBuilder-非线程安全-长度可变
-`那么String的操作线程安全吗？`答:String是~~final~~不可变类型，常量对量，线程安全。
+`那么String的操作线程安全吗？`安全的，属于内容不可变类。
 
 String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
 
@@ -565,45 +552,7 @@ Java 实现的红黑树
     TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
 
 
-
-## 常见处理函数
-### 字符串处理
-c、c++
-
-    strcat strcpy strcmp  
-    sprintf //进行数据到字符串的转化
-    memset memcpy
-    malloc
-    atoi//arraytoint
-    itoa//inttoarray
-
-java
-
-    Integer.parseInt()
-    Integer.toString()
-
-### 输入输出
-c
-
-    scanf
-    printf
-
-c++
-
-    cin
-    cout
-
-java
-
-    Scanner.in
-    sysout.println
-
-### 文件操作
-
-
-## 内存泄漏场景
-
-## 内部类、静态内部类、匿名类、静态匿名类对象
+# 面向对象相关知识
 
 ## 内部类以及静态内部类
 1. 嵌套类是定义在另一个类内部的类。内部类(inner class)是非静态的嵌套类(An inner class is a nested class that is not explicitly or implicitly declared static)
@@ -663,14 +612,12 @@ jls17.4 & jls17.1
 ## 不可变类的分析
 Integer类&IntegerCache缓存&Integer中的享元模式&Boolen也是享元模式
 
-##BigInteger类分析不可变类
+## BigInteger类分析之不可变类
 1. final类型的类，不等同于不可变类，不可变类要通过一定形式保障相关内容是不可变的。
 2. 使用final修饰类是设计不可变类的条件之一，不是唯一条件，也不是必须条件。
 3. 除了final之外可以通过私有化构造函数转而使用静态工厂的形式来实现final不可继承的特点。
 4. BigInteger和BigDecimal没有使用final修饰，也没使用3中的技术，虽然他是不可变类，但是其子类是不可信的。这个是最初设计问题，但考虑兼容性已经无法修改。类似的java.awt中的Point和Demision类的设技与“共有类不应直接暴露共有域”这一原则相悖(effective java 3rd)，也是历史遗留问题。
 pow(int)方法的设计
-
-## jdk源码中的设计模式
 
 ## 包与成员可见性问题
 1. 对于顶层类(非嵌套)来说有public和默认两种。公有类：对所有代码都可访问；默认类：同一个包中的代码才可以访问。
@@ -720,6 +667,45 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.8.2
 
 `很多细节可能对我们的实际应用关系不大，我们掌握常用的概念即可进行编码工作，我们也应尽量避免易混淆场景，除非真的需要如此。另外我们应结合源码去验证、学习这些概念，去判定哪些知识点是常用的、实用的，而不是孤立地记住他们，更深一步我们可以去了解语言的这些规范是如何实现的，结合jvm的相关知识，最后我们如果能去思考语言设计通用性的一些理念，那就妙不可言了。`
 
+## jdk源码中的设计模式
+
+## 文件操作
+
+## 内存泄漏场景
+
+## transient变量不可序列化
+
+## 序列化和克隆是标志接口
+接口没有实际的方法，只是用于标识这个类是可序列化的或者是可克隆的?
+
+1. object有一个clone方法，因此每个类都会继承到一个clone方法，对于没有实现cloneable这个接口的类即使调用clone方法也会报错，在native的clone方法中会判断是否实现克隆接口。实现这个接口意味着我们要重写clone方法，重点是要改为public访问权限，可能会定制特殊的clone策略，super.clone(shallow copy)应该被调用，当然也可以彻底自己实现所有过程。
+
+2. serialization接口没有任何方法和字段，只是一个语义标识。(注意涉及到序列化id、writeObject、readObject等相关内容)
+
+## Cloneable接口
+
+Cloneble这个接口会被用来作为一个能否调用Object的native的clone方法的判断，只有实现此接口的类才能调用clone方法，否则会抛出不支持此操作的异常。这是一个native的方法，浅拷贝，因此可能需要子类重写这个方法，在super.clone之后再进行一些操作。数组被认为默认实现了cloneable接口，Object自身没有实现这个接口。Object中这个clone方法是protected访问级别的，子类实现Cloneable接口并重写此方法应将访问级别改为Public
+
+## Arraylist的clone是shallow copy
+
+源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
+## java线程使用
+1. 启动一个线程可以去写一个runnable的实现类然后构造一个thread，对thread传入一个runnable接口类。
+2. 也可以new一个thread，覆盖它的run方法。
+
+二者效果是一样的，源代码级别来看，thread的默认的run方法(不被覆写的话)是调用target(target不为空的话)的run方法，target就是我们传入的runnable接口类。
+
+## thread.join
+thread的join通过native的wait帮助检测线程是否结束
+
+## java 文件操作
+## java threadlocal
+关于并发同步，我们想到synchronized关键字，同样threadlocal可用于创建线程变量副本，但我觉得似乎与同步不太相关，毕竟各自有一个副本。
+
+threadlocal的get和set方法是使用的关键，如果没有重写 initialValue的方法，则get之前必须set，否则报null异常。
+内部实现原理就是每个Thread实例本身有一个局部变量threadlocals(threadlocalmap类对象)，通过这个map可以根据thread找到对应的threadlocal。
+那么这个线程变量实际就是我们和线程绑定的一个局部变量，那他和我们自己定义的局部变量又有什么不同的，除了这个作用更加专一，线程相关，但是副本的功能局部变量或者实例变量也能做到。
+
 ## fast-fail & happens before
 ## readObject、readResolve以及序列化、不可变类
 
@@ -755,7 +741,7 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.8.2
 - java反射
 - java线程相关
 - java并发编程
-- java网络相关
 - java源码探究
 - 设计模式相关
+- java网络相关
 - java8学习
