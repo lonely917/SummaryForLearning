@@ -67,11 +67,11 @@
 - [其他](#其他)
     - [Java基本数据类型](#java基本数据类型)
     - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
-    - [String&StringBuffer&StringBuilder](#stringstringbufferstringbuilder)
-    - [java hashcode()](#java-hashcode)
+    - [java hashcode函数](#java-hashcode函数)
     - [hashcode再次研究 搜索 “高效地hashmap”](#hashcode再次研究-搜索-高效地hashmap)
     - [hash算法散列实现，各种方法](#hash算法散列实现各种方法)
     - [十种排序比较](#十种排序比较)
+    - [排序动画](#排序动画)
     - [C++常见数据结构以及算法](#c常见数据结构以及算法)
     - [java强弱引用介绍](#java强弱引用介绍)
     - [文件操作](#文件操作)
@@ -89,7 +89,7 @@
     - [CountDownLatch-可变类但被限制状态空间](#countdownlatch-可变类但被限制状态空间)
     - [Android Handler与内存泄漏](#android-handler与内存泄漏)
     - [深入研究技术点](#深入研究技术点)
-    - [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
+- [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
 
 <!-- /TOC -->
 # 面向对象相关知识1
@@ -631,22 +631,15 @@ Char是2字节的unicode值，属于字符型数据(也可被当作unsigned shor
 
 ## String、StringBuilder、StringBuffer
 1. String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
-2. StringBuffer线程安全效率也就会低一些。 
-3. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
+2. StringBuffer-线程安全-长度可变 append和insert操作 
+3. StringBuilder-非线程安全-长度可变
+4. `那么String的操作线程安全吗？`安全的，属于内容不可变类。
+5. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
+6. String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
 
-## String&StringBuffer&StringBuilder
-http://blog.csdn.net/zlts000/article/details/44677933
-http://blog.csdn.net/rmn190/article/details/1492013
-
-
-StringBuffer-线程安全-长度可变 append和insert操作
-StringBuilder-非线程安全-长度可变
-`那么String的操作线程安全吗？`安全的，属于内容不可变类。
-
-String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
-
-## java hashcode()
+## java hashcode函数
 http://en.wikipedia.org/wiki/Java_hashCode()
+
 http://my.oschina.net/chihz/blog/56256
 
 ## hashcode再次研究 搜索 “高效地hashmap”
@@ -656,14 +649,21 @@ eclipse中有自动生成hashCode和equals方法的功能 ，其方法是effecti
 Object的hashCode()方法其实就是根据对象的物理地址生成的hash值，Object的equals方法默认是判断物理地址是否相等(this==obj)。Object的hashCode方法是native的。
 
 ## hash算法散列实现，各种方法
-http://blog.csdn.net/jnu_simba/article/details/9631445
-31*m+n  31 乘法可以转换成 左移5次减1
-冲突处理链地址(拉链法)http://blog.csdn.net/jnu_simba/article/details/9632675
-冲突处理开地址法(线性探测再散列) http://blog.csdn.net/jnu_simba/article/details/9664053  H0=Hash(x) Hi= (H0+di)%m
-冲突处理开地址法(二次探测再散列)http://blog.csdn.net/jnu_simba/article/details/9668369   H0=Hash(x) Hi= (H0+/- i^2)%m    m表大小 4k+3质数
+
+    http://blog.csdn.net/jnu_simba/article/details/9631445
+    31*m+n  31 乘法可以转换成 左移5次减1
+    
+1. 冲突处理链地址(拉链法)http://blog.csdn.net/jnu_simba/article/details/9632675
+2. 冲突处理开地址法(线性探测再散列) http://blog.csdn.net/jnu_simba/article/details/9664053  H0=Hash(x) Hi= (H0+di)%m
+3. 冲突处理开地址法(二次探测再散列)http://blog.csdn.net/jnu_simba/article/details/9668369   H0=Hash(x) Hi= (H0+/- i^2)%m    m表大小 4k+3质数
 
 ## 十种排序比较
 http://blog.csdn.net/jnu_simba/article/details/9705111
+
+## 排序动画
+https://blog.csdn.net/rocling/article/details/82832998
+https://blog.csdn.net/rocling/article/details/82832998#1%E3%80%81%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F%EF%BC%88Bubble%20Sort%EF%BC%89
+
 
 ## C++常见数据结构以及算法
 http://blog.csdn.net/jnu_simba
@@ -724,7 +724,7 @@ threadlocal的get和set方法是使用的关键，如果没有重写 initialValu
 2. 集合迭代器的实现，iterator和foreach比较
 3. java中树结构
 
-## Java知识图谱-wenburgyan
+# Java知识图谱-wenburgyan
 1. 基本概念(基本数据类型、操作符)
 2. 面向对象(继承、封装、抽象、接口)
 3. JCF-集合类源码分析
