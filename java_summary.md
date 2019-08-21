@@ -1,7 +1,6 @@
 <!-- TOC -->
 
-- [Java知识手册](#java知识手册)
-    - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
+- [面向对象相关知识1](#面向对象相关知识1)
     - [多态](#多态)
     - [java静态方法能否覆盖来实现多态](#java静态方法能否覆盖来实现多态)
     - [java重写注意事项(返回值与重载无关，但是重写要注意)](#java重写注意事项返回值与重载无关但是重写要注意)
@@ -9,56 +8,10 @@
     - [java静态变量初始化以及静态代码块执行](#java静态变量初始化以及静态代码块执行)
     - [普通对象生成时初始化顺序](#普通对象生成时初始化顺序)
     - [接口和抽象类](#接口和抽象类)
-- [Java集合内容](#java集合内容)
-    - [Arrays.sort](#arrayssort)
-    - [Collections.sort](#collectionssort)
-    - [iterator和listiterator](#iterator和listiterator)
-    - [identityhashmap](#identityhashmap)
-    - [collection之前的各种容器](#collection之前的各种容器)
-    - [容器和集合是如何扩容的](#容器和集合是如何扩容的)
-    - [Properties](#properties)
-    - [BitSet](#bitset)
-    - [集合遍历和排序](#集合遍历和排序)
-    - [Collection&Map相关接口、抽象类、实现类](#collectionmap相关接口抽象类实现类)
-        - [接口](#接口)
-        - [抽象类](#抽象类)
-        - [实现类](#实现类)
-    - [List各种遍历方式效率比较](#list各种遍历方式效率比较)
-    - [HashMap和HashTable的扩容](#hashmap和hashtable的扩容)
-    - [Map小结](#map小结)
-    - [java HashMap关键点分析(1.8版本源码)](#java-hashmap关键点分析18版本源码)
-    - [HashMap 和 HashTable 对比](#hashmap-和-hashtable-对比)
-        - [相同点](#相同点)
-        - [不同点](#不同点)
-    - [ConcurrentModificationException](#concurrentmodificationexception)
-    - [java LinkedList 解析](#java-linkedlist-解析)
-    - [Java集合](#java集合)
-        - [常用集合类继承结构](#常用集合类继承结构)
-        - [Vector、ArrayList和LinkedList使用场景比较](#vectorarraylist和linkedlist使用场景比较)
-        - [HashTable、HashMap、HashSet使用场景比较](#hashtablehashmaphashset使用场景比较)
-        - [线程安全](#线程安全)
-        - [面向接口编程思想](#面向接口编程思想)
-    - [Java基本数据类型](#java基本数据类型)
-    - [JCF & Arrays](#jcf--arrays)
-    - [比较类集和数组](#比较类集和数组)
-    - [toarray & aslist方法](#toarray--aslist方法)
-    - [String&StringBuffer&StringBuilder](#stringstringbufferstringbuilder)
-    - [java hashcode()](#java-hashcode)
-    - [hashcode再次研究 搜索 “高效地hashmap”](#hashcode再次研究-搜索-高效地hashmap)
-    - [hash算法散列实现，各种方法](#hash算法散列实现各种方法)
-    - [十种排序比较](#十种排序比较)
-    - [C++常见数据结构以及算法](#c常见数据结构以及算法)
-    - [java强弱引用介绍](#java强弱引用介绍)
-    - [java-树相关数据结构](#java-树相关数据结构)
-        - [BST概念](#bst概念)
-        - [Java-TreeMap](#java-treemap)
-        - [红黑树VS二叉排序树](#红黑树vs二叉排序树)
-        - [红黑树](#红黑树)
-    - [TreeMap、TreeSet 对比 HashMap、HashSet的优缺点？](#treemaptreeset-对比-hashmaphashset的优缺点)
-- [面向对象相关知识](#面向对象相关知识)
+- [面向对象相关知识2](#面向对象相关知识2)
     - [内部类以及静态内部类](#内部类以及静态内部类)
     - [final关键字](#final关键字)
-    - [抽象类](#抽象类-1)
+    - [抽象类](#抽象类)
     - [方法签名](#方法签名)
     - [重写和重载](#重写和重载)
     - [重写与屏蔽](#重写与屏蔽)
@@ -72,7 +25,55 @@
     - [java interface](#java-interface)
     - [一些混淆场景](#一些混淆场景)
     - [关于一些规范的间接](#关于一些规范的间接)
-    - [jdk源码中的设计模式](#jdk源码中的设计模式)
+- [Java集合内容1](#java集合内容1)
+    - [JCF之前的各种容器类](#jcf之前的各种容器类)
+    - [JCF相关接口、抽象类、实现类](#jcf相关接口抽象类实现类)
+        - [接口](#接口)
+        - [抽象类](#抽象类-1)
+        - [实现类](#实现类)
+    - [容器和集合的扩容](#容器和集合的扩容)
+    - [HashMap和HashTable的扩容](#hashmap和hashtable的扩容)
+    - [Properties](#properties)
+    - [BitSet](#bitset)
+    - [identityhashmap](#identityhashmap)
+    - [集合遍历和排序](#集合遍历和排序)
+    - [List各种遍历方式效率比较](#list各种遍历方式效率比较)
+    - [Arrays.sort方法解析](#arrayssort方法解析)
+    - [Collections.sort方法解析](#collectionssort方法解析)
+- [Java集合内容2](#java集合内容2)
+    - [Java集合](#java集合)
+        - [常用集合类继承结构](#常用集合类继承结构)
+        - [Vector、ArrayList和LinkedList使用场景比较](#vectorarraylist和linkedlist使用场景比较)
+        - [HashTable、HashMap、HashSet使用场景比较](#hashtablehashmaphashset使用场景比较)
+        - [线程安全](#线程安全)
+        - [面向接口编程思想](#面向接口编程思想)
+    - [Map小结](#map小结)
+    - [java HashMap关键点分析(1.8版本源码)](#java-hashmap关键点分析18版本源码)
+    - [HashMap 和 HashTable 对比](#hashmap-和-hashtable-对比)
+        - [相同点](#相同点)
+        - [不同点](#不同点)
+    - [ConcurrentModificationException](#concurrentmodificationexception)
+    - [java LinkedList 解析](#java-linkedlist-解析)
+    - [JCF & Arrays](#jcf--arrays)
+    - [比较类集和数组](#比较类集和数组)
+    - [toarray & aslist方法](#toarray--aslist方法)
+    - [java-树相关数据结构](#java-树相关数据结构)
+        - [BST概念](#bst概念)
+        - [Java-TreeMap](#java-treemap)
+        - [红黑树VS二叉排序树](#红黑树vs二叉排序树)
+        - [红黑树](#红黑树)
+    - [TreeMap、TreeSet 对比 HashMap、HashSet的优缺点](#treemaptreeset-对比-hashmaphashset的优缺点)
+- [jdk源码中的设计模式](#jdk源码中的设计模式)
+- [其他](#其他)
+    - [Java基本数据类型](#java基本数据类型)
+    - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
+    - [String&StringBuffer&StringBuilder](#stringstringbufferstringbuilder)
+    - [java hashcode()](#java-hashcode)
+    - [hashcode再次研究 搜索 “高效地hashmap”](#hashcode再次研究-搜索-高效地hashmap)
+    - [hash算法散列实现，各种方法](#hash算法散列实现各种方法)
+    - [十种排序比较](#十种排序比较)
+    - [C++常见数据结构以及算法](#c常见数据结构以及算法)
+    - [java强弱引用介绍](#java强弱引用介绍)
     - [文件操作](#文件操作)
     - [内存泄漏场景](#内存泄漏场景)
     - [transient变量不可序列化](#transient变量不可序列化)
@@ -91,13 +92,7 @@
     - [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
 
 <!-- /TOC -->
-# Java知识手册
-
-## String、StringBuilder、StringBuffer
-1. String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
-2. StringBuffer线程安全效率也就会低一些。 
-3. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
-
+# 面向对象相关知识1
 
 ## 多态
 多态的表现形式：重载；子类覆盖父类方法；实现类实现接口方法。
@@ -180,379 +175,7 @@ jvm类运行装载-连接-初始化。
 7. 子类继承抽象类没有实现全部抽象方法，还要声明抽象类。
 8. 实现接口是拥有一项功能(也可用于划分类别，比如标志接口的理解：具有某一类功能的类集合，实际上接口里没有任何抽象方法待实现，接口就是用于标记类型、划分类型)，继承抽象类则是是某一类。
 
-# Java集合内容
-## Arrays.sort
-
-1. primitive->quicksort
-
-2. Object->mergesort(可以传入comparator，不传入则null，必须是可比较对象 comparable)
-
-3. 长度<7使用insertation sort
-
-4. 注意归并的时候src和dest的来回复用，以及归并合并时的优化(提前判断是否已经有序)
-
-这里涉及到很多排序的方法，不同jdk版本的实现也会有差异。
-
-
-## Collections.sort
-
-最终调用Arrays的sort（object）方法；
-
-也可以传入比较器；
-
-
-## iterator和listiterator
-
-后者除了向后遍历next还能够previous
-
-## identityhashmap
-区别于一般的hashmap是其判断相等的方法，判断引用值等而不在乎具体对象内容。
-
-    This class implements AbstractMap. It is similar to HashMap except that it uses reference equality when comparing the elements.
-
-几个例子很清晰
-http://blog.csdn.net/stoneok07/article/details/7262676
-
-## collection之前的各种容器
-java2提出JCF-集合框架(java collection framework)，查看源码会看到Collection和Map接口是在1.2之后加入的。那么由他们引申来的XXList、XXMap在1.2之前是没有的。
-
-1.0中相关的集合或者列表功能的类(即对数据结构中的线性表、栈、树、图、哈希表等的一些实现或者基础支持)
-
-    Vector
-    Stack
-    HashTable->Dictionary
-
-1. Vector实现一个动态的数组，和Arraylist类似，不同之处在于vector是线程安全的，方法都是同步的，synchronized；其次vector有很多旧方法legacy methods，而这些旧接口不属于collections framework(arraylist是集合框架下的一个具体实类)。
-
-2. Stack是vector的子类，一个后进先出的vector，只提供一个默认构造函数，除了vector的方法外，添加了一些特有方法，pop、push、peek等。peek是查看栈顶元素但不弹出，pop则是返回栈顶元素，并弹出。
-
-3. Dictionary是一个抽象类，类似于map接口的功能。目前被标记为过时的。
-
-    The Dictionary class is obsolete. You should implement the Map interface to obtain key/value storage functionality.
-
-4. Hashtable是Dictionary的具体实现类，早期java.util的一部分。java2提出集合框架后，进行整合，1.2源码可以看到它继承Dictionary并实现了map接口。
-
-    Hashtable was part of the original java.util and is a concrete implementation of a Dictionary.
-
-总结：有时候接口或者抽象类去实现或者继承，不一定真的需要进行关联，而是为了进行概念和逻辑上的一个统一，比如后期的延伸需要与前期版本进行兼容，实际上两者可能并不需要继承或实现关系。
-
-    However, Java 2 re-engineered Hashtable so that it also implements the Map interface. Thus, Hashtable is now integrated into the collections framework. It is similar to HashMap, but is synchronized.
-
-早期的容器都是同步的，集合框架中很多不是线程同步的，这样设计的一个原因是多数情况下不需要去进行线程同步，因此一定程度上提高集合效率，另一方面集合也提供了对应的同步版本或者说支持并发的集合版本。
-
-
-## 容器和集合是如何扩容的
-
-1. hashtable会有一个装载因子，比如容量达到一定界限(比例)会进行扩容，map类型也是如此；
-
-2. vector有一个增加值，满了之后重新申请空间，原空间加上增加值是新的空间的大小(增加值不为0的情况下，直接变为原来的两倍)，得到的新值再和实际所需空间比较，还不够，则用实际所需空间作为新的空间大小去申请。会和一个max比较，是否oom。
-
-3. 对于collection集合实现类比如arraylist，则是默认加上自身空间的一半，也就是1.5倍扩容，不够的话使用实际所需空间去申请。会和一个max比较，是否oom。
-
-4. 
-Hashtable默认“加载因子”是0.75，默认的容量大小是11；每次扩容将容量变为“原始容量x2 + 1”。
-HashMap默认的“加载因子”是0.75, 默认的容量大小是16，每次扩容将容量变为“原始容量x2”。HashMap其中哈希算法是假定表长为2的整数次幂。
-扩容发生的条件：当前存储数目 >= 阈值按照扩容算法进行扩容，其中阈值 = 总的容量 * 加载因子。扩容后会已有所有元素重新进行散列存储。
-
-## Properties
-Properties是hashtable的一个子类，额外添加一些方法，比如从文件读取以及写入文件。
-
-    Properties is a subclass of Hashtable. It is used to maintain lists of values in which the key is a String and the value is also a String.
-
-## BitSet
-BitSet的提出since1.0,后来进行了重新设计。
-位运算对应集合运算，and、or、xor ->  求交、求和、求两个差集的和。
-
-    This is a legacy class but it has been completely re-engineered in Java 2, version 1.4.
-
-## 集合遍历和排序
-
-1. 遍历集合 iterator
-2. 集合排序 comparator
-
-    Iterator enables you to cycle through a collection, obtaining or removing elements. ListIterator extends Iterator to allow bidirectional traversal of a list and the modification of elements.注意后者还能双向遍历，并且可以修改集合元素。
-
-## Collection&Map相关接口、抽象类、实现类
-
-### 接口
-```
-1. collection 
-	list //有序的collection
-	set  //不重复的collection
-		sortedset//有序的set
-2. Map //(unique keys to values)[ map.entry]
-	sortedmap//keys 升序的map
-
-3. Iterator //遍历Collection。注意Map本身不提供Iterator遍历，但是可以获取集合视图进而使用Iterator
-```
-`早期使用Enumeration对Vector、Hashtable进行遍历，1.2之后被Iterator取代`
-
-### 抽象类
-```java
-AbstractCollection  实现大多数的collection接口方法
-	AbstractList 继承自abstractcollection并实现多数List接口
-		AbstractSequentialList 继承自abstractlist提供顺序访问而非随机访问
-	AbstractSet 继承自AbstractCollection  并实现多数set接口
-AbstractMap 实现多数map接口
-```
-### 实现类
-```
-linkedlist是AbstractSequentialList 的实现类，抽象类的实现类。
-
-Arraylist 是 AbstractList.的实现类(Implements a dynamic array by extending AbstractList.)
-
-HashSet是AbstractSet 的实现类，使用的hashmap，组合。
-	linkedhashset是有序的hashset，插入顺序。
-TreeSet 是 AbstractSet 的实现类，使用树结构存储。
-
-HashMap是AbstractMap的实现类，使用哈希存储。
-	linkedhashmap，保持插入顺序的HashMap子类。
-
-Treemap是AbstractMap实现类，使用树存储(java中使用的是红黑树)
-
-IdentityHashMap 是AbstractMap实现类，不同于hashmap的是判等方式，使用引用值是否相等进行判断。
-```
-
-## List各种遍历方式效率比较
-
-Iterable接口是1.5提出的，为了支持foreach循环。
-foreach支持的实现机理
-
-## HashMap和HashTable的扩容
-
-注意HashMap的key到index的映射方法是假定长度为2的x次幂的情况下，所以默认的初始长度是一个2的次方项(16),而且每次的扩容是double，指定初始容量的构造函数中实际会对这个初始值进行处理，得到一个近似的2的次方项。对比地，HashTable没有这种限制，默认初始长度11，扩容利用2*x+1进行计算。扩容会对已有内容进行重新计算，所以扩容实际上是一个比较耗时的操作，于是合适的初始化长度就比较重要，在内存消耗和扩容时间消耗之间进行折衷处理。
-
-## Map小结
-
-Java为数据结构中的映射(字典)定义了一个接口java.util.Map;它有四个实现类,分别是HashMap、Hashtable、LinkedHashMap和TreeMap。HashTable在java1.0中就出现，继承Dictionary抽象类，java1.2提出集合框架后进行了整合，实现Map接口。
-
-Map主要用于存储健值对，根据键得到值，因此不允许键重复(重复即覆盖已有键值),但允许值重复(不同的key可以有相同的value，很好理解)。
-
-Hashmap 是一个最常用的Map接口实现类,用于存储很多的键值对儿，它根据键的hashcode相关值进行key的位置定位,因此根据键key可以直接获取键值对儿位置并获取对应的value，具有O(1)访问速度，遍历时，取得数据的顺序是完全随机的,不一定是插入键值对儿的顺序。 HashMap最多只允许一条记录的键为Null;允许多条记录的值为Null;前面两句比较绕口，就是说hashmap允许空值的出现，key不能重复，自然只能有一个空值key，而value本身可能重复，自然可能有多条记录具的value未空。
-
-HashMap不支持线程的同步，没有对写操作加锁，即任一时刻可以有多个线程同时写HashMap，即可能会导致数据的不一致。如果需要同步，可以用 Collections的synchronizedMap方法使HashMap具有同步的能力，或者使用`ConcurrentHashMap`。
-
-Hashtable与 HashMap类似,它继承自Dictionary抽象类，1.2之后也实现了Map接口。与HashMap不同点:它不允许记录的键或者值为空;它支持线程的同步，即任一时刻只会有一个线程能写Hashtable,因此也导致了Hashtable在写入时效率相比HashMap低一些。
-
-LinkedHashMap是HashMap的一个子类，保存了记录的插入顺序，在用Iterator遍历LinkedHashMap时，先得到的记录肯定是先插入的。在遍历的时候会比HashMap慢，不过有种情况例外，当HashMap容量很大，实际数据较少时，遍历起来可能会比 LinkedHashMap慢，因为`LinkedHashMap的遍历速度只和实际数据有关，和容量无关`，而HashMap的遍历速度和他的容量有关。注意实现机理。
-
-TreeMap实现SortedMap接口，能够把它保存的记录根据键排序,默认是按键值的升序排序，也可以指定排序的比较器，当用Iterator 遍历TreeMap时，得到的记录是排过序的。
-
-一般情况下，我们用的最多的是HashMap,在Map中插入、删除和定位元素，HashMap 是最好的选择。但如果您要按自然顺序或自定义顺序遍历键，那么TreeMap会更好。如果需要输出的顺序和输入的相同,那么用LinkedHashMap 可以实现,它还可以按读取顺序来排列.
-
-## java HashMap关键点分析(1.8版本源码)
-使用开链法存储，链长超出一定范围会进行`树式优化`。因此这里既有散列表的映射、冲突解决、扩充处理、也有二叉树操作(具体分析红黑树、平衡二叉树还是普通二叉搜索树)。小小HashMap内含乾坤，之前没有注意到其中的树操作，是后来引入的？
-
-## HashMap 和 HashTable 对比
-### 相同点
-1. 都是用来存储键值对儿的散列表，设计上都是采用拉链法。
-2. 源码层面都有一个table数组，数组元素为Entry类型对象(各自有一个实现Map.Entry接口的内部类)，每个Entry保存一个键值对key-value，并且引出一个单向的链表用于解决发生在该位置的冲突。
-
-### 不同点
-1. 产生背景和继承结构
-Hashtable 1.0就有，JCF提出后进行了重新设计，继承于Dictionary，实现了Map、Cloneable、java.io.Serializable接口。
-HashMap 提出于1.2，是JCF的一部分，继承于AbstractMap，实现了Map、Cloneable、java.io.Serializable接口。
-
-2. 实现细节不同
-默认初始容量、加载因子、扩容算法、哈希算法等都不同。
-
-冲突处理不同：hashtable比较纯粹，开链法，利用链表存储冲突节点；hashmap会限制链长，链长超限后会进行扩容或者链-树结构优化(Node->TreeNode转化)，链变为红黑树结构。
-(静态内部类TreeNode继承自LinkedHashMap.Entry,有红黑树相关的各种旋转调整操作，源码值得一读)
-
-3. 线程安全不同
-Hashtable产生于1.0,包括同时期的Vector,几乎所有方法都是同步的，即它是线程安全的，支持多线程。
-而HashMap的函数则是非同步的，它不是线程安全的。若要在多线程中使用HashMap，需要我们额外的进行同步处理。 对HashMap的同步处理可以使用Collections类提供的synchronizedMap静态方法，或者直接使用JDK 5.0之后提供的java.util.concurrent包里的ConcurrentHashMap类。
-
-4. 空值处理
-Hashtable的key、value都不可以为null。
-HashMap的key、value都可以为null。
-
-5. 遍历方式
-HashMap只支持Iterator(迭代器)遍历。
-Hashtable支持Iterator(迭代器)和Enumeration(枚举器)两种方式遍历。
-Enumeration 有两个接口方法：hasMoreElements(), nextElement()，不支持修改元素。
-Iterator有hasNext(), next(), remove() 三个API接口。
-
-6. 通过Iterator迭代器遍历时，遍历的顺序不同
-HashMap是“从前向后”的遍历数组；再对数组具体某一项对应的链表，从表头开始进行遍历。
-Hashtabl是“从后往前”的遍历数组；再对数组具体某一项对应的链表，从表头开始进行遍历。
-
-## ConcurrentModificationException
-1. 产生原因：java的fail-fast机制，通过iterator迭代器遍历HashMap的时候，如果通过其他方式修改了容器结构，常见的如调用HashMap的remove函数，然后iterator的next函数就会抛出此异常，这是尽早抛出异常避免非法访问策略，那么遍历的时候如何删除呢，通过iterator提供的remove函数即可。
-
-2. 实现机制：利用modCount和exceptedModCount，通过迭代器操作的时候，加入删除等操作，会同时修改这两个参数，故其保持相等，而通过其他方式操作时，只增加前者数值，使得后者与前者不等，iterator的next等操作会首先检测这两个数值是否相等，不相等就抛出异常。
-
-3. HashMap和HashTable遍历过程删除元素：如前所述，HashMap用iterator的remove可以删除，对于hashtable而言，遍历方式可以通过迭代器或者枚举器，通过迭代器的方式和hashmap分析思路一致，通过枚举的话则不可以，首先使用remove函数的时候会抛出unsupportedException，枚举智能遍历不支持删除，通过HashTable的remove后，继续访问比会引发并发改变异常。
-
-4. 这些异常出现在迭代器遍历过程中集合结果变化时，通过多个迭代器遍历也可能引发此异常，思路一致，有一些改进的集合对这些会进行处理，也势必对性能有一定影响。
-
-## java LinkedList 解析
-http://www.cnblogs.com/skywang12345/p/3308807.html
-
-1. 内部实现是双向链表，可以当做队列或者栈，有队列或者栈相关的等效方法addFirst、addLast、getFirst、getLast、removeFirst、removeLast。
-
-2. 随机访问接口get(int index)会调用entry(int index)，根据index和长度决定从后面还是前面开始找(利用双向链表的优势)。
-
-## Java集合
-### 常用集合类继承结构 
-```
-Collection<--List<--Vector 
-Collection<--List<--ArrayList 
-Collection<--List<--LinkedList 
-Collection<--Set<--HashSet 
-Collection<--Set<--HashSet<--LinkedHashSet 
-Collection<--Set<--SortedSet<--TreeSet 
-Map<--SortedMap<--TreeMap 
-Map<--HashMap 
-HashTable
-```
-### Vector、ArrayList和LinkedList使用场景比较
-都会对基本数据类型进行包装，大多数情况下，从性能上来说ArrayList最好，但是当集合内的元素需要频繁插入、删除时LinkedList会有比较好的表现，但是它们三个性能都比不上数组，另外Vector是线程同步的。所以： 
-
-
-1. 如果能用数组的时候(元素类型固定，数组长度固定)，请尽量使用数组来代替List； 
-2. 如果没有频繁的删除插入操作，又不用考虑多线程问题，优先选择ArrayList； 
-3. 如果在多线程条件下使用，可以考虑Vector； 
-4. 如果需要频繁地删除插入，LinkedList就有了用武之地； 
-5. 如果你什么都不知道，用ArrayList没错。 
-
-### HashTable、HashMap、HashSet使用场景比较
-1. hashtable线程安全，key和value都非空
-2. hashmap单线程，可空key和空value
-
-### 线程安全
-和Vector不同，ArrayList中的操作不是线程安全的！所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。但和HashMap相比，Hashtable是线程安全的，而且它支持通过Enumeration去遍历。
-
-### 面向接口编程思想
-利用抽象编程我们返回一个接口，用接口控制，以后根据需要可以改变具体实现类而不需要改变客户端代码。
-
-## Java基本数据类型
-整数都是有符号数：
-
-    byte, 8 bit
-    short, 16 bit
-    int, 32 bit
-    long, 64 bit
-    float,32bit
-    double,64bit
-    char, 16bit
-    boolean，不明确，跟实现有关。
-
-Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
-
-## JCF & Arrays
-Arrays提供了对基本数据类型和对象对类型数组的一些操作，比如排序、查找、拷贝等工作。
-Collections提供对List的一些操作，底层还是调用了Arrays相关方法。另外Collections提供封装其功能，可以把一个集合(List或者Map类)转换成特殊的集合，使得其具有只读或者同步属性。
- 
-1. binarySearch：二分查找 
-2. sort：排序，这里是一种类似于快速排序的方法，不同版本源码方法有所不同，复杂度O(n * log n)，注意这里的排序是`稳定的`stable。
-3. reverse：将线性表进行逆序操作。
-4. rotate：以某个元素为轴心将线性表“旋转”。 
-5. swap：交换一个线性表中两个元素的位置。 
-6. unmodifiableXXX：转换成只读集合，这里XXX代表六种基本集合接口：Collection、List、Map、Set、SortedMap和SortedSet。如果你对只读集合进行插入删除操作，将会抛出UnsupportedOperationException异常。 
-7. synchronizedXXX：转换成同步集合。 
-8. singleton：创建一个仅有一个元素的集合，这里singleton生成的是单元素Set， 
-singletonList和singletonMap分别生成单元素的List和Map。 
-8. 空集：由Collections的静态属性EMPTY_SET、EMPTY_LIST和EMPTY_MAP表示
-
-## 比较类集和数组
-1. Collection包含了更多的结构，更多的操作，Collections也提供更为丰富的方法。
-2. LinkedList和ArrayList 与数组(链表)比较，容器动态增长，数组固定大小。
-
-##toarray & aslist方法
-
-1. Arrays.asList(T...)方法对于传入的数组生成一个对应的固定长度的ArrayList，原数组和这个新的list共同引用对象，而且这个ArrayList是固定长度不可改变的，是Arrays$ArrayList,一个静态内部类。
-
-2. Collections.toArray最终调用的是Collection.toArray,而Collection的toArray要看实现类具体实现的情况。
-Object[] toArray()和Object[] toArray(T[]a)接口定义进行了实现细节的约束说明，应当进行深度拷贝，不传参的调用直接生成新的数组返回，传参的调用根据参数数组大小决定是否生成新数组。具体以ArrayList为例，其toArray实现的时候使用了Arrays.copyOf方法，最终会使用System.arrayCopy方法进行一组对象的拷贝。
-
-
-## String&StringBuffer&StringBuilder
-http://blog.csdn.net/zlts000/article/details/44677933
-http://blog.csdn.net/rmn190/article/details/1492013
-
-
-StringBuffer-线程安全-长度可变 append和insert操作
-StringBuilder-非线程安全-长度可变
-`那么String的操作线程安全吗？`安全的，属于内容不可变类。
-
-String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
-
-## java hashcode()
-http://en.wikipedia.org/wiki/Java_hashCode()
-http://my.oschina.net/chihz/blog/56256
-
-## hashcode再次研究 搜索 “高效地hashmap”
-http://blog.23lab.com/blog/2013/10/31/cong-hashcodetan-qi/
-
-eclipse中有自动生成hashCode和equals方法的功能 ，其方法是effective java中提出的方法。
-Object的hashCode()方法其实就是根据对象的物理地址生成的hash值，Object的equals方法默认是判断物理地址是否相等(this==obj)。Object的hashCode方法是native的。
-
-## hash算法散列实现，各种方法
-http://blog.csdn.net/jnu_simba/article/details/9631445
-31*m+n  31 乘法可以转换成 左移5次减1
-冲突处理链地址(拉链法)http://blog.csdn.net/jnu_simba/article/details/9632675
-冲突处理开地址法(线性探测再散列) http://blog.csdn.net/jnu_simba/article/details/9664053  H0=Hash(x) Hi= (H0+di)%m
-冲突处理开地址法(二次探测再散列)http://blog.csdn.net/jnu_simba/article/details/9668369   H0=Hash(x) Hi= (H0+/- i^2)%m    m表大小 4k+3质数
-
-## 十种排序比较
-http://blog.csdn.net/jnu_simba/article/details/9705111
-
-## C++常见数据结构以及算法
-http://blog.csdn.net/jnu_simba
-
-## java强弱引用介绍
-http://blog.csdn.net/mazhimazh/article/details/19752475
-
-强>软>弱>虚
-## java-树相关数据结构
-树 二叉树 完全二叉树 满二叉树 二叉搜索树 红黑树 字典树
-
-### BST概念
-Binary search trees are a fundamental data structure used to construct more abstract data structures such as sets, multisets, and associative arrays。
-
-### Java-TreeMap
-1. TreeMap基于红黑树（Red-Black tree）实现。该映射根据其键的自然顺序进行排序，或者根据创建映射时提供的 Comparator 进行排序，具体取决于使用的构造方法。
-2. TreeMap的基本操作 containsKey、get、put 和 remove 的时间复杂度是 log(n) 。
-另外，TreeMap是非同步的。 它的iterator 方法返回的迭代器是fail-fast的。
-
-### 红黑树VS二叉排序树
-1. 首先红黑树是改进的二叉排序树
-2. 避免不平衡导致退化成链表的情况
-
-### 红黑树
-1. 红黑树的应用比较广泛，主要是用它来存储有序的数据，它的时间复杂度是O(lgn)，效率非常之高。
-例如，Java集合中的TreeSet和TreeMap，C++ STL中的set、map，以及Linux虚拟内存的管理，都是通过红黑树去实现的。
-
-2. 对于Java-TreeMap 而言，由于它底层采用一棵“红黑树”来保存集合中的 Entry，这意味这 TreeMap 添加元素、取出元素的性能都比 HashMap 低（红黑树和Hash数据结构上的区别）：当 TreeMap 添加元素时，需要通过循环找到新增 Entry 的插入位置，因此比较耗性能；当从 TreeMap 中取出元素时，需要通过循环才能找到合适的 Entry，也比较耗性能。但 TreeMap、TreeSet 比 HashMap、HashSet 的优势在于：TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
-
-3. 为什么TreeMap采用红黑树而不是二叉查找树？
-最坏的情况下：如果插入的节点集本身就是有序的，要么是由小到大排列，要么是由大到小排列，那么最后得到的排序二叉树将变成链表：所有节点只有左节点（如果插入节点集本身是大到小排列）；或所有节点只有右节点（如果插入节点集本身是小到大排列）。在这种情况下，排序二叉树就变成了普通链表，其检索效率就会很差。为了改变排序二叉树存在的不足，Rudolf Bayer 与 1972 年发明了另一种改进后的排序二叉树：红黑树，他将这种排序二叉树称为“对称二叉 B 树”，而红黑树这个名字则由 Leo J. Guibas 和 Robert Sedgewick 于 1978 年首次提出。红黑树是一个更高效的检索二叉树，因此常常用来实现关联数组。典型地，JDK 提供的集合类 TreeMap 本身就是一个红黑树的实现。
-
-4. 红黑树在原有的排序二叉树增加了如下几个要求：
-```
-性质 1：每个节点要么是红色，要么是黑色。
-性质 2：根节点永远是黑色的。
-性质 3：所有的叶节点都是空节点（即 null），并且是黑色的。
-性质 4：每个红色节点的两个子节点都是黑色。（从每个叶子到根的路径上不会有两个连续的红色节点）
-性质 5：从任一节点到其子树中每个叶子节点的路径都包含相同数量的黑色节点。
-{
-Java 实现的红黑树
-上面的性质 3 中指定红黑树的每个叶子节点都是空节点，而且并叶子节点都是黑色。但 Java 实现的红黑树将使用 null 来代表空节点，因此遍历红黑树时将看不到黑色的叶子节点，反而看到每个叶子节点都是红色的。
-}
-```
-红黑树通过上面这种限制来保证它大致是平衡的——因为红黑树的高度不会无限增高，这样保证红黑树在最坏情况下都是高效的，不会出现普通排序二叉树的情况。
-由于红黑树只是一个特殊的排序二叉树，因此对红黑树上的只读操作与普通排序二叉树上的只读操作完全相同，只是红黑树保持了大致平衡，因此检索性能比排序二叉树要好很多。
-但在红黑树上进行插入操作和删除操作会导致树不再符合红黑树的特征，因此插入操作和删除操作都需要进行一定的维护，以保证插入节点、删除节点后的树依然是红黑树。二叉查找树(二叉排序树)中我们对元素删除和插入花费时间为O(h)，而在红黑树中却为O(lgn)，这是因为在经过二叉查找树的那些操作后，红黑树为了保证其特有性质必须进行树的旋转。
-
-## TreeMap、TreeSet 对比 HashMap、HashSet的优缺点？
-缺点：
-    对于 TreeMap 而言，由于它底层采用一棵“红黑树”来保存集合中的 Entry，这意味这 TreeMap 添加元素、取出元素的性能都比 HashMap （O(1)）低；当 TreeMap 添加元素时，需要通过循环找到新增 Entry 的插入位置，因此比较耗性能（O(logN)）。当从 TreeMap 中取出元素时，需要通过循环才能找到合适的 Entry，也比较耗性能（O(logN)）
-优点：
-    TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
-
-
-# 面向对象相关知识
+# 面向对象相关知识2
 
 ## 内部类以及静态内部类
 1. 嵌套类是定义在另一个类内部的类。内部类(inner class)是非静态的嵌套类(An inner class is a nested class that is not explicitly or implicitly declared static)
@@ -667,7 +290,388 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-8.html#jls-8.4.8.2
 
 `很多细节可能对我们的实际应用关系不大，我们掌握常用的概念即可进行编码工作，我们也应尽量避免易混淆场景，除非真的需要如此。另外我们应结合源码去验证、学习这些概念，去判定哪些知识点是常用的、实用的，而不是孤立地记住他们，更深一步我们可以去了解语言的这些规范是如何实现的，结合jvm的相关知识，最后我们如果能去思考语言设计通用性的一些理念，那就妙不可言了。`
 
-## jdk源码中的设计模式
+
+# Java集合内容1
+
+## JCF之前的各种容器类
+查看源码会看到Collection和Map接口是在1.2之后加入的。那么由他们引申来的XXList、XXMap在1.2之前是没有的。java2提出JCF-集合框架(java collection framework)。
+
+1.0中相关的集合或者列表功能的类(即对数据结构中的线性表、栈、树、图、哈希表等的一些实现或者基础支持)
+
+    Vector
+    Stack
+    HashTable->Dictionary
+
+1. Vector实现一个动态的数组，和Arraylist类似，不同之处在于vector是线程安全的，方法都是同步的，synchronized；其次vector有很多旧方法legacy methods，而这些旧接口不属于collections framework(arraylist是集合框架下的一个具体实类)。
+
+2. Stack是vector的子类，一个后进先出的vector，只提供一个默认构造函数，除了vector的方法外，添加了一些特有方法，pop、push、peek等。peek是查看栈顶元素但不弹出，pop则是返回栈顶元素，并弹出。
+
+3. Dictionary是一个抽象类，类似于map接口的功能。目前被标记为过时的。
+
+    The Dictionary class is obsolete. You should implement the Map interface to obtain key/value storage functionality.
+
+4. Hashtable是Dictionary的具体实现类，早期java.util的一部分。java2提出集合框架后，进行整合，1.2源码可以看到它继承Dictionary并实现了map接口。
+
+    Hashtable was part of the original java.util and is a concrete implementation of a Dictionary.
+
+总结：有时候接口或者抽象类去实现或者继承，不一定真的需要进行关联，而是为了进行概念和逻辑上的一个统一，比如后期的延伸需要与前期版本进行兼容，实际上两者可能并不需要继承或实现关系。
+
+    However, Java 2 re-engineered Hashtable so that it also implements the Map interface. Thus, Hashtable is now integrated into the collections framework. It is similar to HashMap, but is synchronized.
+
+早期的容器都是同步的，集合框架中很多不是线程同步的，这样设计的一个原因是多数情况下不需要去进行线程同步，因此一定程度上提高集合效率，另一方面集合也提供了对应的同步版本或者说支持并发的集合版本。
+
+## JCF相关接口、抽象类、实现类
+
+### 接口
+```
+1. collection 
+	list //有序的collection
+	set  //不重复的collection
+		sortedset//有序的set
+2. Map //(unique keys to values)[ map.entry]
+	sortedmap//keys 升序的map
+
+3. Iterator //遍历Collection。注意Map本身不提供Iterator遍历，但是可以获取集合视图进而使用Iterator
+```
+`早期使用Enumeration对Vector、Hashtable进行遍历，1.2之后被Iterator取代`
+
+### 抽象类
+```java
+AbstractCollection  实现大多数的collection接口方法
+	AbstractList 继承自abstractcollection并实现多数List接口
+		AbstractSequentialList 继承自abstractlist提供顺序访问而非随机访问
+	AbstractSet 继承自AbstractCollection  并实现多数set接口
+AbstractMap 实现多数map接口
+```
+### 实现类
+```
+linkedlist是AbstractSequentialList 的实现类，抽象类的实现类。
+
+Arraylist 是 AbstractList.的实现类(Implements a dynamic array by extending AbstractList.)
+
+HashSet是AbstractSet 的实现类，使用的hashmap，组合。
+	linkedhashset是有序的hashset，插入顺序。
+TreeSet 是 AbstractSet 的实现类，使用树结构存储。
+
+HashMap是AbstractMap的实现类，使用哈希存储。
+	linkedhashmap，保持插入顺序的HashMap子类。
+
+Treemap是AbstractMap实现类，使用树存储(java中使用的是红黑树)
+
+IdentityHashMap 是AbstractMap实现类，不同于hashmap的是判等方式，使用引用值是否相等进行判断。
+```
+
+## 容器和集合的扩容
+
+1. Hashtable会有一个装载因子，比如容量达到一定界限(比例)会进行扩容，map类型也是如此；
+
+2. Hashtable默认装载因子是0.75，默认的容量大小是11；每次扩容将容量变为“原始容量x2 + 1”。
+
+3. HashMap默认的“加载因子”是0.75, 默认的容量大小是16，每次扩容将容量变为“原始容量x2”。HashMap其中哈希算法是假定表长为2的整数次幂。
+
+4. HashMap和HashMap扩容发生的条件：当前存储数目 >= 阈值按照扩容算法进行扩容，其中阈值 = 总的容量 * 加载因子。扩容后会已有所有元素重新进行散列存储。
+
+5. Vector有一个增加值，满了之后重新申请空间，原空间加上增加值是新的空间的大小(增加值不为0的情况下，直接变为原来的两倍)，得到的新值再和实际所需空间比较，还不够，则用实际所需空间作为新的空间大小去申请。会和一个max比较，是否oom。
+
+6. 对于Collection集合实现类比如ArrayList，则是默认加上自身空间的一半，也就是1.5倍扩容，不够的话使用实际所需空间去申请。会和一个max比较，是否oom。
+
+## HashMap和HashTable的扩容
+
+注意HashMap的key到index的映射方法是假定长度为2的x次幂的情况下，所以默认的初始长度是一个2的次方项(16),而且每次的扩容是double，指定初始容量的构造函数中实际会对这个初始值进行处理，得到一个近似的2的次方项。对比地，HashTable没有这种限制，默认初始长度11，扩容利用2*x+1进行计算。扩容会对已有内容进行重新计算，所以扩容实际上是一个比较耗时的操作，于是合适的初始化长度就比较重要，在内存消耗和扩容时间消耗之间进行折衷处理。
+
+## Properties
+Properties是hashtable的一个子类，额外添加一些方法，比如从文件读取以及写入文件。
+
+    Properties is a subclass of Hashtable. It is used to maintain lists of values in which the key is a String and the value is also a String.
+
+## BitSet
+BitSet的提出since1.0，后来进行了重新设计。
+位运算对应集合运算，and、or、xor ->  求交、求和、求两个差集的和。
+
+    This is a legacy class but it has been completely re-engineered in Java 2, version 1.4.
+
+## identityhashmap
+区别于hashmap的是其判断相等的方法，判断引用值等而不在乎具体对象内容。
+
+    This class implements AbstractMap. It is similar to HashMap except that it uses reference equality when comparing the elements.
+
+几个例子很清晰
+http://blog.csdn.net/stoneok07/article/details/7262676
+
+
+## 集合遍历和排序
+
+1. 遍历集合 iterator
+2. 集合排序 comparator
+
+    Iterator enables you to cycle through a collection, obtaining or removing elements. ListIterator extends Iterator to allow bidirectional traversal of a list and the modification of elements.注意后者还能双向遍历，并且可以修改集合元素。
+3. listiterator，除了向后遍历next还能够利用previous向前遍历。
+
+## List各种遍历方式效率比较
+
+Iterable接口是1.5提出的，为了支持foreach循环。
+`foreach支持的实现机理`。
+
+## Arrays.sort方法解析
+
+1. primitive->quicksort
+
+2. Object->mergesort(可以传入comparator，不传入则null，必须是可比较对象 comparable)
+
+3. 长度<7使用insertation sort
+
+4. 注意归并的时候src和dest的来回复用，以及归并合并时的优化(提前判断是否已经有序)
+
+这里涉及到很多排序的方法，不同jdk版本的实现也会有差异。
+
+## Collections.sort方法解析
+
+1. 最终调用Arrays的sort（object）方法；
+
+2. 也可以传入比较器；
+
+
+# Java集合内容2
+
+## Java集合
+### 常用集合类继承结构 
+```
+Collection<--List<--Vector 
+Collection<--List<--ArrayList 
+Collection<--List<--LinkedList 
+Collection<--Set<--HashSet 
+Collection<--Set<--HashSet<--LinkedHashSet 
+Collection<--Set<--SortedSet<--TreeSet 
+Map<--SortedMap<--TreeMap 
+Map<--HashMap 
+HashTable
+```
+### Vector、ArrayList和LinkedList使用场景比较
+都会对基本数据类型进行包装，大多数情况下，从性能上来说ArrayList最好，但是当集合内的元素需要频繁插入、删除时LinkedList会有比较好的表现，但是它们三个性能都比不上数组，另外Vector是线程同步的。所以： 
+
+
+1. 如果能用数组的时候(元素类型固定，数组长度固定)，请尽量使用数组来代替List； 
+2. 如果没有频繁的删除插入操作，又不用考虑多线程问题，优先选择ArrayList； 
+3. 如果在多线程条件下使用，可以考虑Vector； 
+4. 如果需要频繁地删除插入，LinkedList就有了用武之地； 
+5. 如果你什么都不知道，用ArrayList没错。 
+
+### HashTable、HashMap、HashSet使用场景比较
+1. hashtable线程安全，key和value都非空
+2. hashmap单线程，可空key和空value
+
+### 线程安全
+和Vector不同，ArrayList中的操作不是线程安全的！所以，建议在单线程中才使用ArrayList，而在多线程中可以选择Vector或者CopyOnWriteArrayList。但和HashMap相比，Hashtable是线程安全的，而且它支持通过Enumeration去遍历。
+
+### 面向接口编程思想
+利用抽象编程我们返回一个接口，用接口控制，以后根据需要可以改变具体实现类而不需要改变客户端代码。
+
+## Map小结
+
+Java为数据结构中的映射(字典)定义了一个接口java.util.Map;它有四个实现类,分别是HashMap、Hashtable、LinkedHashMap和TreeMap。HashTable在java1.0中就出现，继承Dictionary抽象类，java1.2提出集合框架后进行了整合，实现Map接口。
+
+Map主要用于存储健值对，根据键得到值，因此不允许键重复(重复即覆盖已有键值),但允许值重复(不同的key可以有相同的value，很好理解)。
+
+Hashmap 是一个最常用的Map接口实现类,用于存储很多的键值对儿，它根据键的hashcode相关值进行key的位置定位,因此根据键key可以直接获取键值对儿位置并获取对应的value，具有O(1)访问速度，遍历时，取得数据的顺序是完全随机的,不一定是插入键值对儿的顺序。 HashMap最多只允许一条记录的键为Null;允许多条记录的值为Null;前面两句比较绕口，就是说hashmap允许空值的出现，key不能重复，自然只能有一个空值key，而value本身可能重复，自然可能有多条记录具的value未空。
+
+HashMap不支持线程的同步，没有对写操作加锁，即任一时刻可以有多个线程同时写HashMap，即可能会导致数据的不一致。如果需要同步，可以用 Collections的synchronizedMap方法使HashMap具有同步的能力，或者使用`ConcurrentHashMap`。
+
+Hashtable与 HashMap类似,它继承自Dictionary抽象类，1.2之后也实现了Map接口。与HashMap不同点:它不允许记录的键或者值为空;它支持线程的同步，即任一时刻只会有一个线程能写Hashtable,因此也导致了Hashtable在写入时效率相比HashMap低一些。
+
+LinkedHashMap是HashMap的一个子类，保存了记录的插入顺序，在用Iterator遍历LinkedHashMap时，先得到的记录肯定是先插入的。在遍历的时候会比HashMap慢，不过有种情况例外，当HashMap容量很大，实际数据较少时，遍历起来可能会比 LinkedHashMap慢，因为`LinkedHashMap的遍历速度只和实际数据有关，和容量无关`，而HashMap的遍历速度和他的容量有关。注意实现机理。
+
+TreeMap实现SortedMap接口，能够把它保存的记录根据键排序,默认是按键值的升序排序，也可以指定排序的比较器，当用Iterator 遍历TreeMap时，得到的记录是排过序的。
+
+一般情况下，我们用的最多的是HashMap,在Map中插入、删除和定位元素，HashMap 是最好的选择。但如果您要按自然顺序或自定义顺序遍历键，那么TreeMap会更好。如果需要输出的顺序和输入的相同,那么用LinkedHashMap 可以实现,它还可以按读取顺序来排列.
+
+## java HashMap关键点分析(1.8版本源码)
+使用开链法存储，链长超出一定范围会进行`树式优化`。因此这里既有散列表的映射、冲突解决、扩充处理、也有二叉树操作(具体分析红黑树、平衡二叉树还是普通二叉搜索树)。小小HashMap内含乾坤，之前没有注意到其中的树操作，是后来引入的？
+
+## HashMap 和 HashTable 对比
+### 相同点
+1. 都是用来存储键值对儿的散列表，设计上都是采用拉链法。
+2. 源码层面都有一个table数组，数组元素为Entry类型对象(各自有一个实现Map.Entry接口的内部类)，每个Entry保存一个键值对key-value，并且引出一个单向的链表用于解决发生在该位置的冲突。
+
+### 不同点
+1. 产生背景和继承结构
+Hashtable 1.0就有，JCF提出后进行了重新设计，继承于Dictionary，实现了Map、Cloneable、java.io.Serializable接口。
+HashMap 提出于1.2，是JCF的一部分，继承于AbstractMap，实现了Map、Cloneable、java.io.Serializable接口。
+
+2. 实现细节不同
+默认初始容量、加载因子、扩容算法、哈希算法等都不同。
+
+冲突处理不同：hashtable比较纯粹，开链法，利用链表存储冲突节点；hashmap会限制链长，链长超限后会进行扩容或者链-树结构优化(Node->TreeNode转化)，链变为红黑树结构。
+(静态内部类TreeNode继承自LinkedHashMap.Entry,有红黑树相关的各种旋转调整操作，源码值得一读)
+
+3. 线程安全不同
+Hashtable产生于1.0,包括同时期的Vector,几乎所有方法都是同步的，即它是线程安全的，支持多线程。
+而HashMap的函数则是非同步的，它不是线程安全的。若要在多线程中使用HashMap，需要我们额外的进行同步处理。 对HashMap的同步处理可以使用Collections类提供的synchronizedMap静态方法，或者直接使用JDK 5.0之后提供的java.util.concurrent包里的ConcurrentHashMap类。
+
+4. 空值处理
+Hashtable的key、value都不可以为null。
+HashMap的key、value都可以为null。
+
+5. 遍历方式
+HashMap只支持Iterator(迭代器)遍历。
+Hashtable支持Iterator(迭代器)和Enumeration(枚举器)两种方式遍历。
+Enumeration 有两个接口方法：hasMoreElements(), nextElement()，不支持修改元素。
+Iterator有hasNext(), next(), remove() 三个API接口。
+
+6. 通过Iterator迭代器遍历时，遍历的顺序不同
+HashMap是“从前向后”的遍历数组；再对数组具体某一项对应的链表，从表头开始进行遍历。
+Hashtabl是“从后往前”的遍历数组；再对数组具体某一项对应的链表，从表头开始进行遍历。
+
+## ConcurrentModificationException
+1. 产生原因：java的fail-fast机制，通过iterator迭代器遍历HashMap的时候，如果通过其他方式修改了容器结构，常见的如调用HashMap的remove函数，然后iterator的next函数就会抛出此异常，这是尽早抛出异常避免非法访问策略，那么遍历的时候如何删除呢，通过iterator提供的remove函数即可。
+
+2. 实现机制：利用modCount和exceptedModCount，通过迭代器操作的时候，加入删除等操作，会同时修改这两个参数，故其保持相等，而通过其他方式操作时，只增加前者数值，使得后者与前者不等，iterator的next等操作会首先检测这两个数值是否相等，不相等就抛出异常。
+
+3. HashMap和HashTable遍历过程删除元素：如前所述，HashMap用iterator的remove可以删除，对于hashtable而言，遍历方式可以通过迭代器或者枚举器，通过迭代器的方式和hashmap分析思路一致，通过枚举的话则不可以，首先使用remove函数的时候会抛出unsupportedException，枚举智能遍历不支持删除，通过HashTable的remove后，继续访问比会引发并发改变异常。
+
+4. 这些异常出现在迭代器遍历过程中集合结果变化时，通过多个迭代器遍历也可能引发此异常，思路一致，有一些改进的集合对这些会进行处理，也势必对性能有一定影响。
+
+## java LinkedList 解析
+http://www.cnblogs.com/skywang12345/p/3308807.html
+
+1. 内部实现是双向链表，可以当做队列或者栈，有队列或者栈相关的等效方法addFirst、addLast、getFirst、getLast、removeFirst、removeLast。
+
+2. 随机访问接口get(int index)会调用entry(int index)，根据index和长度决定从后面还是前面开始找(利用双向链表的优势)。
+
+## JCF & Arrays
+Arrays提供了对基本数据类型和对象对类型数组的一些操作，比如排序、查找、拷贝等工作。
+Collections提供对List的一些操作，底层还是调用了Arrays相关方法。另外Collections提供封装其功能，可以把一个集合(List或者Map类)转换成特殊的集合，使得其具有只读或者同步属性。
+ 
+1. binarySearch：二分查找 
+2. sort：排序，这里是一种类似于快速排序的方法，不同版本源码方法有所不同，复杂度O(n * log n)，注意这里的排序是`稳定的`stable。
+3. reverse：将线性表进行逆序操作。
+4. rotate：以某个元素为轴心将线性表“旋转”。 
+5. swap：交换一个线性表中两个元素的位置。 
+6. unmodifiableXXX：转换成只读集合，这里XXX代表六种基本集合接口：Collection、List、Map、Set、SortedMap和SortedSet。如果你对只读集合进行插入删除操作，将会抛出UnsupportedOperationException异常。 
+7. synchronizedXXX：转换成同步集合。 
+8. singleton：创建一个仅有一个元素的集合，这里singleton生成的是单元素Set， 
+singletonList和singletonMap分别生成单元素的List和Map。 
+8. 空集：由Collections的静态属性EMPTY_SET、EMPTY_LIST和EMPTY_MAP表示
+
+## 比较类集和数组
+1. Collection包含了更多的结构，更多的操作，Collections也提供更为丰富的方法。
+2. LinkedList和ArrayList 与数组(链表)比较，容器动态增长，数组固定大小。
+
+## toarray & aslist方法
+
+1. Arrays.asList(T...)方法对于传入的数组生成一个对应的固定长度的ArrayList，原数组和这个新的list共同引用对象，而且这个ArrayList是固定长度不可改变的，是Arrays$ArrayList,一个静态内部类。
+
+2. Collections.toArray最终调用的是Collection.toArray,而Collection的toArray要看实现类具体实现的情况。
+Object[] toArray()和Object[] toArray(T[]a)接口定义进行了实现细节的约束说明，应当进行深度拷贝，不传参的调用直接生成新的数组返回，传参的调用根据参数数组大小决定是否生成新数组。具体以ArrayList为例，其toArray实现的时候使用了Arrays.copyOf方法，最终会使用System.arrayCopy方法进行一组对象的拷贝。
+
+
+## java-树相关数据结构
+树 二叉树 完全二叉树 满二叉树 二叉搜索树 红黑树 字典树
+
+### BST概念
+Binary search trees are a fundamental data structure used to construct more abstract data structures such as sets, multisets, and associative arrays。
+
+### Java-TreeMap
+1. TreeMap基于红黑树（Red-Black tree）实现。该映射根据其键的自然顺序进行排序，或者根据创建映射时提供的 Comparator 进行排序，具体取决于使用的构造方法。
+2. TreeMap的基本操作 containsKey、get、put 和 remove 的时间复杂度是 log(n) 。
+另外，TreeMap是非同步的。 它的iterator 方法返回的迭代器是fail-fast的。
+
+### 红黑树VS二叉排序树
+1. 首先红黑树是改进的二叉排序树
+2. 避免不平衡导致退化成链表的情况
+
+### 红黑树
+1. 红黑树的应用比较广泛，主要是用它来存储有序的数据，它的时间复杂度是O(lgn)，效率非常之高。
+例如，Java集合中的TreeSet和TreeMap，C++ STL中的set、map，以及Linux虚拟内存的管理，都是通过红黑树去实现的。
+
+2. 对于Java-TreeMap 而言，由于它底层采用一棵“红黑树”来保存集合中的 Entry，这意味这 TreeMap 添加元素、取出元素的性能都比 HashMap 低（红黑树和Hash数据结构上的区别）：当 TreeMap 添加元素时，需要通过循环找到新增 Entry 的插入位置，因此比较耗性能；当从 TreeMap 中取出元素时，需要通过循环才能找到合适的 Entry，也比较耗性能。但 TreeMap、TreeSet 比 HashMap、HashSet 的优势在于：TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
+
+3. 为什么TreeMap采用红黑树而不是二叉查找树？
+最坏的情况下：如果插入的节点集本身就是有序的，要么是由小到大排列，要么是由大到小排列，那么最后得到的排序二叉树将变成链表：所有节点只有左节点（如果插入节点集本身是大到小排列）；或所有节点只有右节点（如果插入节点集本身是小到大排列）。在这种情况下，排序二叉树就变成了普通链表，其检索效率就会很差。为了改变排序二叉树存在的不足，Rudolf Bayer 与 1972 年发明了另一种改进后的排序二叉树：红黑树，他将这种排序二叉树称为“对称二叉 B 树”，而红黑树这个名字则由 Leo J. Guibas 和 Robert Sedgewick 于 1978 年首次提出。红黑树是一个更高效的检索二叉树，因此常常用来实现关联数组。典型地，JDK 提供的集合类 TreeMap 本身就是一个红黑树的实现。
+
+4. 红黑树在原有的排序二叉树增加了如下几个要求：
+```
+性质 1：每个节点要么是红色，要么是黑色。
+性质 2：根节点永远是黑色的。
+性质 3：所有的叶节点都是空节点（即 null），并且是黑色的。
+性质 4：每个红色节点的两个子节点都是黑色。（从每个叶子到根的路径上不会有两个连续的红色节点）
+性质 5：从任一节点到其子树中每个叶子节点的路径都包含相同数量的黑色节点。
+{
+Java 实现的红黑树
+上面的性质 3 中指定红黑树的每个叶子节点都是空节点，而且并叶子节点都是黑色。但 Java 实现的红黑树将使用 null 来代表空节点，因此遍历红黑树时将看不到黑色的叶子节点，反而看到每个叶子节点都是红色的。
+}
+```
+红黑树通过上面这种限制来保证它大致是平衡的——因为红黑树的高度不会无限增高，这样保证红黑树在最坏情况下都是高效的，不会出现普通排序二叉树的情况。
+由于红黑树只是一个特殊的排序二叉树，因此对红黑树上的只读操作与普通排序二叉树上的只读操作完全相同，只是红黑树保持了大致平衡，因此检索性能比排序二叉树要好很多。
+但在红黑树上进行插入操作和删除操作会导致树不再符合红黑树的特征，因此插入操作和删除操作都需要进行一定的维护，以保证插入节点、删除节点后的树依然是红黑树。二叉查找树(二叉排序树)中我们对元素删除和插入花费时间为O(h)，而在红黑树中却为O(lgn)，这是因为在经过二叉查找树的那些操作后，红黑树为了保证其特有性质必须进行树的旋转。
+
+## TreeMap、TreeSet 对比 HashMap、HashSet的优缺点
+缺点：
+    对于 TreeMap 而言，由于它底层采用一棵“红黑树”来保存集合中的 Entry，这意味这 TreeMap 添加元素、取出元素的性能都比 HashMap （O(1)）低；当 TreeMap 添加元素时，需要通过循环找到新增 Entry 的插入位置，因此比较耗性能（O(logN)）。当从 TreeMap 中取出元素时，需要通过循环才能找到合适的 Entry，也比较耗性能（O(logN)）
+优点：
+    TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
+
+
+# jdk源码中的设计模式
+
+# 其他
+
+## Java基本数据类型
+整数都是有符号数：
+
+    byte, 8 bit
+    short, 16 bit
+    int, 32 bit
+    long, 64 bit
+    float,32bit
+    double,64bit
+    char, 16bit
+    boolean，不明确，跟实现有关。
+
+Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
+
+## String、StringBuilder、StringBuffer
+1. String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
+2. StringBuffer线程安全效率也就会低一些。 
+3. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
+
+## String&StringBuffer&StringBuilder
+http://blog.csdn.net/zlts000/article/details/44677933
+http://blog.csdn.net/rmn190/article/details/1492013
+
+
+StringBuffer-线程安全-长度可变 append和insert操作
+StringBuilder-非线程安全-长度可变
+`那么String的操作线程安全吗？`安全的，属于内容不可变类。
+
+String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
+
+## java hashcode()
+http://en.wikipedia.org/wiki/Java_hashCode()
+http://my.oschina.net/chihz/blog/56256
+
+## hashcode再次研究 搜索 “高效地hashmap”
+http://blog.23lab.com/blog/2013/10/31/cong-hashcodetan-qi/
+
+eclipse中有自动生成hashCode和equals方法的功能 ，其方法是effective java中提出的方法。
+Object的hashCode()方法其实就是根据对象的物理地址生成的hash值，Object的equals方法默认是判断物理地址是否相等(this==obj)。Object的hashCode方法是native的。
+
+## hash算法散列实现，各种方法
+http://blog.csdn.net/jnu_simba/article/details/9631445
+31*m+n  31 乘法可以转换成 左移5次减1
+冲突处理链地址(拉链法)http://blog.csdn.net/jnu_simba/article/details/9632675
+冲突处理开地址法(线性探测再散列) http://blog.csdn.net/jnu_simba/article/details/9664053  H0=Hash(x) Hi= (H0+di)%m
+冲突处理开地址法(二次探测再散列)http://blog.csdn.net/jnu_simba/article/details/9668369   H0=Hash(x) Hi= (H0+/- i^2)%m    m表大小 4k+3质数
+
+## 十种排序比较
+http://blog.csdn.net/jnu_simba/article/details/9705111
+
+## C++常见数据结构以及算法
+http://blog.csdn.net/jnu_simba
+
+## java强弱引用介绍
+http://blog.csdn.net/mazhimazh/article/details/19752475
+
+强>软>弱>虚
 
 ## 文件操作
 
@@ -689,6 +693,7 @@ Cloneble这个接口会被用来作为一个能否调用Object的native的clone�
 ## Arraylist的clone是shallow copy
 
 源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
+
 ## java线程使用
 1. 启动一个线程可以去写一个runnable的实现类然后构造一个thread，对thread传入一个runnable接口类。
 2. 也可以new一个thread，覆盖它的run方法。
