@@ -35,7 +35,7 @@
     - [HashMap和HashTable的扩容](#hashmap和hashtable的扩容)
     - [Properties](#properties)
     - [BitSet](#bitset)
-    - [identityhashmap](#identityhashmap)
+    - [IdentityHashMap(since1.4)](#identityhashmapsince14)
     - [集合遍历和排序](#集合遍历和排序)
     - [List各种遍历方式效率比较](#list各种遍历方式效率比较)
     - [Arrays.sort方法解析](#arrayssort方法解析)
@@ -67,7 +67,7 @@
 - [其他](#其他)
     - [Java基本数据类型](#java基本数据类型)
     - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
-    - [java hashcode函数](#java-hashcode函数)
+    - [java hashCode函数](#java-hashcode函数)
     - [hashcode再次研究 搜索 “高效地hashmap”](#hashcode再次研究-搜索-高效地hashmap)
     - [hash算法散列实现，各种方法](#hash算法散列实现各种方法)
     - [十种排序比较](#十种排序比较)
@@ -78,8 +78,8 @@
     - [内存泄漏场景](#内存泄漏场景)
     - [transient变量不可序列化](#transient变量不可序列化)
     - [序列化和克隆是标志接口](#序列化和克隆是标志接口)
-    - [Cloneable接口](#cloneable接口)
     - [Arraylist的clone是shallow copy](#arraylist的clone是shallow-copy)
+    - [Linkedlist的clone是shallow copy](#linkedlist的clone是shallow-copy)
     - [java线程使用](#java线程使用)
     - [thread.join](#threadjoin)
     - [java 文件操作](#java-文件操作)
@@ -390,7 +390,7 @@ BitSet的提出since1.0，后来进行了重新设计。
 
     This is a legacy class but it has been completely re-engineered in Java 2, version 1.4.
 
-## identityhashmap
+## IdentityHashMap(since1.4)
 区别于hashmap的是其判断相等的方法，判断引用值等而不在乎具体对象内容。
 
     This class implements AbstractMap. It is similar to HashMap except that it uses reference equality when comparing the elements.
@@ -616,8 +616,10 @@ Java 实现的红黑树
 # 其他
 
 ## Java基本数据类型
-整数都是有符号数：
+1. 整数都是有符号数
+2. Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
 
+```
     byte, 8 bit
     short, 16 bit
     int, 32 bit
@@ -626,18 +628,18 @@ Java 实现的红黑树
     double,64bit
     char, 16bit
     boolean，不明确，跟实现有关。
+```
 
-Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
 
 ## String、StringBuilder、StringBuffer
-1. String final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
+1. String，final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
 2. StringBuffer-线程安全-长度可变 append和insert操作 
 3. StringBuilder-非线程安全-长度可变
 4. `那么String的操作线程安全吗？`安全的，属于内容不可变类。
-5. 编译器会对代码进行优化、有些拼接String并不会降低效率(看上去会)，因为编译器对代码进行了优化。
+5. 编译器会对代码进行优化、有些拼接String并不会降低那么多效率(看上去会)，因为编译器对代码进行了优化。
 6. String的hashCode利用了延迟初始化(lazy initialization)，又由于不可变的，利用了缓存技术，避免了重复的复杂计算。
 
-## java hashcode函数
+## java hashCode函数
 http://en.wikipedia.org/wiki/Java_hashCode()
 
 http://my.oschina.net/chihz/blog/56256
@@ -645,8 +647,8 @@ http://my.oschina.net/chihz/blog/56256
 ## hashcode再次研究 搜索 “高效地hashmap”
 http://blog.23lab.com/blog/2013/10/31/cong-hashcodetan-qi/
 
-eclipse中有自动生成hashCode和equals方法的功能 ，其方法是effective java中提出的方法。
-Object的hashCode()方法其实就是根据对象的物理地址生成的hash值，Object的equals方法默认是判断物理地址是否相等(this==obj)。Object的hashCode方法是native的。
+1. eclipse中有自动生成hashCode和equals方法的功能 ，其方法是effective java中提出的方法。
+2. Object的hashCode()方法其实就是根据对象的物理地址生成的hash值，Object的equals方法默认是判断物理地址是否相等(this==obj)。Object的hashCode方法是native的。
 
 ## hash算法散列实现，各种方法
 
@@ -682,17 +684,20 @@ http://blog.csdn.net/mazhimazh/article/details/19752475
 ## 序列化和克隆是标志接口
 接口没有实际的方法，只是用于标识这个类是可序列化的或者是可克隆的?
 
-1. object有一个clone方法，因此每个类都会继承到一个clone方法，对于没有实现cloneable这个接口的类即使调用clone方法也会报错，在native的clone方法中会判断是否实现克隆接口。实现这个接口意味着我们要重写clone方法，重点是要改为public访问权限，可能会定制特殊的clone策略，super.clone(shallow copy)应该被调用，当然也可以彻底自己实现所有过程。
+1. object有一个clone方法，Object中这个clone方法是protected访问级别，因此每个类都会继承到一个clone方法，对于没有实现cloneable这个接口的类即使调用clone方法也会报错，在native的clone方法中会判断是否实现克隆接口。实现这个接口意味着我们要重写clone方法，重点是要改为public访问权限，可能会定制特殊的clone策略，super.clone(shallow copy)应该被调用，当然也可以彻底自己实现所有过程(比如可以使用拷贝构造函数)。数组被认为默认实现了cloneable接口，Object自身没有实现这个接口。
 
 2. serialization接口没有任何方法和字段，只是一个语义标识。(注意涉及到序列化id、writeObject、readObject等相关内容)
 
-## Cloneable接口
-
-Cloneble这个接口会被用来作为一个能否调用Object的native的clone方法的判断，只有实现此接口的类才能调用clone方法，否则会抛出不支持此操作的异常。这是一个native的方法，浅拷贝，因此可能需要子类重写这个方法，在super.clone之后再进行一些操作。数组被认为默认实现了cloneable接口，Object自身没有实现这个接口。Object中这个clone方法是protected访问级别的，子类实现Cloneable接口并重写此方法应将访问级别改为Public
 
 ## Arraylist的clone是shallow copy
 
 源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
+首先调用super.clone()，然后利用Arrays.copyOf方法，最终利用system.arrayCopy进行复制，注意这里元素本身是共享的。
+
+## Linkedlist的clone是shallow copy
+
+源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
+首先迪奥用super.clone()，然后遍历链表元素对clone后的链表进行元素添加，这里元素也是共享的。
 
 ## java线程使用
 1. 启动一个线程可以去写一个runnable的实现类然后构造一个thread，对thread传入一个runnable接口类。
