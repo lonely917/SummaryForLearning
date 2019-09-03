@@ -87,7 +87,8 @@
     - [fast-fail & happens before](#fast-fail--happens-before)
     - [readObject、readResolve以及序列化、不可变类](#readobjectreadresolve以及序列化不可变类)
     - [CountDownLatch-可变类但被限制状态空间](#countdownlatch-可变类但被限制状态空间)
-    - [Android Handler与内存泄漏](#android-handler与内存泄漏)
+    - [volatile关键字](#volatile关键字)
+    - [transient关键字](#transient关键字)
     - [深入研究技术点](#深入研究技术点)
 - [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
 
@@ -617,7 +618,7 @@ Java 实现的红黑树
 
 ## Java基本数据类型
 1. 整数都是有符号数
-2. Char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
+2. char是2字节的unicode值，属于字符型数据(也可被当作unsigned short int型数据进行运算，但是直接输出是字符)
 
 ```
     byte, 8 bit
@@ -629,7 +630,7 @@ Java 实现的红黑树
     char, 16bit
     boolean，不明确，跟实现有关。
 ```
-
+3. 每种基本类型都有一个对应的封装类型，注意char对应的是Character，其余都是对应首字母大写的类(byte-Byte，short-Short....)。
 
 ## String、StringBuilder、StringBuffer
 1. String，final类型，是字符串常量(常量池相关 intern用法需要了解)，后两者变量。
@@ -718,11 +719,9 @@ threadlocal的get和set方法是使用的关键，如果没有重写 initialValu
 
 ## fast-fail & happens before
 ## readObject、readResolve以及序列化、不可变类
-
 ## CountDownLatch-可变类但被限制状态空间
-
-## Android Handler与内存泄漏
-涉及静态内部类以及弱引用相关操作
+## volatile关键字
+## transient关键字
 
 ## 深入研究技术点
 1. 源码中sort实现，双基准快排、tim-sort等
