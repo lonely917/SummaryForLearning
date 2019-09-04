@@ -89,6 +89,7 @@
     - [CountDownLatch-可变类但被限制状态空间](#countdownlatch-可变类但被限制状态空间)
     - [volatile关键字](#volatile关键字)
     - [transient关键字](#transient关键字)
+- [](#)
     - [深入研究技术点](#深入研究技术点)
 - [Java知识图谱-wenburgyan](#java知识图谱-wenburgyan)
 
@@ -722,6 +723,17 @@ threadlocal的get和set方法是使用的关键，如果没有重写 initialValu
 ## CountDownLatch-可变类但被限制状态空间
 ## volatile关键字
 ## transient关键字
+##
+1. 锁等待时线程的状态
+2. wait notify
+3. Executor
+4. java线程的状态{new running blocked waiting timed-waiting terminated }(https://docs.oracle.com/javase/10/docs/api/java/lang/Thread.State.html)
+5. synchronized {lock and monitor}
+6. java实现生产者消费者模型(wait notify? 其他类型的高级锁？)
+7. wait和sleep
+8. fail-fast&fail-safe  / collection in java.util. & java.util.concurrent
+9. ConcurrentHashMap源码分析
+10. comparable & comparator 两个接口
 
 ## 深入研究技术点
 1. 源码中sort实现，双基准快排、tim-sort等
