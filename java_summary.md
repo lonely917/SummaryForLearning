@@ -16,7 +16,7 @@
     - [重写和重载](#重写和重载)
     - [重写与屏蔽](#重写与屏蔽)
     - [参数传递](#参数传递)
-    - [参数传递的实现?](#参数传递的实现)
+    - [拷贝构造函数](#拷贝构造函数)
     - [java内存模型(memory model)](#java内存模型memory-model)
     - [不可变类的分析](#不可变类的分析)
     - [BigInteger类分析之不可变类](#biginteger类分析之不可变类)
@@ -80,6 +80,8 @@
     - [序列化和克隆是标志接口](#序列化和克隆是标志接口)
     - [Arraylist的clone是shallow copy](#arraylist的clone是shallow-copy)
     - [Linkedlist的clone是shallow copy](#linkedlist的clone是shallow-copy)
+    - [Arrays.copy 和 数组clone的比较](#arrayscopy-和-数组clone的比较)
+    - [对象clone和拷贝构造函数性能比较？](#对象clone和拷贝构造函数性能比较)
     - [java线程使用](#java线程使用)
     - [thread.join](#threadjoin)
     - [java 文件操作](#java-文件操作)
@@ -227,9 +229,10 @@ java多态，一个方法具有不同的表现，有两种实现途径，重写�
 5. 对于数组，java中引用类型，传参就是一个引用变量值的传递，当时c如果是数组作为参数传递是一个完整的拷贝传递。
 7. 对于基本类型可以通过包装器或者人为封装，然后就可以当作引用变量进行传递。
 
-## 参数传递的实现?
-`拷贝构造函数`
-`保护性拷贝`(defensive copy)
+## 拷贝构造函数
+1. 注意c++中，会有一个默认拷贝构造函数，进行成员拷贝，浅拷贝。java中需要自己去定义这个函数，而且java参数传递的时候或者引用变量赋值的时候只会进行引用变量值的拷贝，不会像c++中那样进行对象内容的拷贝。这里所谓的拷贝构造实际上没有什么意义，不像c++中那种对象拷贝行为会在对象赋值以及对象传参中自动触发，java中都是引用变量值。
+
+2. `保护性拷贝`(defensive copy)，effective java中提出的一个概念，对象能少生成就少生成，但是再需要生成的时候不应吝啬。保护性拷贝就是针对后半句的。需要根据设计和场景决定是返回同一个对象的引用，还是返回对象的一个拷贝，这个拷贝可以通过clone和拷贝构造函数来生成，这两个途径都可以自定义来区分浅拷贝还是深拷贝。
 
 ## java内存模型(memory model)
 jls17.4 & jls17.1
@@ -701,6 +704,10 @@ http://blog.csdn.net/mazhimazh/article/details/19752475
 源码中有说明，数组中的对象本身并没有复制，被两个数组引用着。
 首先迪奥用super.clone()，然后遍历链表元素对clone后的链表进行元素添加，这里元素也是共享的。
 
+## Arrays.copy 和 数组clone的比较
+
+## 对象clone和拷贝构造函数性能比较？
+
 ## java线程使用
 1. 启动一个线程可以去写一个runnable的实现类然后构造一个thread，对thread传入一个runnable接口类。
 2. 也可以new一个thread，覆盖它的run方法。
@@ -734,6 +741,12 @@ threadlocal的get和set方法是使用的关键，如果没有重写 initialValu
 8. fail-fast&fail-safe  / collection in java.util. & java.util.concurrent
 9. ConcurrentHashMap源码分析
 10. comparable & comparator 两个接口
+11. TreeSet
+12. System.gc() & Runtime.gc()
+13. java heap & permernant generation space
+14. garbage collector
+15. Exception & Error  / Checked & Unchecked Exception
+16. final/finally/finalize
 
 ## 深入研究技术点
 1. 源码中sort实现，双基准快排、tim-sort等
