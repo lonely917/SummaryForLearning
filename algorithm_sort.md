@@ -36,7 +36,7 @@
 选择|O(n^2) |O(1)|不稳定
 插入|O(n^2) |O(1)|稳定
 希尔|O(n^1.5)|O(1)|不稳定
-快排|O(nlogn)|O(logn)|不稳定
+快排|O(nlogn)|O(nlogn)|不稳定
 归并|O(nlogn)|O(n)|稳定
 堆排序|O(nlogn)|O(1)|不稳定
 基数(lsd/msd)|O(d(n+radix))|-|稳定
