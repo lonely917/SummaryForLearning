@@ -14,6 +14,7 @@
     - [1.8之前对对象类型使用归并(modified mergesort )](#18之前对对象类型使用归并modified-mergesort-)
     - [1.8对基本类型数组使用双基准快排(DualPivotQuicksort)](#18对基本类型数组使用双基准快排dualpivotquicksort)
     - [1.8对象类型数组使用ComparableTimSort](#18对象类型数组使用comparabletimsort)
+- [考虑快排以及归并排序的非递归实现](#考虑快排以及归并排序的非递归实现)
 
 <!-- /TOC -->
 ## 排序算法
@@ -36,7 +37,7 @@
 选择|O(n^2) |O(1)|不稳定
 插入|O(n^2) |O(1)|稳定
 希尔|O(n^1.5)|O(1)|不稳定
-快排|O(nlogn)|O(nlogn)|不稳定
+快排|O(nlogn)|O(logn)|不稳定
 归并|O(nlogn)|O(n)|稳定
 堆排序|O(nlogn)|O(1)|不稳定
 基数(lsd/msd)|O(d(n+radix))|-|稳定
@@ -313,3 +314,5 @@ public static void sort(int[] a) {
 
 1. 数组规模小于MIN_MERGE(32)则会调整数组然后使用binarySort(折半插入排序)
 2. 大规模时直接使用ComparableTimSort，注意这里没有递归的调用，直接循环解决问题。
+
+## 考虑快排以及归并排序的非递归实现
