@@ -51,3 +51,8 @@
 
 ### 关联数组
 关联数组、Map键值对、Dictionary字典，都是一个概念，与之对应的是索引数组(通过数字编号进行定位)，关联数组则可以通过key值定位，本质就是键值对的集合。Java中关联数组的实现有HashTable、HashMap等，这些是基于散列表来实现，如果集合内元素有一定有序性，比如LinkedHashMap(保持插入顺序)和TreeMap(通过键值排序)，则使用红黑树来实现。
+
+### 堆结构
+1. 数组存储的完全二叉树表示堆。Add操作(上移)、Remove操作(下移)时间复杂度O(h)，h为高度，所以时间复杂度OlogN。堆的构建O(logN).具体策略可以参考排序-堆排序章节。
+
+2. 链式存储的完全二叉树表示堆。(MeldableHeap: A Randomized )。通过Merge(h1,h2)操作来帮助实现Add和Remove。Merge操作本身时间复杂度为O(log(N1+N2)),故Add和Remove操作时间复杂度为O(log(N+/-1))即为O(logN).
