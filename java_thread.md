@@ -37,6 +37,37 @@
 36. CountDownLatch & CyclicBarrier
 37. RecusiveTask & RecusiveAction
 
-## java process and threads
+## JLS之java process and threads
 
 https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html
+
+### synchronized
+对于语句，synchronized对一个对象进行加锁和解锁，加锁成功后才执行具体行为，行为结束(包括异常退出)后则自动解锁。
+
+对于函数，synchronized对被调用对象(同步的实例方法)或者被调用类class(同步的静态方法)进行加锁，函数结束(包括退出)后自动解锁。
+
+其他的一些同步相关策略：volatile变量读写、java.util.concurrent包的使用。
+
+加锁指的是加锁对象对应的monitor，java中每个object都有一个对应的monitor。
+
+### wait
+object.wait肯定发生在对object相关的monitor加锁的情况下(比如对其进行了synchronized操作)。wait行为如下：
+1. 如果thread没有进行过object相关的lock操作，则wait操作会发生异常
+2. 如果带参wait参数不合法，也会报异常
+
+不报异常的情况下发生如下事情：
+1. thread会被加入到object的wait-set中(一个阻塞在object上的线程集)，然后进行锁释放(lock了多少次，就unlock多少次)。
+2. thread等待至到其从object的wait-set中移除。
+    2中所属的移除会发生在下述情况下：
+    - notify被执行，然后该thread被选中从wait-set中移除
+    - notifyAll被执行
+    - thread被interrupt
+    - time-wait超时
+3. thread重新进行加锁(之前释放了多少次，就要重新加锁多少次)
+4. 如果2中等待的时候，thread被interrupt的话，不会走3重新加锁，会在wait方法抛出异常。
+
+### notification
+object.nofity肯定发生在对object相关的monitor加锁的情况下，比如常见的notify之前应该有synchronized相关的操作语句。notify行为如下：
+1. 如果当前thread没有对object进行加锁，notify抛出异常
+2. 如果当前thread对object加锁次数大于0，则nofity会在object的wait-set中选择一个thread移除。（注意这里选择的策略并不明确，可能是任意一个，对应的thread会从wait返回，然后进行加锁操作，但是加锁操作要想成功得等到notify的发起方完成解锁操作，即nofity后至到执行完退出synchronized语句时锁才得以释放，被唤醒的thread才可能拿到锁。）
+3. 如果当前thread对object加锁次数大于0，notifyAll会唤起所有的等待方thread，(即wait-set中所有thread都被移除)，但是一次只能有一个thread重新获得锁。
