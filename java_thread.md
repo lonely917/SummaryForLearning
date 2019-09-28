@@ -71,3 +71,33 @@ object.nofity肯定发生在对object相关的monitor加锁的情况下，比如
 1. 如果当前thread没有对object进行加锁，notify抛出异常
 2. 如果当前thread对object加锁次数大于0，则nofity会在object的wait-set中选择一个thread移除。（注意这里选择的策略并不明确，可能是任意一个，对应的thread会从wait返回，然后进行加锁操作，但是加锁操作要想成功得等到notify的发起方完成解锁操作，即nofity后至到执行完退出synchronized语句时锁才得以释放，被唤醒的thread才可能拿到锁。）
 3. 如果当前thread对object加锁次数大于0，notifyAll会唤起所有的等待方thread，(即wait-set中所有thread都被移除)，但是一次只能有一个thread重新获得锁。
+
+### sleep and yield
+Thread.sleep会使得当前线程进行休眠一段时间(具体时间长度和系统定时器精度有关)，休眠不会使得线程放弃对monitor的拥有权，也就是说sleep不会解锁。
+
+Thread.yield会让出cpu时间片，使得cpu重新调度选择执行线程，因此存在这样一种可能，yield后依然马上又获得cpu时间片。注意，yield和sleep一样不会放弃对锁的控制。
+
+很重要的一点，yield和sleep并没有同步语义，即在这两个方法调用的时候编译器不会强制刷新缓存到内存或者从内存重新加载数据到缓存。理解下面的例子：
+
+```java
+//done是一个非volatile的bollean变量
+while (!this.done)
+    Thread.sleep(1000);
+//就编译器的实现而言，可以只读取一次done到缓存，即使其他线程改变了done的值，但是这个线程由于一直使用的缓存值，依然无限循环着不退出。
+```
+上述例子说明使用这种形式的方法来控制线程结束是不确定的，因为没有确定规则来使得编译器对变量同步进行保证。但如果使用volatile修饰done就有可以达到目的。
+
+### memory model
+- reordering
+- shared variables(共享变量)
+- synchronization order
+- program order
+- happen-before order
+- final field semantics
+
+### word tearing
+
+### long double操作
+对于long、double基本类型操作，不是原子操作，最好使用volatile或者同步策略。
+
+对于引用变量本身，无论是32位还是64位虚拟机，都是原子操作。
