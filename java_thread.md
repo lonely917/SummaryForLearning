@@ -95,9 +95,28 @@ while (!this.done)
 - happen-before order
 - final field semantics
 
+总结
+1. jmm三个关键点：atomicity、visibility、ordering。
+2. 给编程者的同步工具：通过synchronized、volatile、final来向编译器表明同步控制的语义。
+3. jmm主要是描述同步的框架和策略，一方面编译器的实现应遵循这个模型，另一方面编程者根据这个模型实现同步策略。
+4. 编译器指令重排是一种程序优化，jmm允许指令重排，但设定了一些规则保持局部的顺序。
+5. volatile关键字解决DCL(double check locking)问题，是基于JVM1.5及以后才有效的。新的JMM保证volatile应用对象可见一定是在对应构造函数完全执行完毕，而再次之前，可能由于指令重排的缘故得到一个部分初始化的对象。
+6. 一个对象的final成员在该对象构造返回后(由于指令重排，外部已经获取对象的引用，但是其普通成员变量可能还是默认值，没有完成构造函数中的赋值操作)，其final值一定是完成赋值的，外界所见的就是最终值。而再次之前可能观察到未完成的默认值以及最终赋值的初始值，会观察到final值的变更。
+7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制。
+8. synchronized同步含义：除了我们临界区的概念，一次只能有一个线程持有锁并操作，还有一个很重要的概念，同一个锁的unlock对lock的happens-before原则(可见性规则)，意味着，相关缓存会被刷新(缓存写入主存以及变量重新加载等)。
+9. happens-before是一种可见性的规则，如果A先于B发生，则A的操作对B可见，这样就叫做A hb B。JMM关于HB有8条规则，如果两个操作之间的关系不能从这8条规则推导出来，则这两个操作没有顺序保证，虚拟机(还是编译器?)可以随意重排。对于符合HB的，只要重排是合理的，也是允许的。
+
 ### word tearing
 
 ### long double操作
 对于long、double基本类型操作，不是原子操作，最好使用volatile或者同步策略。
 
 对于引用变量本身，无论是32位还是64位虚拟机，都是原子操作。
+
+
+### JSR(java specification requests)
+1. jsr列表：https://www.jcp.org/en/jsr/all
+2. java memory model（jsr133） 
+3. The Java Memory Model http://www.cs.umd.edu/~pugh/java/memoryModel/
+4. JMM FAQ (好文 http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html)
+5. 旧资料不知道过时不?http://gee.cs.oswego.edu/dl/cpj/index.html
