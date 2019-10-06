@@ -37,9 +37,95 @@
 36. CountDownLatch & CyclicBarrier
 37. RecusiveTask & RecusiveAction
 
-## JLS之java process and threads
+## Java Tutorial之concurrency
 
-https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html
+https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
+
+### Thread和Process
+1. 计算机系统中会有很多的进程和线程，对于单一处理器架构，同一时间只能有一个进程或者只能有一个线程占据cpu。时间片的概念(time slicing)
+2. Process-进程，shi一个自包含的执行环境(self-contained)，通常会有一个独立私有的运行时资源，有独立的内存空间。一般我们所说的程序、应用就是类似的概念。但是一个应用或者程序可能会含有多个进程。进程间通信即IPC有不同的途径，比如管道(pipe)和套接字(socket)，IPC也可能发生在不同的系统之间。
+3. 多数jvm的实现都是单进程的。 ProcessBuilder可以被用来创建新的java进程。
+4. Thread-线程，也叫轻量级的进程(LWP-light weight process)。每个进程至少有一个线程，创建一个线程需要的开销更小，因为线程会共享进程的部分资源，比如内存和打开的文件。这种设计是为了更高效，但是也带来了一定的复杂性。
+5. 多线程是java平台的一个很重要的特性，每个java应用至少有一个线程，或者说至少有若干个线程(因为有一些必要的系统线程来进行内存管理以及信号处理)。从编程者角度，至少要有一个线程，也就是主线程，主线程可以开启另外的自定义的线程。
+6. 操作线程的基本方法使用Thread类，更高级的操作比如Executors(high-level concurrency objects)。 
+7. Thread的实现以及使用。法1通过自定义runnable对象构造Thread对象；法2-自定义Thread类重写run方法，使用自定义类构造线程对象；
+8. 关于线程的interrupt。Thread.interrupted方法会检测标志位，返回线程是否被已经被中断的结果。此方法会清空标志位。对比地，另一个实例方法，thread.isInterrupted则只是返回检测结果，不会清空标志位。后者可以从其他线程发起检测，前者只能在当前线程对自身发起检测。线程的许多操作比如sleep、join等都可能抛出InterruptedException异常，即在发起调用的线程在sleep或者join等待的过程中被另外的线程中断的话(比如通过thread.interrupt实例方法发起中断调用)，会抛出的异常。根据默认的约定，抛出异常之前会清空标志位，也就是说sleep/join等已经对中断异常进行了处理，遇到中断则会清空标志位并进行操作的退出和异常的抛出，交由外部调用者进行异常处理。
+9. 对于不调用可能抛出中断异常方法的线程，如果存在一些耗时或者循环性的操作，则需要进行定期主动判断线程是否被中断，进行相应的处理(线程退出或者抛出中断异常)。
+10. Thread的一些实例方法来判断线程的状态：thread.isAlive，thread.isInterrupted。
+
+### Synchronization
+1. 线程通信主要通过共享变量(字段或者对象的引用)，但也会带来问题：线程干扰和内存一致性错误，使用同步(synchronization)来解决这个问题。
+2. 并发(concurrency),可以是多处理器同时执行多个任务，也可以是单处理器一段时间内执行多个任务，java支持并发编程，1.5之后提供了高层次的API接口(在java.util.concurrent包中)。
+3. ThreadInterference，多个线程同时对一个对象的某个字段操作(多处理器可能是同时，单处理器则是微小时间段内操作序列重叠交错执行)，可能会造成与预计不相符合的结果。通过锁机制来解决。
+4. Memory consistency errors，不同的线程对本应一致的数据却具有不同的视角导致数据差异。主要是操作可见性的问题。通过HappenBefore规则来约束。
+5. 同步方法，会对所属对象进行加锁(如果是静态方法则会对对应的class对象加锁)。有两个作用：其一是临界区的概念，只能有一个线程调用被加锁的方法(或者是被加锁的其他方法)，其二是临界区退出时锁释放对后续加锁操作的HappenBefore规则，也就是加锁过程中的操作，对后续再加锁后操作时是可见的。实际上是通过HB规则对编译器或者虚拟机行为进行了约束，来保证并发的正确性。
+6. 构造函数不应使用同步，因为构造过程中该对象只能对创建它的那个线程是可见的，因此同步是无意义的。注意在构造函数中应避免泄露对象，使得存在一种可能，外部可以获得没有构造完全的对象(构造函数泄露)，因为这会引发线程安全问题。
+7. 同步可以解决线程干扰和内存不一致错误。如果一个对象对多个线程可见，多个线程对其的读写操作应该进行同步,即使用其synchronized的读写方法。一种例外，如果操作字段是final类型，则只要在对象创建完毕后，就可以进行非同步地安全地读。
+8. 除了同步方法外还有同步语句，同步语句除了使用this还可以进行自定义的加锁对象，因此提供了更丰富地粒度控制。
+9. synchronized加锁是一种可重入锁(reentrant)，这使得同步方法可以调用其他的同步方法，而不需要进行额外的控制。
+10. 原子操作(Atomic Access),对于基本类型(除了long和double)以及对象的引用类型的读写操作；对于volatile类型的变量的读写操作。对变量的原子操作会比通过同步方法对变量操作更为高效，但是并不能完全避免内存不一致问题,需要一些额外的工作量。`CAS的概念`。
+
+### Liveness
+1. Liveness线程活跃度(Deadlock, starvation,livelock),其中死锁是多个线程彼此持有对方需要的资源，都在等待获取到对应的锁，均处于block的状态；饥饿是部分线程一直在等待获取对应锁，但是锁不断地被其他线程持有，造成一种长时间等待加锁的状态，或者长时间得不到cpu使用权的一种状态；活锁是线程彼此都进行退让，但却形成双方都无法进一步执行的场景(走廊让道的例子)，此时双方都处于waiting而非block的状态。`活锁死锁以及线程阻塞的问题?是否都有block的状态以及相互停滞的时候CPU的占用情况`
+
+### Guarded Blocks
+1. wait的使用完善的写法应该在一个循环检测中，也就是wait结束被唤醒后仍要对判断条件进行判断以确认是否满足预期条件，因为并不能确定中断退出是否表示对应标志改变以及即使被唤醒了但不能保证判断条件没有被修改过。
+2. wait需要在同步方法或者同步块中执行，因为wait要求已经获取到对象的monitor，否则会抛出异常，因此在同步方法中使用wait比较容易符合这个条件，wait会释放锁然后挂起执行(releases the lock and suspends execution)，线程处于waiting状态，等另外某个线程加锁后并调用notify系列方法的时候，wait的线程收到通知有状态变化，会重新尝试加锁，等nofity的线程退出同步块即释放锁之后，wait的线程重新获得锁，从wait结束，开始后续执行。
+3. SynchronousQueue implements BlockingQueue，一种阻塞队列的高级实现，可以帮助更容易地实现生产者消费者问题。
+4. 尝试使用synchronized以及wait-notify实现基本的生产者消费者问题。
+
+### Immutable Objects
+1. 不可变对象可以使用在多线程并发中，避免产生数据操作的不一致现象。
+2. 不可变类设计规则(https://docs.oracle.com/javase/tutorial/essential/concurrency/imstrat.html)
+
+
+### High Level Concurrency Objects
+1. Lock(java.util.concurrent.locks)。synchronized同步依赖于简单的可重入锁，简单但有一些限制，Lock是一种更高级别的锁接口，提供更灵活的操作，也支持wait/notify机制(通过Condition信号量来支持)。
+2. Executors，更高级别的线程操作管理。
+3. 一个并发API相关的动画展示。 https://sourceforge.net/projects/javaconcurrenta/
+4. Executor/ExecutorService/ScheduledExecutorService/FinalizableDelegatedExecutorService
+5. ThreadPoolExecutor/ScheduledThreadPoolExecutor
+6. Executors工具类/newSingleThreadExecutor/newFixedThreadPool/newCachedThreadPool/newScheduledThreadPool
+
+```java
+//1.5 concurrent包描述-内存可见性部分
+https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility
+
+Chapter 17 of the Java Language Specification defines the happens-before relation on memory operations such as reads and writes of shared variables. The results of a write by one thread are guaranteed to be visible to a read by another thread only if the write operation happens-before the read operation. The synchronized and volatile constructs, as well as the Thread.start() and Thread.join() methods, can form happens-before relationships. In particular:
+Each action in a thread happens-before every action in that thread that comes later in the program s order.
+
+An unlock (synchronized block or method exit) of a monitor happens-before every subsequent lock (synchronized block or method entry) of that same monitor. And because the happens-before relation is transitive, all actions of a thread prior to unlocking happen-before all actions subsequent to any thread locking that monitor.
+
+A write to a volatile field happens-before every subsequent read of that same field. Writes and reads of volatile fields have similar memory consistency effects as entering and exiting monitors, but do not entail mutual exclusion locking.
+
+A call to start on a thread happens-before any action in the started thread.
+All actions in a thread happen-before any other thread successfully returns from a join on that thread.
+
+The methods of all classes in java.util.concurrent and its subpackages extend these guarantees to higher-level synchronization. In particular:
+Actions in a thread prior to placing an object into any concurrent collection happen-before actions subsequent to the access or removal of that element from the collection in another thread.
+Actions in a thread prior to the submission of a Runnable to an Executor happen-before its execution begins. Similarly for Callables submitted to an ExecutorService.
+Actions taken by the asynchronous computation represented by a Future happen-before actions subsequent to the retrieval of the result via Future.get() in another thread.
+Actions prior to "releasing" synchronizer methods such as Lock.unlock, Semaphore.release, and CountDownLatch.countDown happen-before actions subsequent to a successful "acquiring" method such as Lock.lock, Semaphore.acquire, Condition.await, and CountDownLatch.await on the same synchronizer object in another thread.
+For each pair of threads that successfully exchange objects via an Exchanger, actions prior to the exchange() in each thread happen-before those subsequent to the corresponding exchange() in another thread.
+Actions prior to calling CyclicBarrier.await and Phaser.awaitAdvance (as well as its variants) happen-before actions performed by the barrier action, and actions performed by the barrier action happen-before actions subsequent to a successful return from the corresponding await in other threads.
+Since:
+1.5
+
+```
+
+```java
+//关于共享变量
+Memory that can be shared between threads is called shared memory or heap memory.
+
+All instance fields, static fields, and array elements are stored in heap memory. In this chapter, we use the term variable to refer to both fields and array elements.
+
+Local variables (§14.4), formal method parameters (§8.4.1), and exception handler parameters (§14.20) are never shared between threads and are unaffected by the memory model.
+
+Two accesses to (reads of or writes to) the same variable are said to be conflicting if at least one of the accesses is a write.
+```
+
+## JLS之Threads and Locks
+https://docs.oracle.com/javase/specs/jls/se12/html/jls-17.html
 
 ### synchronized
 对于语句，synchronized对一个对象进行加锁和解锁，加锁成功后才执行具体行为，行为结束(包括异常退出)后则自动解锁。
@@ -85,7 +171,7 @@ while (!this.done)
     Thread.sleep(1000);
 //就编译器的实现而言，可以只读取一次done到缓存，即使其他线程改变了done的值，但是这个线程由于一直使用的缓存值，依然无限循环着不退出。
 ```
-上述例子说明使用这种形式的方法来控制线程结束是不确定的，因为没有确定规则来使得编译器对变量同步进行保证。但如果使用volatile修饰done就有可以达到目的。
+上述例子说明使用这种形式的方法来控制线程结束是不确定的，因为没有确定规则来使得编译器对变量同步进行保证。但如果`使用volatile修饰done就有可以达到目的`。
 
 ### memory model
 - reordering
@@ -100,9 +186,9 @@ while (!this.done)
 2. 给编程者的同步工具：通过synchronized、volatile、final来向编译器表明同步控制的语义。
 3. jmm主要是描述同步的框架和策略，一方面编译器的实现应遵循这个模型，另一方面编程者根据这个模型实现同步策略。
 4. 编译器指令重排是一种程序优化，jmm允许指令重排，但设定了一些规则保持局部的顺序。
-5. volatile关键字解决DCL(double check locking)问题，是基于JVM1.5及以后才有效的。新的JMM保证volatile应用对象可见一定是在对应构造函数完全执行完毕，而再次之前，可能由于指令重排的缘故得到一个部分初始化的对象。
-6. 一个对象的final成员在该对象构造返回后(由于指令重排，外部已经获取对象的引用，但是其普通成员变量可能还是默认值，没有完成构造函数中的赋值操作)，其final值一定是完成赋值的，外界所见的就是最终值。而再次之前可能观察到未完成的默认值以及最终赋值的初始值，会观察到final值的变更。
-7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制。
+5. volatile关键字解决DCL(double check locking)问题，是基于JVM1.5及以后才有效的。新的JMM保证volatile应用对象可见一定是在对应构造函数完全执行完毕，而在1.5之前，可能由于指令重排的缘故得到一个部分初始化的对象。
+6. 一个对象的final成员在该对象构造返回后(由于指令重排，外部已经获取对象的引用，但是其普通成员变量可能还是默认值，没有完成构造函数中的赋值操作)，其final值一定是完成赋值的，外界所见的就是最终值。而在1.5之前可能观察到未完成的默认值以及最终赋值的初始值，会观察到final值的变更。
+7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制(比如5中的描述)。
 8. synchronized同步含义：除了我们临界区的概念，一次只能有一个线程持有锁并操作，还有一个很重要的概念，同一个锁的unlock对lock的happens-before原则(可见性规则)，意味着，相关缓存会被刷新(缓存写入主存以及变量重新加载等)。
 9. happens-before是一种可见性的规则，如果A先于B发生，则A的操作对B可见，这样就叫做A hb B。JMM关于HB有8条规则，如果两个操作之间的关系不能从这8条规则推导出来，则这两个操作没有顺序保证，虚拟机(还是编译器?)可以随意重排。对于符合HB的，只要重排是合理的，也是允许的。
 
