@@ -85,8 +85,11 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 3. 一个并发API相关的动画展示。 https://sourceforge.net/projects/javaconcurrenta/
 4. Executor/ExecutorService/ScheduledExecutorService/FinalizableDelegatedExecutorService
 5. ThreadPoolExecutor/ScheduledThreadPoolExecutor
-6. Executors工具类/newSingleThreadExecutor/newFixedThreadPool/newCachedThreadPool/newScheduledThreadPool
+6. Executors工具类/newSingleThreadExecutor/newFixedThreadPool/newCachedThreadPool/newScheduledThreadPool最终都会用到new ThreadPoolExecutor的构造，传入的参数有核心线程数、线程池尺寸、非核心线程闲置时间、阻塞队列、线程构造工厂、异常处理等参数。
+7. ExecutorService的shutdown操作
+8. ExecutorService的submit/execute以及Future的get操作
 
+### 高级锁
 
 ```java
 //1.5 concurrent包描述-内存可见性部分
