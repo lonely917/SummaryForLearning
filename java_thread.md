@@ -88,6 +88,12 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 6. Executors工具类/newSingleThreadExecutor/newFixedThreadPool/newCachedThreadPool/newScheduledThreadPool最终都会用到new ThreadPoolExecutor的构造，传入的参数有核心线程数、线程池尺寸、非核心线程闲置时间、阻塞队列、线程构造工厂、异常处理等参数。
 7. ExecutorService的shutdown操作
 8. ExecutorService的submit/execute以及Future的get操作
+9. Fork/Join框架：这个时多核编程相关的，有点类似windows MPI编程，利用多处理器进行划分和归约操作。框架核心是ForkJoinPool(AbstractExecutorService的子类)帮助我们利用多处理器，并有一个work-stealing机制，可以理解为完成任务的线程可以去帮助其他线程解决未完成的任务。`思考一下线程在多核架构下的实现原理。`
+10. JDK中F/J框架的应用：java8中Arrays中提供了并行排序算法parallelSort；java8开始java.util.streams包也利用了F/J框架。
+11. Concurrent Collections:BlockingQueue\ConcurrentMap\ConcurrentNavigableMap\ConcurrentSkipListMap。注意`All of these collections help avoid Memory Consistency Errors by defining a happens-before relationship between an operation that adds an object to the collection with subsequent operations that access or remove that object.`
+12. java.util.concurrent.atomic：
+13. Concurrent Random Numbers
+
 
 ### 高级锁
 
@@ -192,7 +198,7 @@ while (!this.done)
 4. 编译器指令重排是一种程序优化，jmm允许指令重排，但设定了一些规则保持局部的顺序。
 5. volatile关键字解决DCL(double check locking)问题，是基于JVM1.5及以后才有效的。新的JMM保证volatile应用对象可见一定是在对应构造函数完全执行完毕，而在1.5之前，可能由于指令重排的缘故得到一个部分初始化的对象。
 6. 一个对象的final成员在该对象构造返回后(由于指令重排，外部已经获取对象的引用，但是其普通成员变量可能还是默认值，没有完成构造函数中的赋值操作)，其final值一定是完成赋值的，外界所见的就是最终值。而在1.5之前可能观察到未完成的默认值以及最终赋值的初始值，会观察到final值的变更。
-7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制(比如5中的描述)。
+7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制(比如5中的描述)。前者保证不同线程每次都取最新值而不使用缓存，后者避免指令重排带来的执行顺序以及初始化问题，但是对volatile变量的操作并不是原子的，因此并非完全线程安全，volatile的变量的线程安全是有条件的，一是运算结果不依赖变量本身的数值或者确保只有一个线程修改数值，二是变量不需要与其他状态变量共同参与不变约束。(不好理解的话，就记住原子性的判断对多线程的影响就可以了)
 8. synchronized同步含义：除了我们临界区的概念，一次只能有一个线程持有锁并操作，还有一个很重要的概念，同一个锁的unlock对lock的happens-before原则(可见性规则)，意味着，相关缓存会被刷新(缓存写入主存以及变量重新加载等)。
 9. happens-before是一种可见性的规则，如果A先于B发生，则A的操作对B可见，这样就叫做A hb B。JMM关于HB有8条规则，如果两个操作之间的关系不能从这8条规则推导出来，则这两个操作没有顺序保证，虚拟机(还是编译器?)可以随意重排。对于符合HB的，只要重排是合理的，也是允许的。
 
