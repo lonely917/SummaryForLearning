@@ -3029,6 +3029,8 @@ path:addXX，XXto,close.
 11. 模块化，组件化，路由AROUTER
 12. 插件化
 13. listview和edittext问题，焦点问题，嵌套layout触摸事件问题。
+14. org.json google.gson 两者对key-value中value为字符串的处理不同，引号的处理不一样。
+15. 汉字相关 urlencode
 
 
 ## edittext设置输入类型没有生效的问题
