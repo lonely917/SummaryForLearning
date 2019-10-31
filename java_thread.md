@@ -82,7 +82,7 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 ### High Level Concurrency Objects
 1. Lock(java.util.concurrent.locks)。synchronized同步依赖于简单的可重入锁，简单但有一些限制，Lock是一种更高级别的锁接口，提供更灵活的操作，也支持wait/notify机制(通过Condition信号量来支持)。
 2. Executors，更高级别的线程操作管理。
-3. 一个并发API相关的动画展示。 https://sourceforge.net/projects/javaconcurrenta/
+3. 一个并发API相关的动画展示（很棒，一个可执行jar程序）。 https://sourceforge.net/projects/javaconcurrenta/
 4. Executor/ExecutorService/ScheduledExecutorService/FinalizableDelegatedExecutorService
 5. ThreadPoolExecutor/ScheduledThreadPoolExecutor
 6. Executors工具类/newSingleThreadExecutor/newFixedThreadPool/newCachedThreadPool/newScheduledThreadPool最终都会用到new ThreadPoolExecutor的构造，传入的参数有核心线程数、线程池尺寸、非核心线程闲置时间、阻塞队列、线程构造工厂、异常处理等参数。
@@ -91,12 +91,20 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 9. Fork/Join框架：这个时多核编程相关的，有点类似windows MPI编程，利用多处理器进行划分和归约操作。框架核心是ForkJoinPool(AbstractExecutorService的子类)帮助我们利用多处理器，并有一个work-stealing机制，可以理解为完成任务的线程可以去帮助其他线程解决未完成的任务。`思考一下线程在多核架构下的实现原理。`
 10. JDK中F/J框架的应用：java8中Arrays中提供了并行排序算法parallelSort；java8开始java.util.streams包也利用了F/J框架。
 11. Concurrent Collections:BlockingQueue\ConcurrentMap\ConcurrentNavigableMap\ConcurrentSkipListMap。注意`All of these collections help avoid Memory Consistency Errors by defining a happens-before relationship between an operation that adds an object to the collection with subsequent operations that access or remove that object.`
-12. java.util.concurrent.atomic：
+12. java.util.concurrent.atomic，相关变量封装是完全线程安全的，而volatile的线程安全是有使用场景的。volatile变量本身的写对读是可见的，但是在多线程中volatile变量的相关操作可能不是原子的，这就导致并发的不安全。volatile只是保证变量的可见以及有序性(指令重排控制)。`atmoic的实现原理?以及CAS在java中的应用`
 13. Concurrent Random Numbers
-
+14. concurrent further reading  (https://docs.oracle.com/javase/tutorial/essential/concurrency/further.html)
+15. concurrent exercise(https://docs.oracle.com/javase/tutorial/essential/concurrency/QandE/questions.html),其中exercise2 关于happen-before的仔细分析。
 
 ### 高级锁
 
+### 并发集合的实现(非阻塞操作)
+1. ConcurrentLinkedQueue 
+
+论文https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html
+
+2. ConcurrentHashMap 1.7 vs 1.8实现不同
+### 内存可见性以及共享变量
 ```java
 //1.5 concurrent包描述-内存可见性部分
 https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility
