@@ -576,14 +576,16 @@ function sumAll() {
     return sum;
 }
 
-js的参数传递
-通过值传递参数
+## js的参数传递
+1. 通过值传递参数
+
 在函数中调用的参数是函数的隐式参数。
 JavaScript 隐式参数通过值来传递：函数仅仅只是获取值。
 如果函数修改参数的值，不会修改显式参数的初始值（在函数外定义）。
 隐式参数的改变在函数外是不可见的。
 
-通过对象传递参数
+2. 通过对象传递参数
+
 在JavaScript中，可以引用对象的值。
 因此我们在函数内部修改对象的属性就会修改其初始的值。
 修改对象属性可作用于函数外部（全局变量）。
@@ -593,19 +595,19 @@ JavaScript 隐式参数通过值来传递：函数仅仅只是获取值。
 this 的值在函数调用时实例化对象(new object)时创建。
 
 
-#js闭包没有看明白
+## js闭包没有看明白
 http://www.jb51.net/article/24101.htm
 闭包，理解。函数内部嵌套，返回内部函数，内部函数控制外部函数局部变量，从而实现从外部函数外对其内部变量的控制。
 延长了变量在内存的生存周期，不宜过多使用。
 这里使用闭包的目的仅仅是为了外部对内部变量控制，内部变量的安全性，常用例子的效果也就是一般编程静态变量的效果，？java中闭包？类似内部类？另外一个函数就是一个闭包？闭包的学术定义？
 关于闭包引发的思考，涉及语言机理，语法规则以及运行机制，如js的垃圾回收，解释器运行原理。
 
-#js的prototype
+## js的prototype
 对象方法，类方法，原型方法。
 http://www.cnblogs.com/yjf512/archive/2011/06/03/2071914.html
 
 
-js操作html的dom对象
+## js操作html的dom对象
 通过 id 找到 HTML 元素
 通过标签名找到 HTML 元素
 通过类名找到 HTML 元素
@@ -617,7 +619,9 @@ document.getElementById("p2").style.color="blue";
 document.getElementById("p2").style.fontFamily="Arial";
 document.getElementById("p2").style.fontSize="larger";
 
-对事件做出反映，比如onclick="js代码",可以添加this参数
+## 对事件做出反映
+
+onclick="js代码",可以添加this参数
 
 e.onclick = 某函数，进行事件分配。
 
@@ -636,16 +640,16 @@ useCapture是捕获标志？捕获和冒泡？事件传递原理-----捕获，�
 对window对象添加事件监听，比如resize事件。
 传递参数的时候，使用"匿名函数"调用带参数的函数。如果是无参函数，可以使用函数名，又参数需要利用匿名函数包裹对应函数，否则设置的时候就会触发函数。
 
-ji关于dom节点的增删
+## js关于dom节点的增删
 如果能够在不引用父元素的情况下删除某个元素，就太好了。
 不过很遗憾。DOM 需要清楚您需要删除的元素，以及它的父元素。
 这是常用的解决方案：找到您希望删除的子元素，然后使用其 parentNode 属性来找到父元素
 
-JavaScript 类
+## JavaScript 类
 JavaScript 是面向对象的语言，但 JavaScript 不使用类。
 在 JavaScript 中，不会创建类，也不会通过类来创建对象（就像在其他面向对象的语言中那样）。
 JavaScript 基于 prototype，而不是基于类的。
 
-所有 JavaScript 数字均为 64 位
+## 所有 JavaScript 数字均为 64 位
 JavaScript 不是类型语言。与许多其他编程语言不同，JavaScript 不定义不同类型的数字，比如整数、短、长、浮点等等。
 JavaScript 中的所有数字都存储为根为 10 的 64 位（8 比特），浮点数。
