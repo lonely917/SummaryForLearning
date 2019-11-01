@@ -96,14 +96,36 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 14. concurrent further reading  (https://docs.oracle.com/javase/tutorial/essential/concurrency/further.html)
 15. concurrent exercise(https://docs.oracle.com/javase/tutorial/essential/concurrency/QandE/questions.html),其中exercise2 关于happen-before的仔细分析。
 
-### 高级锁
+### 高级锁相关概念
+1. 悲观锁和乐观锁。
+2. 加锁机制以及线程切换代价-阻塞or自旋(spin)-自选超时+阻塞。
+3. java对象之markword：未锁定、可偏向、轻量、重量、
+4. 重量级锁、轻量级锁、可偏向锁；自旋锁。
+5. CAS以及ABA问题的探讨。`ABA会带来什么问题？这一点没搞明白`
+6. 悲观锁实例：synchronized、reentrantlock.(synchronized 也在逐步优化)
+7. 缓存行的伪共享问题产生以及性能优化。(主要影响多核场景下处理器之间的缓存同步问题，解决方法都是缓存行填充的原理，具体实现方式可能会有所不同)
+8. ABA问题的处理：CAS添加对象标志用来进行操作计数。比如java中AtomicStampedReference以及AtomicMarkableReference是对AtomicReference的ABA完善版。
+
+一些参考
+http://ifeve.com/falsesharing/
+
 
 ### 并发集合的实现(非阻塞操作)
+
 1. ConcurrentLinkedQueue 
 
+```
 论文https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html
 
+96年Non-Blocking and Blocking Concurrent Queue Algorithms 论文的一些实验结论：
+
+1.两个锁(head lock 和 tail lock)相对于single lock的情况，在并发较多的情况下(5个processors以上)效果更好。(很容易理解，并发量高才能体现出分锁的意义)
+
+2.非阻塞算法的实现利用CAS需要硬件指令支持(当前多数硬件都支持)，论文中的非阻塞算法相较于传统单锁、文中的双锁、以及此前一些非阻塞算法，在多处理器情况下都表现得更为出色。(`jdk中ConcurrentLinkedQueue的实现也是基于此论文所阐述的原理`)
+```
+
 2. ConcurrentHashMap 1.7 vs 1.8实现不同
+   
 ### 内存可见性以及共享变量
 ```java
 //1.5 concurrent包描述-内存可见性部分
