@@ -110,6 +110,14 @@ https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 http://ifeve.com/falsesharing/
 
 
+### concurrent并发包中的锁、信号量、条件变量等
+1. 最基础的wait、notify结合synchronized关键字
+2. Condition和Lock结合使用，lock的lock和unlock以及condition的await和signal/signal
+3. Semaphore信号量的acquire和release
+4. Lock子类ReentrantLock以及ReadWriteLock
+5. CountDownLatch的await和countdown，控制一定数量的线程集合。
+6. CyclicBarrier循环屏障
+
 ### 并发集合的实现(非阻塞操作)
 
 1. ConcurrentLinkedQueue 
