@@ -118,6 +118,14 @@ http://ifeve.com/falsesharing/
 5. CountDownLatch的await和countdown，控制一定数量的线程集合。
 6. CyclicBarrier循环屏障
 
+### AQS框架(AbstractQueueSynchronizer)
+
+>Provides a framework for implementing blocking locks and related
+synchronizers (semaphores, events, etc) that rely on
+first-in-first-out (FIFO) wait queues. 
+
+1.5之后加入的类，位于java.util.concurrent.locks包，是条件变量、信号量的实现基础。此前我们通过synchronized和wait/notify来实现同步控制，或者附加数组检查来实现带有条件的等待与同步(比如生产者消费者、读写锁等模型)，1.5后直接实现了一个新的框架，提供了Lock、Condition、Semaphore等高级类，Condition的await和signal以及Semaphore的acquire和release的实现最终都和AQS有关，新框架中类似wait和notify的等待和唤醒操作是由LockSupport类的park和unpark操作来实现，进一步是通过sun.misc.Unsafe类实现。
+
 ### 并发集合的实现(非阻塞操作)
 
 1. ConcurrentLinkedQueue 
