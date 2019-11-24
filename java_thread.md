@@ -17,7 +17,7 @@
 16. volatile原理
 17. Java中的原子操作(long double的读和写不是)
 18. 线程安全的单例模式(n中写法比较)
-19. 双重检测机制+volatile变量的单例模式(volatile的必要性，否则单纯的双重检测未必线程安全，由于指令重排的缘故可能得到一个没有构建完全的实单例对象)
+19. 双重检测机制+volatile变量的单例模式(volatile的必要性，否则单纯的双重检测未必线程安全，由于指令重排的缘故可能得到一个没有构建完全的单例对象)
 20. 同步涉及的一些概念：deadlock、livelock、fairlock、reenterlock、optimisticlock、readwritelock、wait、notify、notifyAll
 21. ThreadLocal实现原理(threadlocal、threadlocalmap、弱引用、垃圾回收)
 22. 获取锁失败的线程的行为?直接放弃cpu or busywaiting后再放弃cpu。再次被调用后又会尝试加锁？
@@ -42,31 +42,42 @@
 https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 
 ### Thread和Process
+
 1. 计算机系统中会有很多的进程和线程，对于单一处理器架构，同一时间只能有一个进程或者只能有一个线程占据cpu。时间片的概念(time slicing)
-2. Process-进程，shi一个自包含的执行环境(self-contained)，通常会有一个独立私有的运行时资源，有独立的内存空间。一般我们所说的程序、应用就是类似的概念。但是一个应用或者程序可能会含有多个进程。进程间通信即IPC有不同的途径，比如管道(pipe)和套接字(socket)，IPC也可能发生在不同的系统之间。
+
+2. Process-进程，是一个自包含的执行环境(self-contained)，通常会有一个独立私有的运行时资源，有独立的内存空间。一般我们所说的程序、应用就是类似的概念。但是一个应用或者程序可能会含有多个进程。进程间通信即IPC有不同的途径，比如管道(pipe)和套接字(socket)，IPC也可能发生在不同的系统之间。
 3. 多数jvm的实现都是单进程的。 ProcessBuilder可以被用来创建新的java进程。
 4. Thread-线程，也叫轻量级的进程(LWP-light weight process)。每个进程至少有一个线程，创建一个线程需要的开销更小，因为线程会共享进程的部分资源，比如内存和打开的文件。这种设计是为了更高效，但是也带来了一定的复杂性。
-5. 多线程是java平台的一个很重要的特性，每个java应用至少有一个线程，或者说至少有若干个线程(因为有一些必要的系统线程来进行内存管理以及信号处理)。从编程者角度，至少要有一个线程，也就是主线程，主线程可以开启另外的自定义的线程。
-6. 操作线程的基本方法使用Thread类，更高级的操作比如Executors(high-level concurrency objects)。 
-7. Thread的实现以及使用。法1通过自定义runnable对象构造Thread对象；法2-自定义Thread类重写run方法，使用自定义类构造线程对象；
-8. 关于线程的interrupt。Thread.interrupted方法会检测标志位，返回线程是否被已经被中断的结果。此方法会清空标志位。对比地，另一个实例方法，thread.isInterrupted则只是返回检测结果，不会清空标志位。后者可以从其他线程发起检测，前者只能在当前线程对自身发起检测。线程的许多操作比如sleep、join等都可能抛出InterruptedException异常，即在发起调用的线程在sleep或者join等待的过程中被另外的线程中断的话(比如通过thread.interrupt实例方法发起中断调用)，会抛出的异常。根据默认的约定，抛出异常之前会清空标志位，也就是说sleep/join等已经对中断异常进行了处理，遇到中断则会清空标志位并进行操作的退出和异常的抛出，交由外部调用者进行异常处理。
-9. 对于不调用可能抛出中断异常方法的线程，如果存在一些耗时或者循环性的操作，则需要进行定期主动判断线程是否被中断，进行相应的处理(线程退出或者抛出中断异常)。
+5. 多线程是java平台的一个很重要的特性，每个java应用至少有一个线程，或者说至少有若干个线程(因为有一些必要的系统线程来进行内存管理以及信号处理)。从编程者角度，至少要有一个线程，也就是主线程，主线程可以开启另外的自定义的线程。注意，c和c++的早期自身不支持多线程操作，需要通过第三方库进行系统调用创建线程(比如linux下posix线程库的pthread_create操作)，c++11添加了Thread类，支持线程操作。
+6. java中操作线程的基本方法使用Thread类，更高级的操作比如Executors(high-level concurrency objects)。 
+7. Thread的实现以及使用。法1通过自定义runnable对象构造Thread对象；法2-自定义Thread类重写run方法，使用自定义类构造线程对象。
+8. 关于线程的interrupt方法的说明。Thread.interrupted()方法会检测标志位，返回线程是否被已经被中断的结果。interrupted方法会清空标志位。对比地，另一个实例方法，thread.isInterrupted则只是返回检测结果，不会清空标志位。后者可以从其他线程发起检测(实例方法)，前者(静态方法)只能在当前线程对自身发起检测。线程的许多操作比如sleep、join等都可能抛出InterruptedException异常，即发起调用的线程在sleep或者join等待的过程中被另外的线程中断的话(比如通过thread.interrupt实例方法发起中断调用)，sleep或者join操作后处于等待状态的线程会抛出的异常。根据`默认的约定`，抛出异常之前会清空标志位，也就是说sleep/join等已经对中断异常进行了处理，遇到中断则会清空标志位并进行操作的退出和异常的抛出，交由外部调用者进行异常处理(sleep以及join的底层实现应该是遵循前文`默认的约定`)。
+9. 对于不调用可能抛出中断异常方法的线程，如果存在一些耗时或者循环性的操作，则需要进行定期主动判断线程是否被中断，进行相应的处理(即发现标志位被设置后也就是进行Thread.interrupted()操作发现返回true，应进行退出线程或者抛出中断异常的操作)。
 10. Thread的一些实例方法来判断线程的状态：thread.isAlive，thread.isInterrupted。
+11. java线程状态：new生成线程，调用start方法后线程进行runnable状态(实际上start之后应该是有个ready的状态，然后当线程获取时间片后才真正开始执行，这里将就绪和运行合二为一)，如果由sleep或者join操作，则线程会放弃cpu进入timed-waiting状态或者waiting状态，如果是遇到加锁操作(synchronized或者lock对象上锁)暂时不能获得锁，则会处于blocked状态，等待加锁成功进入runnable状态开始执行临界区代码，如果有object.wait操作(一定结合synchronized关键字使用)，则会放弃锁，并进入waiting状态，等待其他线程notify操作的唤醒，如果遇到notify操作，则wait操作会被唤醒，并尝试获取之前放弃的锁并恢复状态，成功上锁并恢复状态之后开始执行位于wait操作后续的代码。注意yield操作是尝试放弃cpu控制权，但线程可能继续被调度，sleep会使线程放弃cpu控制权，进入timed-waiting但是不会放弃持有的任何锁，wait会放弃线程持有的锁对象。`blocked状态的线程和cpu占有的关系，忙等类似自旋或者阻塞等待唤醒，或者先自旋尝试一段时间不成功的话阻塞等待唤醒即从轻量级锁切换为重量级锁`。除此外还有一个终结状态terminated。(建议参考thread类源码，有对状态的详细说明)
+12.通过join实现父子线程的同步，join的实现java层会调用wait等待，wait外的循环使用isAlive来判断子线程的状态，join方法也就返回了。首先join方法是一个同步方法，会对子线程对象本身加锁，然后wait会等待其他线程发来的对该线程对象的notify操作，这个notify实际是子线程发来的，`当子线程结束的时候，会调用notifyAll操作`，这个调用发生在c++层，线程start0本地方法中最后会有一个ensureJoin的方法，在线程结束前发出notifyAll。
 
 ### Synchronization
 1. 线程通信主要通过共享变量(字段或者对象的引用)，但也会带来问题：线程干扰和内存一致性错误，使用同步(synchronization)来解决这个问题。
-2. 并发(concurrency),可以是多处理器同时执行多个任务，也可以是单处理器一段时间内执行多个任务，java支持并发编程，1.5之后提供了高层次的API接口(在java.util.concurrent包中)。
-3. ThreadInterference，多个线程同时对一个对象的某个字段操作(多处理器可能是同时，单处理器则是微小时间段内操作序列重叠交错执行)，可能会造成与预计不相符合的结果。通过锁机制来解决。
-4. Memory consistency errors，不同的线程对本应一致的数据却具有不同的视角导致数据差异。主要是操作可见性的问题。通过HappenBefore规则来约束。
-5. 同步方法，会对所属对象进行加锁(如果是静态方法则会对对应的class对象加锁)。有两个作用：其一是临界区的概念，只能有一个线程调用被加锁的方法(或者是被加锁的其他方法)，其二是临界区退出时锁释放对后续加锁操作的HappenBefore规则，也就是加锁过程中的操作，对后续再加锁后操作时是可见的。实际上是通过HB规则对编译器或者虚拟机行为进行了约束，来保证并发的正确性。
+
+2. 并发(concurrency),可以是多处理器同时执行多个任务，也可以是单处理器一段时间内执行多个任务，java支持并发编程，1.5之后提供了高层次的API接口(在java.util.concurrent包中)。另一个概念，并行，则是绝对意义上的同时执行，类似前文所述的并发中的第一种情况。
+3. ThreadInterference(线程干扰概念)，多个线程同时对一个对象的某个字段操作(多处理器可能是同时，单处理器则是微小时间段内操作序列重叠交错执行)，可能会造成与预计不相符合的结果。通过锁机制来解决。
+4. Memory consistency errors(内存一致性问题)，不同的线程对本应一致的数据却具有不同的视角导致数据差异。可以理解为线程局部缓存和共享的内存区域数据不一致的问题。主要是操作可见性的问题。通过HappenBefore规则来约束。
+5. 同步方法，会对所属对象进行加锁(如果是静态方法则会对对应的class对象加锁)。有两个作用：其一是临界区的概念，只能有一个线程调用被加锁的方法(或者是该对象被加锁的其他方法)，其二是退出临界区时锁释放对后续加锁操作的HappenBefore规则，也就是加锁过程中的操作，对后续再加锁后操作是可见的。实际上是通过HB规则对编译器或者虚拟机行为进行了约束，来保证并发的正确性。
 6. 构造函数不应使用同步，因为构造过程中该对象只能对创建它的那个线程是可见的，因此同步是无意义的。注意在构造函数中应避免泄露对象，使得存在一种可能，外部可以获得没有构造完全的对象(构造函数泄露)，因为这会引发线程安全问题。
-7. 同步可以解决线程干扰和内存不一致错误。如果一个对象对多个线程可见，多个线程对其的读写操作应该进行同步,即使用其synchronized的读写方法。一种例外，如果操作字段是final类型，则只要在对象创建完毕后，就可以进行非同步地安全地读。
+7. 同步可以解决线程干扰和内存不一致错误。如果一个对象对多个线程可见，多个线程对其的读写操作应该进行同步,即要使用synchronized的读写方法。一种例外，如果操作字段是final类型，则只要在对象创建完毕后，就可以进行非同步地安全地读。
 8. 除了同步方法外还有同步语句，同步语句除了使用this还可以进行自定义的加锁对象，因此提供了更丰富地粒度控制。
-9. synchronized加锁是一种可重入锁(reentrant)，这使得同步方法可以调用其他的同步方法，而不需要进行额外的控制。
-10. 原子操作(Atomic Access),对于基本类型(除了long和double)以及对象的引用类型的读写操作；对于volatile类型的变量的读写操作。对变量的原子操作会比通过同步方法对变量操作更为高效，但是并不能完全避免内存不一致问题,需要一些额外的工作量。`CAS的概念`。
+9. synchronized加锁是一种可重入锁(reentrant lock)，这使得同步方法可以调用同一个锁对象关联的其他的同步方法，而不需要进行额外的控制。
+10. 原子操作(Atomic Access),对于基本类型(除了long和double)以及对象的引用类型的读写操作是原子操作；对于volatile类型的变量的`读写操作`是原子操作(包含volatile的long和double)。对变量的原子操作会比通过同步方法对变量操作更为高效，但是并不能完全避免内存不一致问题,需要一些额外的工作量。注意变量的操作一般会涉及多个连续的原子操作，整个操作序列的原子性不能通过简单的volatile来保证。
+11. `CAS的概念`。
+12. 线程内存相关概念：主内存和工作内存；原子性、可见性、有序性。
 
 ### Liveness
-1. Liveness线程活跃度(Deadlock, starvation,livelock),其中死锁是多个线程彼此持有对方需要的资源，都在等待获取到对应的锁，均处于block的状态；饥饿是部分线程一直在等待获取对应锁，但是锁不断地被其他线程持有，造成一种长时间等待加锁的状态，或者长时间得不到cpu使用权的一种状态；活锁是线程彼此都进行退让，但却形成双方都无法进一步执行的场景(走廊让道的例子)，此时双方都处于waiting而非block的状态。`活锁死锁以及线程阻塞的问题?是否都有block的状态以及相互停滞的时候CPU的占用情况`
+1. Liveness线程活跃度(Deadlock, Starvation,Livelock等概念)，其中死锁是多个线程彼此持有对方需要的资源，都在等待获取到对应的锁，均处于blocked的状态；饥饿是部分线程一直在等待获取对应锁，但是锁不断地被其他线程持有，造成一种长时间等待加锁的状态，或者长时间得不到cpu使用权的一种状态；活锁是线程彼此都进行退让，但却形成双方都无法进一步执行的场景(`走廊让道的例子`)，此时双方都处于waiting(忙等?)而非blocked的状态。`活锁死锁以及线程阻塞的问题?是否都有block的状态以及相互停滞的时候CPU的占用情况`
+
+```
+A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then livelock may result. As with deadlock, livelocked threads are unable to make further progress. However, the threads are not blocked — they are simply too busy responding to each other to resume work. This is comparable to two people attempting to pass each other in a corridor: Alphonse moves to his left to let Gaston pass, while Gaston moves to his right to let Alphonse pass. Seeing that they are still blocking each other, Alphone moves to his right, while Gaston moves to his left. They're still blocking each other, so...
+```
 
 ### Guarded Blocks
 1. wait的使用完善的写法应该在一个循环检测中，也就是wait结束被唤醒后仍要对判断条件进行判断以确认是否满足预期条件，因为并不能确定中断退出是否表示对应标志改变以及即使被唤醒了但不能保证判断条件没有被修改过。
