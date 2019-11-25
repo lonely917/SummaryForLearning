@@ -80,9 +80,9 @@ A thread often acts in response to the action of another thread. If the other th
 ```
 
 ### Guarded Blocks
-1. wait的使用完善的写法应该在一个循环检测中，也就是wait结束被唤醒后仍要对判断条件进行判断以确认是否满足预期条件，因为并不能确定中断退出是否表示对应标志改变以及即使被唤醒了但不能保证判断条件没有被修改过。
+1. wait调用的完善写法应该在一个循环检测中，也就是wait结束被唤醒后仍要对判断条件进行判断以确认是否满足预期条件，因为并不能确定中断退出是否表示对应标志改变以及即使被唤醒了但不能保证判断条件没有被修改过。同时注意有虚假唤醒的可能。
 2. wait需要在同步方法或者同步块中执行，因为wait要求已经获取到对象的monitor，否则会抛出异常，因此在同步方法中使用wait比较容易符合这个条件，wait会释放锁然后挂起执行(releases the lock and suspends execution)，线程处于waiting状态，等另外某个线程加锁后并调用notify系列方法的时候，wait的线程收到通知有状态变化，会重新尝试加锁，等nofity的线程退出同步块即释放锁之后，wait的线程重新获得锁，从wait结束，开始后续执行。
-3. SynchronousQueue implements BlockingQueue，一种阻塞队列的高级实现，可以帮助更容易地实现生产者消费者问题。
+3. SynchronousQueue implements BlockingQueue，一种阻塞队列的高级实现，可以帮助更容易地实现生产者消费者问题。缓存队列大小为0。注意阻塞和非阻塞的操作。
 4. 尝试使用synchronized以及wait-notify实现基本的生产者消费者问题。
 
 ### Immutable Objects
