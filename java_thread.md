@@ -80,6 +80,9 @@ A thread often acts in response to the action of another thread. If the other th
 ```
 
 ### Guarded Blocks
+```
+Threads often have to coordinate their actions. The most common coordination idiom is the guarded block. Such a block begins by polling a condition that must be true before the block can proceed. There are a number of steps to follow in order to do this correctly.
+```
 1. wait调用的完善写法应该在一个循环检测中，也就是wait结束被唤醒后仍要对判断条件进行判断以确认是否满足预期条件，因为并不能确定中断退出是否表示对应标志改变以及即使被唤醒了但不能保证判断条件没有被修改过。同时注意有虚假唤醒的可能。
 2. wait需要在同步方法或者同步块中执行，因为wait要求已经获取到对象的monitor，否则会抛出异常，因此在同步方法中使用wait比较容易符合这个条件，wait会释放锁然后挂起执行(releases the lock and suspends execution)，线程处于waiting状态，等另外某个线程加锁后并调用notify系列方法的时候，wait的线程收到通知有状态变化，会重新尝试加锁，等nofity的线程退出同步块即释放锁之后，wait的线程重新获得锁，从wait结束，开始后续执行。
 3. SynchronousQueue implements BlockingQueue，一种阻塞队列的高级实现，可以帮助更容易地实现生产者消费者问题。缓存队列大小为0。注意阻塞和非阻塞的操作。
@@ -92,6 +95,7 @@ A thread often acts in response to the action of another thread. If the other th
 
 ### High Level Concurrency Objects
 1. Lock(java.util.concurrent.locks)。synchronized同步依赖于简单的可重入锁，简单但有一些限制，Lock是一种更高级别的锁接口，提供更灵活的操作，也支持wait/notify机制(通过Condition信号量来支持)。
+
 2. Executors，更高级别的线程操作管理。
 3. 一个并发API相关的动画展示（很棒，一个可执行jar程序）。 https://sourceforge.net/projects/javaconcurrenta/
 4. Executor/ExecutorService/ScheduledExecutorService/FinalizableDelegatedExecutorService
@@ -112,7 +116,7 @@ A thread often acts in response to the action of another thread. If the other th
 2. 加锁机制以及线程切换代价-阻塞or自旋(spin)-自选超时+阻塞。
 3. java对象之markword：未锁定、可偏向、轻量、重量、
 4. 重量级锁、轻量级锁、可偏向锁；自旋锁。
-5. CAS以及ABA问题的探讨。`ABA会带来什么问题？这一点没搞明白`
+5. CAS以及ABA问题的探讨。`ABA不一定导致最终结果错误，但是过程可能会有逻辑错误，或者说过程被隐蔽了`
 6. 悲观锁实例：synchronized、reentrantlock.(synchronized 也在逐步优化)
 7. 缓存行的伪共享问题产生以及性能优化。(主要影响多核场景下处理器之间的缓存同步问题，解决方法都是缓存行填充的原理，具体实现方式可能会有所不同)
 8. ABA问题的处理：CAS添加对象标志用来进行操作计数。比如java中AtomicStampedReference以及AtomicMarkableReference是对AtomicReference的ABA完善版。
@@ -123,7 +127,7 @@ http://ifeve.com/falsesharing/
 
 ### concurrent并发包中的锁、信号量、条件变量等
 1. 最基础的wait、notify结合synchronized关键字
-2. Condition和Lock结合使用，lock的lock和unlock以及condition的await和signal/signal
+2. Condition和Lock结合使用，lock的lock和unlock以及condition的await和signal/signalAll
 3. Semaphore信号量的acquire和release
 4. Lock子类ReentrantLock以及ReadWriteLock
 5. CountDownLatch的await和countdown，控制一定数量的线程集合。
@@ -152,6 +156,7 @@ first-in-first-out (FIFO) wait queues.
 ```
 
 2. ConcurrentHashMap 1.7 vs 1.8实现不同
+1.7使用分段锁，1.8使用CAS操作，CAS失败的话使用Synchronized进行加锁，另外1.8后，存储结果发生变化，开链法的链不在是简单的线性结构，链表过长会转成红黑树进行存储。
    
 ### 内存可见性以及共享变量
 ```java
@@ -201,7 +206,7 @@ https://docs.oracle.com/javase/specs/jls/se12/html/jls-17.html
 
 其他的一些同步相关策略：volatile变量读写、java.util.concurrent包的使用。
 
-加锁指的是加锁对象对应的monitor，java中每个object都有一个对应的monitor。
+加锁指的是加锁对象对应的monitor，java中每个object都有一个对应的monitor,实际是对象的markword中的对应标志位。
 
 ### wait
 object.wait肯定发生在对object相关的monitor加锁的情况下(比如对其进行了synchronized操作)。wait行为如下：
@@ -210,7 +215,7 @@ object.wait肯定发生在对object相关的monitor加锁的情况下(比如对�
 
 不报异常的情况下发生如下事情：
 1. thread会被加入到object的wait-set中(一个阻塞在object上的线程集)，然后进行锁释放(lock了多少次，就unlock多少次)。
-2. thread等待至到其从object的wait-set中移除。
+2. thread等待(挂起)直到其从object的wait-set中移除。
     2中所属的移除会发生在下述情况下：
     - notify被执行，然后该thread被选中从wait-set中移除
     - notifyAll被执行
@@ -248,6 +253,7 @@ while (!this.done)
 - happen-before order
 - final field semantics
 
+
 总结
 1. jmm三个关键点：atomicity、visibility、ordering。
 2. 给编程者的同步工具：通过synchronized、volatile、final来向编译器表明同步控制的语义。
@@ -258,6 +264,7 @@ while (!this.done)
 7. volatile有几点注意：一个是写对读的happens-before(可见性规则)，一个是指令重排方面的限制(比如5中的描述)。前者保证不同线程每次都取最新值而不使用缓存，后者避免指令重排带来的执行顺序以及初始化问题，但是对volatile变量的操作并不是原子的，因此并非完全线程安全，volatile的变量的线程安全是有条件的，一是运算结果不依赖变量本身的数值或者确保只有一个线程修改数值，二是变量不需要与其他状态变量共同参与不变约束。(不好理解的话，就记住原子性的判断对多线程的影响就可以了)
 8. synchronized同步含义：除了我们临界区的概念，一次只能有一个线程持有锁并操作，还有一个很重要的概念，同一个锁的unlock对lock的happens-before原则(可见性规则)，意味着，相关缓存会被刷新(缓存写入主存以及变量重新加载等)。
 9. happens-before是一种可见性的规则，如果A先于B发生，则A的操作对B可见，这样就叫做A hb B。JMM关于HB有8条规则，如果两个操作之间的关系不能从这8条规则推导出来，则这两个操作没有顺序保证，虚拟机(还是编译器?)可以随意重排。对于符合HB的，只要重排是合理的，也是允许的。
+10. 鉴于编译器的优化策略，比如指令重排以及前向替代，对于并发访问应使用合适的同步策略。(jls17.4开篇就列出了编译器优化带来的一些奇特现象)
 
 ### word tearing
 
