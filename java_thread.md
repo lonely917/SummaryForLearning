@@ -311,3 +311,8 @@ while (!this.done)
 3. The Java Memory Model http://www.cs.umd.edu/~pugh/java/memoryModel/
 4. JMM FAQ (好文 http://www.cs.umd.edu/~pugh/java/memoryModel/jsr-133-faq.html)
 5. 旧资料不知道过时不?http://gee.cs.oswego.edu/dl/cpj/index.html
+
+### 相关资料
+1. java并发相关的一个uml图 https://www.uml-diagrams.org/java-7-concurrent-uml-class-diagram-example.html
+2. java线程状态的一个uml图
+https://www.uml-diagrams.org/java-thread-uml-state-machine-diagram-example.html
