@@ -124,7 +124,7 @@ Threads often have to coordinate their actions. The most common coordination idi
 
 
 ### High Level Concurrency Objects
-1. Lock(java.util.concurrent.locks)。synchronized同步依赖于简单的可重入锁，简单但有一些限制，jdk1.5之后提供了更高级的控制，Lock是一种更高级别的锁接口，提供更灵活的操作，也支持wait/notify机制(通过Condition信号量接口来支持)，内置两个实现类ReentrantLock和ReadWriteLock。(Doug Lea，java并发相关类的主要作者)
+1. Lock(java.util.concurrent.locks)。synchronized同步依赖于简单的可重入锁，简单但有一些限制，jdk1.5之后提供了更高级的控制，Lock是一种更高级别的锁接口，提供更灵活的操作，也支持wait/notify机制(通过Condition信号量接口来支持)，内置两个实现类ReentrantLock和ReentrantReadWriteLock。(Doug Lea，java并发相关类的主要作者)
 
 2. Executors，更高级别的线程操作管理,可以看作一个Executor的工厂类，提供一些简单的方法可以生成不同类型的线程池。
 
