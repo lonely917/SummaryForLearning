@@ -5,7 +5,7 @@
     - [响应报文](#响应报文)
     - [请求方法](#请求方法)
     - [知识点](#知识点)
-    - [http1.1 & http2](#http11--http2)
+    - [http演进](#http演进)
 - [https](#https)
     - [加密知识点](#加密知识点)
     - [https概览](#https概览)
@@ -82,16 +82,31 @@ Content-Length: 256200
 8. TRACE 追踪路径
 
 ### 知识点
-1. 短链接和长连接
-2. 流水线技术 pipeline
-3. cookie和session概念
-4. 现代浏览器已经由很丰富的存储技术(web storage api & indexedDB )
-5. tcp复用概念
+1. 短链接和长连接(1.0是短链接，1.1默认长连接)
+2. 流水线技术(基于长连接之后提出pipeline增加并发，但可能出现线头阻塞)
+3. tcp复用概念(multiplexing，http2底层支持tcp复用，二进制帧)
+4. cookie和session概念
+5. 现代浏览器已经由很丰富的存储技术(web storage api & indexedDB )
 
 
-### http1.1 & http2
 
+### http演进
+>http1.0
+1. 每个请求都是使用一个tcp连接，资源耗费。
 
+>http1.1
+1. 默认长连接，使得连接可复用，一次握手挥手之间可以发起多个http请求。
+2. 进一步使用pipeline，一次tcp连接里的多个http请求可以并发地进行，而不必串行发生，但是注意服务器返回需要按照请求的顺序。(因此某些场景存在线头阻塞问题)
+3. cache-control头、host头
+4. 断点续传chunked-transfer
+
+>http2
+1. http over tcp，tcp复用(multiplexing)，使得1.1中线头阻塞问题得到解决，服务器收到基于一个tcp连接的并发的http请求，处理完毕即可返回，允许乱序。
+2. google早年推出spdy，后被IETF标准化有了HTTP2.0.
+
+>http3
+1. http over QUIC(quick udp internet connections)
+2. 相较于http2+tcp+tls的优势：减少三次握手以及TLS握手时间；改进拥塞控制；避免队头阻塞的多路复用...
 
 ## https
 ### 加密知识点
@@ -118,19 +133,25 @@ https可以理解为http secure，或者http over ssl(Secure Socket Layer)，由
 4. 证书的概念以及验证
 
 ### https通信全流程
-1. 客户端发起握手请求，client hello;
-2. 服务器回应握手请求，server hello;
+1. 客户端发起握手请求，client hello(支持的协议版本、加密算法、压缩算法、随机数A);
+2. 服务器回应握手请求，server hello(确认协议版本、加密算法、随机数B、公钥证书即步骤2-3-4);
 3. 服务器发送证书(含有自己的公钥);
 4. 服务器发送server hello done;
 5. 客户端生成随机密码串(pre master secret)，然后发送给服务器，这个过程使用公钥加密；
-6. 客户端发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret可以生成master secret；
+6. 客户端发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret以及A和B可以生成master secret；
 7. 客户端发送握手结束报文；
-8. 服务器发送发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret可以生成master secret；
+8. 服务器发送发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret以及A和B可以生成master secret；
 9. 服务器发送握手结束报文；
 10. 此时ssl连接已经建立，客户端向服务器发送加密后的http报文，解密使用；
 11. 服务器向客户端回应报文一样使用对称加密算法进行加密；
 12. 客户端发起断开连接的时候走tcp四次挥手过程。
 13. 注意，并非每次https请求都要进行握手协商、证书认证、pms传输的过程，https支持快速恢复，每次连接会有一个session，可以从上一个连接快速恢复。
+
+上述流程可以简化为四次交互(注意这是https中的tls握手部分，在此之前会进行tcp的三次握手)：
+1. 客户端握手请求、发送一些信息
+2. 服务器回应握手、确认一些信息并发送证书
+3. 客户端验证证书并发送利用公钥加密后的第三个随机数，并生成主密钥用于后续对称加密。
+4. 服务器给出回应，私钥解密获取随机数，生成主密钥，进行后续对称加密通讯。
 
 ### 证书的认证和用途
 https通信过程中如何明确服务器身份是我想要通信的服务器呢，即如何避免中间人攻击。公钥通过证书发送，证书由权威CA机构颁发，证书包含证书信息和签名(签名是CA机构利用CA的私钥对证书信息进行摘要计算后加密生成)，客户端能够根据证书签名对证书认证，从而确定证书的有效性，进而确定证书中公钥的有效性，也就明确了服务器端身份。对证书签名的认证需要使用CA机构的公钥，这个公钥在操作系统内置的一些证书中。所以上述过程可以这样描述：客户端收到服务器的证书，从证书中获取服务器端的公钥，为了明确这个公钥可信的，需要对证书进行认证，对证书认证就需要证书发布方的公钥，这个公钥在另一个证书中，这个用于验证证书的证书提前已经内置在计算机中。
