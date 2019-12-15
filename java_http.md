@@ -82,7 +82,7 @@ Content-Length: 256200
 8. TRACE 追踪路径
 
 ### 知识点
-1. 短链接和长连接(1.0是短链接，1.1默认长连接)
+1. 短链接和长连接(1.0是默认短链接，1.1默认长连接)
 2. 流水线技术(基于长连接之后提出pipeline增加并发，但可能出现线头阻塞)
 3. tcp复用概念(multiplexing，http2底层支持tcp复用，二进制帧)
 4. cookie和session概念
@@ -96,7 +96,7 @@ Content-Length: 256200
 
 >http1.1
 1. 默认长连接，使得连接可复用，一次握手挥手之间可以发起多个http请求。
-2. 进一步使用pipeline，一次tcp连接里的多个http请求可以并发地进行，而不必串行发生，但是注意服务器返回需要按照请求的顺序。(因此某些场景存在线头阻塞问题)
+2. 进一步使用pipeline，一次tcp连接里的多个http请求可以并发地进行，而不必串行发生，但是注意接收服务器返回需要按照请求的顺序。(因此某些场景存在线头阻塞问题)
 3. cache-control头、host头
 4. 断点续传chunked-transfer
 
@@ -106,7 +106,7 @@ Content-Length: 256200
 
 >http3
 1. http over QUIC(quick udp internet connections)
-2. 相较于http2+tcp+tls的优势：减少三次握手以及TLS握手时间；改进拥塞控制；避免队头阻塞的多路复用...
+2. 相较于http2+tcp+tls的优势：减少三次握手(1.5rtt)以及TLS握手时间(2rtt)；改进拥塞控制；避免队头阻塞的多路复用...
 
 ## https
 ### 加密知识点
@@ -174,8 +174,8 @@ https通信过程中如何明确服务器身份是我想要通信的服务器呢
 
 tcp首部固定20字节，16位源端口和16位目的端口，32位的序号和32位的确认号，另外还有数据偏移、保留位、一些标志位(SYN,ACK,FIN等)、窗口值、校验和、紧急指针、填充位等。SYN=1表示同步报文，SYN=1、ACK=0表示这是一个连接请求，对方同意建立连接则返回SYN=1、ACK=1，tcp约定连接建立后发送报文ACK要置1。FIN=1表示发送方数据发送完毕要求断开连接。
 
-SYN和ACK不同于seq和ack，这个ack是首部中的确认号，表示接下来要求对方返回的序列号值，比如在一个已经建立好连接的通信过程中：
-A向B发送了seq=x,ack=y(假定窗口值为100)，
+SYN和ACK不同于seq和ack，这个ack是首部中的确认号，表示接下来要求对方返回的序列号值，比如在一个已经建立好连接的通信过程中A向B发送数据的过程：
+A向B发送了seq=x,ack=y(假定数据有效程度为100)，
 则B会发送seq=y，ack=x+101，
 随后A发送seq=x+101,ack=y+101。
 
@@ -187,14 +187,26 @@ A connect B(server)
 
 1. A发送SYN=1/ACK=0/seq=x(SYN_SENT)
 2. B收到后返回SYN=1/ACK=1/seq=y/ack=x+1(SYN_RECEIVED)
-3. A收到后发送SYN=1/ACK=1/seq=x+1/ack=y+1(ESTABLISHED)
+3. A收到后发送SYN=0/ACK=1/seq=x+1/ack=y+1(ESTABLISHED)
 4. B收到后建立连接(ESTABLISHED)
 
 2处B确定A的发送正常以及B的接收正常，3处A确定自己的收发正常以及B的收发正常，4处B确定A的接收和B的发送正常，至此可靠的连接才建立。
 
-注意1和2 SYN=1表示同步报文，不可携带数据但是需要消耗一个序列号；3是一个ACK报文，可以携带数据，不携带数据则不消耗序列号。
+注意1和2 SYN=1表示同步报文，不可携带数据但是需要消耗一个序列号；3是一个ACK报文，可以携带数据，不携带数据则不消耗序列号(不消耗序列号则seq依然为x)。
+
 ### tcp连接断开
-四次挥手
+四次挥手(客户端主动断开连接)：
+
+A disconnect from B(Server)
+1. A发送FIN=1/ACK=1/seq=x/ack=y (FIN-WAIT-1)
+2. B收到后发送FIN=0/ACK=1/seq=y/ack=x+1(CLOSE-WAIT)
+3. A收到后进入FIN-WAIT-2状态
+4. B向A继续发送需要发送的数据至结束(LAST-ACK)
+5. B向A发送FIN=1/ACK=1/seq=m/ack=x+1(CLOSED)
+6. A收到后发送FIN=0/ACK=1/seq=x+1/ack=m+1(TIME-WAIT)
+7. A等待两个MSL时间后断开连接(CLOSED)
+
+A告知B要断开连接，B收到FIN报文后给与回执需要让A直到FIN报文发送成功，但是B端可能还有数据要发送，因此B处于一个等待关闭(CLOSE_WAIT)的状态。A收到回执报文后直到A的断开请求已经被B收到，A会等待B这边单向数据传输完毕，B可以继续发送数据，数据传输完毕后向A发送一个FIN报文，请求断开连接并等待回执，处于LAST-ACK状态，A收到B的FIN报文后，明白B的数据传输已经结束并向自己发送断开请求，A给与回执，B收到者最后一个ACK后即从LAST-ACK状态变成CLOSE状态，A回执发送完毕后会等待一段时间，2MSL，如果没有收到B发送来的报文大概率可以认为B收到了最后一个ACK，然后A断开连接。
 
 ## java httpclient(java11)
 
@@ -213,3 +225,5 @@ A connect B(server)
 6. HTTPS可替代方案
 7. java http 请求相关类
 8. java 加解密相关类
+9. http相关api使用的时候连接池的概念
+10. tls版本协商过程-服务器支持协议版本的配置
