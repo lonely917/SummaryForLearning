@@ -17,7 +17,6 @@
     - [报文结构](#报文结构)
     - [tcp连接建立](#tcp连接建立)
     - [tcp连接断开](#tcp连接断开)
-- [java httpclient(java11)](#java-httpclientjava11)
 - [若干问题思考](#若干问题思考)
 
 <!-- /TOC -->
@@ -101,7 +100,7 @@ Content-Length: 256200
 4. 断点续传chunked-transfer
 
 >http2
-1. http over tcp，tcp复用(multiplexing)，使得1.1中线头阻塞问题得到解决，服务器收到基于一个tcp连接的并发的http请求，处理完毕即可返回，允许乱序。
+1. http over tcp，tcp复用(multiplexing)，使得1.1中线头阻塞问题得到解决，服务器收到基于一个tcp连接的并发的http请求，处理完毕即可返回，允许乱序。(注意不是彻底地解决线头阻塞，最终还要靠http3)
 2. google早年推出spdy，后被IETF标准化有了HTTP2.0.
 
 >http3
@@ -124,7 +123,7 @@ https可以理解为http secure，或者http over ssl(Secure Socket Layer)，由
 
 结合对称加密和非对称加密的长处，在https中使用`非对称加密来传输对称加密的密钥`，使用`对称加密来进行基本的数据传输`。这样既解决了简单对称加密的密钥传输问题，又对非对称算法双向传输需要两对公私钥以及复杂耗时的痛点进行了弱化。
 
-一个简化的https模型：客户端向服务器发起https请求，服务器发送公钥给客户端，客户端生成一个对称加密算法密钥m用于后续和服务器的http加密通信，客户端使用服务器的公钥对m进行加密，服务器使用私钥对报文解密得到对称密钥算法的密钥m，后续双方使用m对http报文进行对称加密解密。
+一个简化的https模型：客户端向服务器发起https请求，服务器发送公钥给客户端，客户端生成一个对称加密算法密钥m用于后续和服务器的http加密通信，客户端使用服务器的公钥对m进行加密，服务器使用私钥对报文解密得到对称密钥算法的密钥m，后续双方使用m对http报文进行对称加密解密。(这是一个简化的过程，证书传输以及随机密钥生成都进行了省略)
 
 一些延伸：
 1. 对称加密算法的选取
@@ -140,9 +139,9 @@ https可以理解为http secure，或者http over ssl(Secure Socket Layer)，由
 5. 客户端生成随机密码串(pre master secret)，然后发送给服务器，这个过程使用公钥加密；
 6. 客户端发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret以及A和B可以生成master secret；
 7. 客户端发送握手结束报文；
-8. 服务器发送发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret以及A和B可以生成master secret；
+8. 服务器发送发送ChangeCiperSpec报文，后续切换加密算法，使用pre master secret(来自5过程，用私钥解密获取)以及A和B可以生成master secret；
 9. 服务器发送握手结束报文；
-10. 此时ssl连接已经建立，客户端向服务器发送加密后的http报文，解密使用；
+10. 此时ssl连接已经建立，客户端向服务器发送加密后的http报文，解密后使用；
 11. 服务器向客户端回应报文一样使用对称加密算法进行加密；
 12. 客户端发起断开连接的时候走tcp四次挥手过程。
 13. 注意，并非每次https请求都要进行握手协商、证书认证、pms传输的过程，https支持快速恢复，每次连接会有一个session，可以从上一个连接快速恢复。
@@ -175,9 +174,10 @@ https通信过程中如何明确服务器身份是我想要通信的服务器呢
 tcp首部固定20字节，16位源端口和16位目的端口，32位的序号和32位的确认号，另外还有数据偏移、保留位、一些标志位(SYN,ACK,FIN等)、窗口值、校验和、紧急指针、填充位等。SYN=1表示同步报文，SYN=1、ACK=0表示这是一个连接请求，对方同意建立连接则返回SYN=1、ACK=1，tcp约定连接建立后发送报文ACK要置1。FIN=1表示发送方数据发送完毕要求断开连接。
 
 SYN和ACK不同于seq和ack，这个ack是首部中的确认号，表示接下来要求对方返回的序列号值，比如在一个已经建立好连接的通信过程中A向B发送数据的过程：
-A向B发送了seq=x,ack=y(假定数据有效程度为100)，
-则B会发送seq=y，ack=x+101，
-随后A发送seq=x+101,ack=y+101。
+
+1. A向B发送了seq=x,ack=y(假定数据有效程度为100)
+2. B会发送seq=y，ack=x+101(假定数据有效程度为100)
+3. 随后A发送seq=x+101,ack=y+101。
 
 
 ### tcp连接建立
@@ -201,18 +201,13 @@ A disconnect from B(Server)
 1. A发送FIN=1/ACK=1/seq=x/ack=y (FIN-WAIT-1)
 2. B收到后发送FIN=0/ACK=1/seq=y/ack=x+1(CLOSE-WAIT)
 3. A收到后进入FIN-WAIT-2状态
-4. B向A继续发送需要发送的数据至结束(LAST-ACK)
-5. B向A发送FIN=1/ACK=1/seq=m/ack=x+1(CLOSED)
+4. B向A继续发送需要发送的数据至结束()
+5. B向A发送FIN=1/ACK=1/seq=m/ack=x+1(LAST-ACK)
 6. A收到后发送FIN=0/ACK=1/seq=x+1/ack=m+1(TIME-WAIT)
+7. B收到后即可断开连接(CLOSED)
 7. A等待两个MSL时间后断开连接(CLOSED)
 
-A告知B要断开连接，B收到FIN报文后给与回执需要让A直到FIN报文发送成功，但是B端可能还有数据要发送，因此B处于一个等待关闭(CLOSE_WAIT)的状态。A收到回执报文后直到A的断开请求已经被B收到，A会等待B这边单向数据传输完毕，B可以继续发送数据，数据传输完毕后向A发送一个FIN报文，请求断开连接并等待回执，处于LAST-ACK状态，A收到B的FIN报文后，明白B的数据传输已经结束并向自己发送断开请求，A给与回执，B收到者最后一个ACK后即从LAST-ACK状态变成CLOSE状态，A回执发送完毕后会等待一段时间，2MSL，如果没有收到B发送来的报文大概率可以认为B收到了最后一个ACK，然后A断开连接。
-
-## java httpclient(java11)
-
-1. http://openjdk.java.net/groups/net/httpclient/
-2. JEP 110 Delivered the HTTP Client in incubating form in JDK 9
-3. JEP 321 Standarized the HTTP Client in Java 11
+A告知B要断开连接，B收到FIN报文后给与回执需要让A直到FIN报文发送成功，但是B端可能还有数据要发送，因此B处于一个等待关闭(CLOSE_WAIT)的状态。A收到回执报文后从FIN-WAIT-1变成FIN-WAIT-2状态，A会等待B这边单向数据传输完毕，B可以继续发送数据，数据传输完毕后向A发送一个FIN报文，请求断开连接并等待回执，处于LAST-ACK状态，A收到B的FIN报文后，明白B的数据传输已经结束并向自己发送断开请求，A给与回执，此时处于TIME-WAIT状态，B收到这最后一个ACK后即从LAST-ACK状态变成CLOSE状态，A回执发送完毕后会等待一段时间，2MSL，如果没有收到B发送来的报文大概率可以认为B收到了最后一个ACK，然后A断开连接即CLOSED状态。
 
 ## 若干问题思考
 
