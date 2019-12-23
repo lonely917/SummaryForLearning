@@ -93,6 +93,7 @@
 - [AMS Activity管理](#ams-activity管理)
     - [ActivityRecord/TaskRecord/ActivityStack](#activityrecordtaskrecordactivitystack)
     - [dumps activity](#dumps-activity)
+    - [根据ActivityManager日志来监测Activity调用情况](#根据activitymanager日志来监测activity调用情况)
     - [Activity launch mode](#activity-launch-mode)
     - [Activity Intent Flag](#activity-intent-flag)
     - [资料](#资料)
@@ -2003,6 +2004,11 @@ vertical类型最终measure实现为measureVertical(widthMeasureSpec, heightMeas
 2. dumpsys activity recents(列出recent app,是一个TaskRecord的列表)
 3. dumpsys activity activities(列出Display-ActivityStack列表-TaskRecord列表-ActivityRecord列表-ActivityRecord详情，以及当前活动情况)
 4. dumpsys activity processes(进程相关信息)
+5. dumpsys activity 包名(列出指定应用的activity相关情况)
+
+### 根据ActivityManager日志来监测Activity调用情况
+1. adb logcat ActivityManager:I *:s
+2. adb logcat *:I | grep ActivityManager
 
 ### Activity launch mode
 1. standard - 默认，每次启动一个新的Activity实例
