@@ -348,6 +348,52 @@ Display #0 (activities from top to bottom):
   mCurTaskId=1624
   mUserStackInFront={}
   mActivityContainers={0=ActivtyContainer{0}A, 1=ActivtyContainer{1}A}
+
+
+
+//dumpsys meminfo 查看指定程序内存信息
+
+$ adb shell dumpsys meminfo "top.wenburgyan.officeassistant"
+Applications Memory Usage (kB):
+Uptime: 116700880 Realtime: 116700880
+
+** MEMINFO in pid 30616 [top.wenburgyan.officeassistant] **
+                   Pss  Private  Private  Swapped     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------
+  Native Heap     8065     8028        0      460     9592     6838     2753
+  Dalvik Heap     6639     6592        0        0     9888     6016     3872
+ Dalvik Other      260      260        0        0
+        Stack      204      204        0        4
+      Gfx dev     2172     2172        0        0
+    Other dev        5        0        4        0
+     .so mmap      867      192      216     1472
+    .apk mmap      203        0       52        0
+    .ttf mmap      159        0       36        0
+    .dex mmap     4525        0     4524        0
+    .oat mmap     2713        0     1332        0
+    .art mmap     1628     1096      200        0
+   Other mmap       47        4        4        0
+   EGL mtrack    13440    13440        0        0
+      Unknown      144      144        0       52
+        TOTAL    41071    32132     6368     1988    19480    12854     6625
+
+ Objects
+               Views:      143         ViewRootImpl:        2
+         AppContexts:        4           Activities:        2
+              Assets:        3        AssetManagers:        3
+       Local Binders:       13        Proxy Binders:       24
+       Parcel memory:        6         Parcel count:       26
+    Death Recipients:        0      OpenSSL Sockets:        0
+
+ SQL
+         MEMORY_USED:      110
+  PAGECACHE_OVERFLOW:        8          MALLOC_SIZE:       62
+
+ DATABASES
+      pgsz     dbsz   Lookaside(b)          cache  Dbname
+         4      236             72      123/36/10  /data/data/top.wenburgyan.officeassistant/databases/leaks.db
+  
 ```
 
 ## LeakCanary分析之-LeakActivity(单Activity应用设计)
