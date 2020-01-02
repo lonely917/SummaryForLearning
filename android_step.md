@@ -396,6 +396,17 @@ Uptime: 116700880 Realtime: 116700880
   
 ```
 
+## art-gc
+1. Explicit concurrent mark sweep GC freed
+2. Background sticky concurrent mark sweep GC
+3. Background sticky concurrent mark sweep GC
+
+```
+01-02 10:28:50.765 32249-32268/top.wenburgyan.officeassistant I/art: Explicit concurrent mark sweep GC freed 318(13KB) AllocSpace objects, 0(0B) LOS objects, 39% free, 5MB/8MB, paused 647us total 47.472ms
+01-02 10:28:52.926 32249-32268/top.wenburgyan.officeassistant I/art: Explicit concurrent mark sweep GC freed 322(14KB) AllocSpace objects, 0(0B) LOS objects, 40% free, 5MB/8MB, paused 698us total 46.264ms
+01-02 10:29:04.297 32249-32264/top.wenburgyan.officeassistant I/art: Background sticky concurrent mark sweep GC freed 310034(9MB) AllocSpace objects, 0(0B) LOS objects, 32% free, 15MB/23MB, paused 10.614ms total 83.384ms
+01-02 10:29:13.685 32249-32264/top.wenburgyan.officeassistant I/art: Background partial concurrent mark sweep GC freed 202755(6MB) AllocSpace objects, 3(1946KB) LOS objects, 39% free, 15MB/26MB, paused 1.829ms total 110.659ms
+```
 ## LeakCanary分析之-LeakActivity(单Activity应用设计)
 -  ContentProvider的利用
 -  NavigationActivity的设计
