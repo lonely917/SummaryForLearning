@@ -1,5 +1,18 @@
+<!-- TOC -->
+
+- [jvm model & GC](#jvm-model--gc)
+    - [概览](#概览)
+    - [Run-Time Data Areas](#run-time-data-areas)
+    - [GC 算法](#gc-算法)
+    - [GC 垃圾回收器](#gc-垃圾回收器)
+    - [Full GC 触发条件](#full-gc-触发条件)
+    - [talks](#talks)
+    - [参考](#参考)
+
+<!-- /TOC -->
 # jvm model & GC
 
+## 概览
 >Run-Time Data Areas(运行时数据区)
 1. 程序计数器；虚拟机栈；本地方法栈；|| 方法区(含运行时常量池)；堆；
 2. 虚拟机栈(jvm stack) & 栈帧(frame)
@@ -73,7 +86,7 @@
 1. 标记-清除
 2. 标记-整理(老年代)
 3. 复制-清除(新生代)
-4. 分代收集
+4. 分代收集(hotspot-gc策略)
 
 ## GC 垃圾回收器
 1. Serial
