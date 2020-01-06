@@ -1,16 +1,17 @@
 <!-- TOC -->
 
-- [jvm model & GC](#jvm-model--gc)
+- [jvm model & GC(jvm model不同于jmm)](#jvm-model--gcjvm-model不同于jmm)
     - [概览](#概览)
     - [Run-Time Data Areas](#run-time-data-areas)
     - [GC 算法](#gc-算法)
     - [GC 垃圾回收器](#gc-垃圾回收器)
     - [Full GC 触发条件](#full-gc-触发条件)
+    - [](#)
     - [talks](#talks)
     - [参考](#参考)
 
 <!-- /TOC -->
-# jvm model & GC
+# jvm model & GC(jvm model不同于jmm)
 
 ## 概览
 >Run-Time Data Areas(运行时数据区)
@@ -59,9 +60,6 @@
 3. 应用程序类加载器
 4. 用户自定义类加载器
 
->GC类型
-1. 
-
 >对象存活判断
 1. 引用计数法
 2. 可达性分析(hotspot采用这种策略)
@@ -83,9 +81,9 @@
 ## Run-Time Data Areas
 
 ## GC 算法
-1. 标记-清除
-2. 标记-整理(老年代)
-3. 复制-清除(新生代)
+1. 标记-清除/内存碎片问题
+2. 标记-整理(老年代)/解决内存碎片，但是每次都得移动对象，成本较高，标记->清除->整理
+3. 复制-清除(新生代)/解决内存碎片，提高效率，但是内存利用率受影响
 4. 分代收集(hotspot-gc策略)
 
 ## GC 垃圾回收器
@@ -94,14 +92,18 @@
 3. Parallel Scavage
 4. Serial Old
 5. Pararrel Old
-6. CMS(并发标记清除)
-7. G1
+6. CMS(并发标记清除，The CMS collector is deprecated as of JDK 9)
+7. G1(Garbage First)
+8. ZGC(Z Garbage Collector is available as an experimental feature, starting with JDK 11.)
+
 
 ## Full GC 触发条件
 1. System.gc方法的调用(不保证触发)
 2. 老年代空间不足(minor gc后老对象可能移入老年代，大对象生成可能直接进入老年代)
 3. 方法区空间不足(`1.8后hotspot方法区在元数据空间对应本地内存`是否还有gc?)
 4. ~~空间分配担保失败(和2原理相似)~~
+
+## 
 
 ## talks
 1. 进程和虚拟机实例
