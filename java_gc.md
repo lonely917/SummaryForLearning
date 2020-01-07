@@ -111,7 +111,43 @@ java9之后两种：启动类加载器，平台类加载器。
 8. 堆：eden/s0/s1;old
 9. 通过参数设置各区域大小和变化规则，可以提高程序性能
 
+```
+-Xms<size>        设置初始 Java 堆大小
+-Xmx<size>        设置最大 Java 堆大小
+-Xss<size>        设置 Java 线程堆栈大小
+
+java -XX:+PrintFlagsFinal查看默认参数，新生代1/3，eden占新生代8/10(new/old=1/2,s0/eden=1/8)
+    uintx MaxGCPauseMillis                          = 4294967295                          {product}
+    uintx MaxHeapFreeRatio                          = 100                                 {manageable}
+    uintx MaxHeapSize                              := 4263510016                          {product}
+    uintx MaxMetaspaceSize                          = 4294901760                          {product}
+    uintx MaxNewSize                               := 1420820480                          {product}
+     intx MaxNodeLimit                              = 75000                               {C2 product}
+    uintx NewRatio                                  = 2                                   {product}
+    uintx NewSize                                  := 89128960                            {product}
+    uintx SurvivorRatio                             = 8                                   {product}
+    uintx YoungGenerationSizeIncrement              = 20                                  {product}
+
+    bool CMSEdenChunksRecordAlways                 = true                                {product}
+    uintx G1ConfidencePercent                       = 50                                  {product}    
+    uintx ParallelGCThreads                         = 4                                   {product}
+     bool ParallelGCVerbose                         = false                               {product}
+     
+     bool UseG1GC                                   = false                               {product}
+     bool UseParNewGC                               = false                               {product}
+     bool UseParallelGC                            := true                                {product}
+     bool UseParallelOldGC                          = true                                {product}
+     bool UseSerialGC                               = false                               {product}     
+```
+
 ## 执行引擎
+1. 方法调用的实现：静态分派和动态分派；多分派和单分派(宗量的概念)；
+2. 重载的实现、多态的实现；
+3. JIT的引入(client compiler & server compiler)
+4. java9引入AOT
+
+权衡的概念：执行字节码，跨平台但是相对本地机器代码效率略低；JIT对热点代码进行检测，预热后会保存一些本地代码，以后再执行相关代码效率得到提高，JIT热点检测过程会影响一定性能，预热阶段需要一定时间；AOT的思想则是执行前转换为本地代码，执行效率最高，没有预热，但是牺牲了跨平台的特性。
+
 ## JVM性能调优监控工具
 1. jps
 2. jstack
