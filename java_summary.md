@@ -66,7 +66,6 @@
         - [红黑树VS二叉排序树](#红黑树vs二叉排序树)
         - [红黑树](#红黑树)
     - [TreeMap、TreeSet 对比 HashMap、HashSet的优缺点](#treemaptreeset-对比-hashmaphashset的优缺点)
-- [jdk源码中的设计模式](#jdk源码中的设计模式)
 - [其他](#其他)
     - [Java基本数据类型](#java基本数据类型)
     - [String、StringBuilder、StringBuffer](#stringstringbuilderstringbuffer)
@@ -635,9 +634,6 @@ Java 实现的红黑树
     对于 TreeMap 而言，由于它底层采用一棵“红黑树”来保存集合中的 Entry，这意味这 TreeMap 添加元素、取出元素的性能都比 HashMap （O(1)）低；当 TreeMap 添加元素时，需要通过循环找到新增 Entry 的插入位置，因此比较耗性能（O(logN)）。当从 TreeMap 中取出元素时，需要通过循环才能找到合适的 Entry，也比较耗性能（O(logN)）
 优点：
     TreeMap 中的所有 Entry 总是按 key 根据指定排序规则保持有序状态，TreeSet 中所有元素总是根据指定排序规则保持有序状态。
-
-
-# jdk源码中的设计模式
 
 # 其他
 
