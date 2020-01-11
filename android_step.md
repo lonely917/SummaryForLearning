@@ -14,6 +14,8 @@
 
 ## 组件化和动态化
 
+## APP保活手段
+
 ## 常用分析手段
 1. APP内Activity、Fragment生命周期监控-打点插桩分析、耗时信息、各周期信号检测
 2. 系统角度监控Activity调用，可从WMS入手。(Fragment有没有类似策略?从WMS入手?)
