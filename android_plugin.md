@@ -1,3 +1,18 @@
+<!-- TOC -->
+
+- [Android插件化](#android插件化)
+    - [进程间通信](#进程间通信)
+    - [Binder通信](#binder通信)
+    - [ClassLoader](#classloader)
+    - [资源处理](#资源处理)
+    - [apk生成](#apk生成)
+    - [插件化技术概览](#插件化技术概览)
+    - [插件化关键技术](#插件化关键技术)
+    - [开源插件动态化技术追踪](#开源插件动态化技术追踪)
+    - [插件化发展进程中的一些资料](#插件化发展进程中的一些资料)
+    - [DroidPlugin对四大组件的支持](#droidplugin对四大组件的支持)
+
+<!-- /TOC -->
 # Android插件化
 
 ## 进程间通信
@@ -54,6 +69,23 @@ ServiceManager对应0号binder，相当于编号固定。其他的服务通过SM
 1. 插件调用。(apply plugin:com.android.library 与 apply plugin:com.android.application的不同)。动态加载dex，classloader的管理。
 2. 资源管理。Resources和AssetManager的处理。关于id冲突可以修改aapt对插件资源id进行修改或者根据插件的使用调用对应的Resources和AssetManager。
 3. AMS和PMS的hook
+
+## 开源插件动态化技术追踪
+1. AndroidDynamicLoader，github最早提交记录在2012年，github账号mmin18，有很多热门项目。插件通过Fragment代替Activity。
+2. DLA，github最早提交记录在2014年初，csdn也有博客介绍，账号singwhatiwanna，任玉刚。利用Activity占位以及代理的思想。
+3. Android PluginManager，github最早提交记录在2014年11月，账号houkx，csdn也有一篇原理介绍对应dev分支，利用dexmaker动态生成dex字节码的相关技术，为插件Activity动态生成代理类；master分支舍弃了dexmaker的使用，对ActivityThread、Instrumentation等进行了hook。
+4. DroidPlugin，360出品，作者账号cmzy(Andy Zhang)，张勇，最早提交追溯到2015年。目前依然在更新活跃的项目。
+5. CtripMobile/DynamicAPK，携程技术，2015年10月份提交，最后一次提交2015年11月份。有对此前技术的一些分析对比。
+6. VirtualApk，滴滴出品，singwhatiwanna任玉刚主笔，最早追溯到2017年6月，最后一次提交18年12月。Hook和预埋的思想。
+7. Atlas，阿里巴巴开源项目，容器化框架/动态组件化框架，主分支最后一次提交与2019年7月。
+8. VirtualApp，APP沙箱运行，可实现APP多开，免安装运行等。作者lody，最早提交于2016年7月，一直在维护更新，但是目前商业化，开源的是早期的版本。
+
+## 插件化发展进程中的一些资料
+1. dla系列文章，github以及csdn
+2. droidplugin实现思路,github由详细说明以及分析资料(其中就有tianweishu和hejunlin的博客分析)
+3. 携程技术，https://www.infoq.cn/article/ctrip-android-dynamic-loading/
+4. 手淘组件化之路，https://mp.weixin.qq.com/s?__biz=MzAxNDEwNjk5OQ==&mid=2650400348&idx=1&sn=99bc1bce932c5b9000d5b54afa2de70e
+5. 支付宝mpaas系列
 
 ## DroidPlugin对四大组件的支持
 1. Activity，通过在manifest.xml中进行占位，躲过安全检查，然后对AMN和ActivityThread中的H.Callback进行hook，调用方在安全检查前替换插件Activity名为占位名，实际处理启动的地方将占位名复原为实际的插件Activity名。不同技术hook点的选取会有所不同，不同的版本hook点的选取也会有差别，都是对私有api的调用，sdk版本的升级可能导致hook不可用。这里还涉及到对Resources的替换，对Instrumentation的callActivityOnCreate进行hook。
