@@ -11,6 +11,7 @@
     - [开源插件动态化技术追踪](#开源插件动态化技术追踪)
     - [插件化发展进程中的一些资料](#插件化发展进程中的一些资料)
     - [DroidPlugin对四大组件的支持](#droidplugin对四大组件的支持)
+    - [代理技术的一些模式](#代理技术的一些模式)
 
 <!-- /TOC -->
 # Android插件化
@@ -75,10 +76,12 @@ ServiceManager对应0号binder，相当于编号固定。其他的服务通过SM
 2. DLA，github最早提交记录在2014年初，csdn也有博客介绍，账号singwhatiwanna，任玉刚。利用Activity占位以及代理的思想。
 3. Android PluginManager，github最早提交记录在2014年11月，账号houkx，csdn也有一篇原理介绍对应dev分支，利用dexmaker动态生成dex字节码的相关技术，为插件Activity动态生成代理类；master分支舍弃了dexmaker的使用，对ActivityThread、Instrumentation等进行了hook。
 4. DroidPlugin，360出品，作者账号cmzy(Andy Zhang)，张勇，最早提交追溯到2015年。目前依然在更新活跃的项目。
+5. RePlugin，360出品的另外一款产品，号称功能更强大，更稳定，只使用唯一hook点，不同团队的产品， 作者张炅轩，主分支最后一次提交2019年7月，目前依然在活跃中，最早开源提交记录时间为2017年6月，据宣传称比DroidPlugin研发时间更早，2013年开始做这块儿。
 5. CtripMobile/DynamicAPK，携程技术，2015年10月份提交，最后一次提交2015年11月份。有对此前技术的一些分析对比。
 6. VirtualApk，滴滴出品，singwhatiwanna任玉刚主笔，最早追溯到2017年6月，最后一次提交18年12月。Hook和预埋的思想。
-7. Atlas，阿里巴巴开源项目，容器化框架/动态组件化框架，主分支最后一次提交与2019年7月。
+7. Atlas，阿里巴巴开源项目，容器化框架/动态组件化框架，最早提交记录2017年3月，主分支最后一次提交与2019年7月。目前仍在活跃中。
 8. VirtualApp，APP沙箱运行，可实现APP多开，免安装运行等。作者lody，最早提交于2016年7月，一直在维护更新，但是目前商业化，开源的是早期的版本。
+9. Shadow，腾讯零反射全动态android插件化技术。最早提交记录2018年4月，目前依然活跃中。
 
 ## 插件化发展进程中的一些资料
 1. dla系列文章，github以及csdn
@@ -91,4 +94,11 @@ ServiceManager对应0号binder，相当于编号固定。其他的服务通过SM
 1. Activity，通过在manifest.xml中进行占位，躲过安全检查，然后对AMN和ActivityThread中的H.Callback进行hook，调用方在安全检查前替换插件Activity名为占位名，实际处理启动的地方将占位名复原为实际的插件Activity名。不同技术hook点的选取会有所不同，不同的版本hook点的选取也会有差别，都是对私有api的调用，sdk版本的升级可能导致hook不可用。这里还涉及到对Resources的替换，对Instrumentation的callActivityOnCreate进行hook。
 2. Service，一样占位。类似Activity。
 3. BroadCastReceiver，通过解析将静态广播都转换为动态广播后通过代码Register上。
-4. ContentProvider，ActivityThread的installContentProviders方法是一个安装插件provider到宿主的实际。
+4. ContentProvider，ActivityThread的installContentProviders方法是一个安装插件provider到宿主的实际地方。
+
+## 代理技术的一些模式
+1. 代理模式的运用，偷梁换柱亦或瞒天过海
+2. 静态代理与动态代理，前者自定义代理类，后者是基于接口来生成代理类，利用Proxy.newProxyInstance方法生成代理类，进一步可以研究下newProxyInstance的实现(相关虚拟机指令)以及InvocationHandler方法拦截的使用。(retrofit中就是利用了代理的思想)
+3. cglib生成代理类利用继承的思想覆盖父类方法，不要求类实现某一接口，应用场景更更广泛，底层利用asm字节码操作技术。但也有限制，由于基于继承，不能实现对final方法的修改。
+4. 编译器生成代理类或者字节码操作技术
+5. 运行时生成代理类或者字节码操作技术
