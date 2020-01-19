@@ -9,9 +9,10 @@
     - [插件化技术概览](#插件化技术概览)
     - [插件化关键技术](#插件化关键技术)
     - [开源插件动态化技术追踪](#开源插件动态化技术追踪)
+    - [多方位看待不同技术框架](#多方位看待不同技术框架)
     - [插件化发展进程中的一些资料](#插件化发展进程中的一些资料)
-    - [DroidPlugin对四大组件的支持](#droidplugin对四大组件的支持)
     - [代理技术的一些模式](#代理技术的一些模式)
+    - [DroidPlugin对四大组件的支持](#droidplugin对四大组件的支持)
 
 <!-- /TOC -->
 # Android插件化
@@ -83,6 +84,10 @@ ServiceManager对应0号binder，相当于编号固定。其他的服务通过SM
 8. VirtualApp，APP沙箱运行，可实现APP多开，免安装运行等。作者lody，最早提交于2016年7月，一直在维护更新，但是目前商业化，开源的是早期的版本。
 9. Shadow，腾讯零反射全动态android插件化技术。最早提交记录2018年4月，目前依然活跃中。
 
+## 多方位看待不同技术框架
+1. 从动态化、兼容性、可迁移、可操作性等方面综合评估，实际中不可能做到各项指标都为最佳，因此要结合场景来考虑
+2. 插件技术都是实现一种动态化，这是必备条件；兼容性的话需要项目不断地更新和维护，利用反射技术多方位hook的实现对此要求更高，因为随着系统升级，内部私有api可能变动，而我们的hook多数是对非公开方法进行操作，另外android9之后禁止对私有api的调用(分层级，白名单、灰名单、黑名单)是一个很大的变数，因此hook点越少或者非hook的实现在兼容适配上会更有优势；可迁移性，在使用插件化技术的时候是否植入方便，是否对插件apk进行特定的改造，都会影响app的稳定和开发效率；可操作性指插件和宿主访问通信的可能性，这个根据场景来抉择，有的只是运行插件但不涉及彼此的交互，有的则是作为一个业务模块会和host进行资源互操作等。在技术实现的过程中，可能会用到编译和预处理的功能，通过自动化来实现一些中间工作。主流技术的总体技能一定是守恒的，比如droidplugin hook点比较多但是对插件activity没有要求，作为一个容器运行插件，replugin的唯一hook点准则给兼容性做了保障，但是插件的开发需要遵循一定准则，不是直接复用，当然也提出一些技术比如动态编译辅助工具等，可以进行更高效的适配，而shadow则直接提出零反射的概念，目前还没有详细的设计文档，按道理说也一定是在某方面进行了妥协，比如可迁移性以及互操作性。
+
 ## 插件化发展进程中的一些资料
 1. dla系列文章，github以及csdn
 2. droidplugin实现思路,github由详细说明以及分析资料(其中就有tianweishu和hejunlin的博客分析)
@@ -90,15 +95,15 @@ ServiceManager对应0号binder，相当于编号固定。其他的服务通过SM
 4. 手淘组件化之路，https://mp.weixin.qq.com/s?__biz=MzAxNDEwNjk5OQ==&mid=2650400348&idx=1&sn=99bc1bce932c5b9000d5b54afa2de70e
 5. 支付宝mpaas系列
 
-## DroidPlugin对四大组件的支持
-1. Activity，通过在manifest.xml中进行占位，躲过安全检查，然后对AMN和ActivityThread中的H.Callback进行hook，调用方在安全检查前替换插件Activity名为占位名，实际处理启动的地方将占位名复原为实际的插件Activity名。不同技术hook点的选取会有所不同，不同的版本hook点的选取也会有差别，都是对私有api的调用，sdk版本的升级可能导致hook不可用。这里还涉及到对Resources的替换，对Instrumentation的callActivityOnCreate进行hook。
-2. Service，一样占位。类似Activity。
-3. BroadCastReceiver，通过解析将静态广播都转换为动态广播后通过代码Register上。
-4. ContentProvider，ActivityThread的installContentProviders方法是一个安装插件provider到宿主的实际地方。
-
 ## 代理技术的一些模式
 1. 代理模式的运用，偷梁换柱亦或瞒天过海
 2. 静态代理与动态代理，前者自定义代理类，后者是基于接口来生成代理类，利用Proxy.newProxyInstance方法生成代理类，进一步可以研究下newProxyInstance的实现(相关虚拟机指令)以及InvocationHandler方法拦截的使用。(retrofit中就是利用了代理的思想)
 3. cglib生成代理类利用继承的思想覆盖父类方法，不要求类实现某一接口，应用场景更更广泛，底层利用asm字节码操作技术。但也有限制，由于基于继承，不能实现对final方法的修改。
 4. 编译器生成代理类或者字节码操作技术
 5. 运行时生成代理类或者字节码操作技术
+
+## DroidPlugin对四大组件的支持
+1. Activity，通过在manifest.xml中进行占位，躲过安全检查，然后对AMN和ActivityThread中的H.Callback进行hook，调用方在安全检查前替换插件Activity名为占位名，实际处理启动的地方将占位名复原为实际的插件Activity名。不同技术hook点的选取会有所不同，不同的版本hook点的选取也会有差别，都是对私有api的调用，sdk版本的升级可能导致hook不可用。这里还涉及到对Resources的替换，对Instrumentation的callActivityOnCreate进行hook。
+2. Service，一样占位。类似Activity。
+3. BroadCastReceiver，通过解析将静态广播都转换为动态广播后通过代码Register上。
+4. ContentProvider，ActivityThread的installContentProviders方法是一个安装插件provider到宿主的实际地方。

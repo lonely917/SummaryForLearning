@@ -2539,6 +2539,13 @@ https://android.googlesource.com/platform/frameworks/base/+/f76a50c/services/jav
     ro.product.locale.region=CN
     # ro.build.product is obsolete; use ro.product.device
     ro.build.product=APOS_A8
+
+    //获取系统版本号和api版本
+    C:\Users\ywb>adb shell getprop ro.build.version.sdk
+    22
+
+    C:\Users\ywb>adb shell getprop ro.build.version.release
+    5.1.1
 ```
 ## adb 命令(shell) 总结
 
