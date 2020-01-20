@@ -2610,7 +2610,7 @@ ActivityThread
 
 ## Activity的startActivity和 getApplicationContext.StartActivity()区别?
 最后都是通过Instrumentation 的execStartActivity，有什么区别，对于后者进行分析，涉及到baseContext的赋值，在app启动阶段。
-解答：最终都要通过instrumentation对象进行execStartActivity方法，前者是activity创建的时候进行attach来关联的，关联的对象就是ActivityThread中的instrumentation；后者通过mMainThread.getInstrumentation()获取对象，两者是同一个对象。
+解答：最终都要通过instrumentation对象进行execStartActivity方法，前者是activity创建的时候进行attach来关联的，关联的对象就是ActivityThread中的instrumentation；后者通过mMainThread.getInstrumentation()获取对象，两者引用同一个对象。另外后者实际调用ContextImpl的startActivity会对intent的标志进行检测，只能是newtask类型的才可以启动。
 
 ##synchronized 锁的是什么，具体底层的实现，延申到各种锁以及线程同步问题
 

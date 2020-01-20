@@ -1,8 +1,25 @@
-## APP性能优化
+# APP性能优化
 
 ## APK包体积优化
 
 ## APP内存优化
+1. 物理内存-cache-虚拟内存-外部存储
+2. 虚拟机内存管理机制
+3. 内存分析：MemoryProfiler(AS的Profiler工具提供cpu、内存、网络以及电量相关的分析)
+4. 内存分析：MAT(memory analysis tool分析hprof文件，可以进行差异对比缩小范围来进行内存泄漏相关检测分析)
+5. 内存泄露检测工具：leakcanary(1.x/2.x)，开源工具，最终都是dump出内存布局通过工具(haha库/shark库)进行gc-root链分析。
+6. 图片资源处理、图片渲染处理、图片资源文件加载到内存的机制(占用内存大小)、位图压缩机制
+7. 图片资源之Fresco原理
+8. 工具类使用场景，HashMap-ArrayMap-SparseArray，不同数据规模不同应用场景使用不同工具。
+9. 微信APM框架Matrix内存监控
+
+## APP卡顿分析
+1. TraceView
+2. Systrace
+3. Simpleperf(AS3.2之后Profiler直接支持Simpleperf)，火焰图分析
+4. CallChart & FlameChart两种图形化分析形式
+5. 线程监控
+6. 插桩技术：Aspect、ASM、ReDex
 
 ## APP网络优化
 
@@ -15,6 +32,10 @@
 ## 组件化和动态化
 
 ## APP保活手段
+
+## 开发框架、设计模式MVC-MVP-MVVM
+
+## UI适配
 
 ## 常用分析手段
 1. APP内Activity、Fragment生命周期监控-打点插桩分析、耗时信息、各周期信号检测
