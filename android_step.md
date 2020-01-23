@@ -438,3 +438,30 @@ Uptime: 116700880 Realtime: 116700880
 -  ContentProvider的利用
 -  NavigationActivity的设计
 -  Screen的概念
+
+## 一些资源
+1. 内存泄漏
+
+https://square.github.io/leakcanary/fundamentals-fixing-a-memory-leak/
+
+2. app性能监控与优化
+
+https://github.com/didi/booster
+
+https://github.com/Tencent/matrix
+
+3. 插件化技术
+
+https://github.com/tiann/understand-plugin-framework
+
+RePlugin
+
+shadow
+
+4. 网络
+
+https://square.github.io/okhttp
+
+http://www.httpclient.cn/archives/146.html
+
+http://hc.apache.org/httpcomponents-client-4.5.x/tutorial/html/connmgmt.html#d5e449
